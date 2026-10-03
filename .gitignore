@@ -1,0 +1,42 @@
+# Dependency directories
+node_modules/
+vendor/
+
+# Environment files
+.env
+.env.backup
+.env.production
+.env.local
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+*.apk
+*.aab
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.log
+
+# AI Agent & Vibe Coding files
+.claude/
+**/.claude/
+AGENTS.md
+**/AGENTS.md
+CLAUDE.md
+**/CLAUDE.md
+antislop.md
+**/antislop.md
+TASKS.md
+**/TASKS.md
+API_SPEC.md
+**/API_SPEC.md
+DESIGN.md
+**/DESIGN.md
+ERD.md
+**/ERD.md
+PRD.md
+**/PRD.md

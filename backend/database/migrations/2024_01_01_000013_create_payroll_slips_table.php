@@ -11,8 +11,11 @@ return new class extends Migration
         Schema::create('payroll_slips', function (Blueprint $table) {
             $table->id('id_payroll_slips');
             $table->unsignedBigInteger('id_companies');
-            $table->unsignedBigInteger('id_payroll_periods');
             $table->unsignedBigInteger('id_employees');
+            $table->string('period_name', 100);
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->date('payment_date')->nullable();
 
             $table->decimal('basic_salary', 14, 2);
             $table->decimal('allowance_fixed', 14, 2)->default(0);
@@ -23,19 +26,13 @@ return new class extends Migration
             $table->decimal('deduction_other', 14, 2)->default(0);
 
             $table->decimal('net_salary', 14, 2);
+            $table->string('status', 20)->default('published');
             $table->string('pdf_path', 255)->nullable();
             $table->timestamps();
-
-            $table->unique(['id_payroll_periods', 'id_employees']);
 
             $table->foreign('id_companies')
                 ->references('id_companies')
                 ->on('companies')
-                ->onDelete('cascade');
-
-            $table->foreign('id_payroll_periods')
-                ->references('id_payroll_periods')
-                ->on('payroll_periods')
                 ->onDelete('cascade');
 
             $table->foreign('id_employees')

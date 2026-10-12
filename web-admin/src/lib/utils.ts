@@ -42,13 +42,35 @@ export function formatDate(dateString: string | Date | null | undefined): string
 }
 
 /**
- * Formats time string (HH:mm:ss) into HH:mm WIB
+ * Formats time string (HH:mm:ss) into HH:mm (or HH:mm WIB if includeZone is true)
  */
-export function formatTime(timeString: string | null | undefined): string {
+export function formatTime(timeString: string | null | undefined, includeZone: boolean = false): string {
   if (!timeString) return "-";
   const parts = timeString.split(":");
   if (parts.length >= 2) {
-    return `${parts[0]}:${parts[1]} WIB`;
+    const formatted = `${parts[0]}:${parts[1]}`;
+    return includeZone ? `${formatted} WIB` : formatted;
   }
   return timeString;
 }
+
+/**
+ * Returns local date in YYYY-MM-DD format based on local client device timezone.
+ * Avoids UTC date-shifting bug where toISOString() in UTC+7 at 00:00-06:59 shifts to previous day.
+ */
+export function getLocalDateIso(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Returns local month in YYYY-MM format.
+ */
+export function getLocalMonthIso(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+

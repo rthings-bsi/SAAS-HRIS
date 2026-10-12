@@ -27,7 +27,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EmployeeDashboardView } from "@/components/dashboard/EmployeeDashboardView";
 import apiClient from "@/lib/axios";
-import { cn, formatRupiah } from "@/lib/utils";
+import { cn, formatRupiah, getLocalDateIso } from "@/lib/utils";
 import type { ApiResponse, Attendance, Employee, LeaveRequest, User } from "@/types";
 
 interface AttendanceRecapResponse {
@@ -46,10 +46,7 @@ export function TenantDashboard() {
   const [showLiveDrawer, setShowLiveDrawer] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
-  const [todayDate] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  });
+  const [todayDate] = useState(() => getLocalDateIso());
 
   // Query 1: Today's Attendance Recap
   const {

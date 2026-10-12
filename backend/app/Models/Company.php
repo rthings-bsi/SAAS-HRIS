@@ -23,22 +23,16 @@ class Company extends Model
         'logo_url',
         'director_name',
         'hr_manager_name',
+        'latitude',
+        'longitude',
+        'radius_meters',
     ];
 
-    public function branches(): HasMany
-    {
-        return $this->hasMany(Branch::class, 'id_companies', 'id_companies');
-    }
-
-    public function departments(): HasMany
-    {
-        return $this->hasMany(Department::class, 'id_companies', 'id_companies');
-    }
-
-    public function jobPositions(): HasMany
-    {
-        return $this->hasMany(JobPosition::class, 'id_companies', 'id_companies');
-    }
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'radius_meters' => 'integer',
+    ];
 
     public function users(): HasMany
     {
@@ -55,19 +49,9 @@ class Company extends Model
         return $this->hasMany(Shift::class, 'id_companies', 'id_companies');
     }
 
-    public function employeeShifts(): HasMany
-    {
-        return $this->hasMany(EmployeeShift::class, 'id_companies', 'id_companies');
-    }
-
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class, 'id_companies', 'id_companies');
-    }
-
-    public function leaveTypes(): HasMany
-    {
-        return $this->hasMany(LeaveType::class, 'id_companies', 'id_companies');
     }
 
     public function leaveRequests(): HasMany
@@ -75,13 +59,13 @@ class Company extends Model
         return $this->hasMany(LeaveRequest::class, 'id_companies', 'id_companies');
     }
 
-    public function payrollPeriods(): HasMany
-    {
-        return $this->hasMany(PayrollPeriod::class, 'id_companies', 'id_companies');
-    }
-
     public function payrollSlips(): HasMany
     {
         return $this->hasMany(PayrollSlip::class, 'id_companies', 'id_companies');
+    }
+
+    public function overtimeRequests(): HasMany
+    {
+        return $this->hasMany(OvertimeRequest::class, 'id_companies', 'id_companies');
     }
 }

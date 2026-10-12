@@ -10,7 +10,6 @@ class UpdateEmployeeRequest extends BaseFormRequest
 {
     public function rules(): array
     {
-        $companyId = auth()->user()?->id_companies;
         $employeeId = $this->route('id_employees');
         $employee = Employee::withoutGlobalScopes()->find($employeeId);
         $userId = $employee?->id_users;
@@ -27,34 +26,13 @@ class UpdateEmployeeRequest extends BaseFormRequest
             ],
             'password' => ['nullable', 'string', 'min:8'],
             'role' => ['sometimes', 'nullable', 'string', Rule::in(['owner', 'hr', 'manager', 'employee'])],
-            'id_branches' => [
-                'sometimes',
-                'required',
-                'integer',
-                Rule::exists('branches', 'id_branches')->where(function ($query) use ($companyId) {
-                    if ($companyId) {
-                        $query->where('id_companies', $companyId);
-                    }
-                }),
-            ],
-            'id_departments' => [
-                'nullable',
-                'integer',
-                Rule::exists('departments', 'id_departments')->where(function ($query) use ($companyId) {
-                    if ($companyId) {
-                        $query->where('id_companies', $companyId);
-                    }
-                }),
-            ],
-            'id_job_positions' => [
-                'nullable',
-                'integer',
-                Rule::exists('job_positions', 'id_job_positions')->where(function ($query) use ($companyId) {
-                    if ($companyId) {
-                        $query->where('id_companies', $companyId);
-                    }
-                }),
-            ],
+            'id_branches' => ['sometimes', 'nullable'],
+            'id_departments' => ['nullable'],
+            'id_job_positions' => ['nullable'],
+            'department_name' => ['nullable', 'string', 'max:100'],
+            'job_position_name' => ['nullable', 'string', 'max:100'],
+            'id_shifts' => ['nullable', 'integer', Rule::exists('shifts', 'id_shifts')],
+            'annual_leave_quota' => ['nullable', 'integer', 'min:0'],
             'nik' => ['sometimes', 'required', 'string', 'max:50'],
             'phone' => ['nullable', 'string', 'max:30'],
             'gender' => ['sometimes', 'required', 'in:male,female'],
@@ -82,13 +60,7 @@ class UpdateEmployeeRequest extends BaseFormRequest
             'email.unique' => 'Email sudah terdaftar.',
             'password.string' => 'Kata sandi harus berupa teks.',
             'password.min' => 'Kata sandi minimal harus 8 karakter.',
-            'id_branches.required' => 'Kantor cabang wajib dipilih.',
-            'id_branches.integer' => 'ID cabang harus berupa angka.',
-            'id_branches.exists' => 'Kantor cabang tidak ditemukan atau tidak berada dalam perusahaan ini.',
-            'id_departments.integer' => 'ID departemen harus berupa angka.',
-            'id_departments.exists' => 'Departemen tidak ditemukan atau tidak berada dalam perusahaan ini.',
-            'id_job_positions.integer' => 'ID posisi jabatan harus berupa angka.',
-            'id_job_positions.exists' => 'Posisi jabatan tidak ditemukan atau tidak berada dalam perusahaan ini.',
+            'id_shifts.exists' => 'Shift kerja tidak ditemukan.',
             'nik.required' => 'NIK karyawan wajib diisi.',
             'nik.string' => 'NIK harus berupa teks.',
             'nik.max' => 'NIK tidak boleh lebih dari 50 karakter.',

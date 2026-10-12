@@ -25,7 +25,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Modal } from "@/components/ui/Modal";
 import apiClient from "@/lib/axios";
-import { formatDate, formatTime, cn } from "@/lib/utils";
+import { formatDate, formatTime, getLocalDateIso, getLocalMonthIso, cn } from "@/lib/utils";
 import type { ApiResponse, Attendance, TodayAttendance, User } from "@/types";
 
 // Fungsi hitung jarak 2 koordinat (Haversine formula dalam meter)
@@ -69,9 +69,9 @@ export default function AttendancePage() {
 
   const isEmployee = currentUser?.role === "employee";
 
-  // Tanggal Hari Ini
-  const todayIso = useMemo(() => new Date().toISOString().split("T")[0], []);
-  const currentMonthIso = useMemo(() => todayIso.slice(0, 7), [todayIso]);
+  // Tanggal Hari Ini (Waktu Lokal Klien)
+  const todayIso = useMemo(() => getLocalDateIso(), []);
+  const currentMonthIso = useMemo(() => getLocalMonthIso(), []);
 
   // Filter Tanggal untuk Admin/HR
   const [selectedDate, setSelectedDate] = useState(todayIso);
@@ -335,19 +335,29 @@ export default function AttendancePage() {
         return;
       }
 
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const now = new Date();
+      const deviceTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
       const formData = new FormData();
       formData.append("latitude", lat.toString());
       formData.append("longitude", lon.toString());
       formData.append("photo", photoFile);
+      formData.append("device_time", deviceTime);
 
       clockInMutation.mutate(formData);
     } else {
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const now = new Date();
+      const deviceTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
       const formData = new FormData();
       formData.append("latitude", lat.toString());
       formData.append("longitude", lon.toString());
       if (clockPhoto) {
         formData.append("photo", clockPhoto);
       }
+      formData.append("device_time", deviceTime);
 
       clockOutMutation.mutate(formData);
     }

@@ -27,7 +27,7 @@ import { TableSkeleton } from "@/components/ui/LoadingSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import apiClient from "@/lib/axios";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, formatDate, getLocalDateIso } from "@/lib/utils";
 import type { ApiResponse, OvertimeRequest, User } from "@/types";
 
 export default function OvertimePage() {
@@ -66,9 +66,7 @@ export default function OvertimePage() {
 
   // Apply Overtime Modal State
   const [isApplyOpen, setIsApplyOpen] = useState(false);
-  const [applyDate, setApplyDate] = useState(() =>
-    new Date().toISOString().split("T")[0]
-  );
+  const [applyDate, setApplyDate] = useState(() => getLocalDateIso());
   const [applyStartTime, setApplyStartTime] = useState("17:00");
   const [applyEndTime, setApplyEndTime] = useState("20:00");
   const [applyReason, setApplyReason] = useState("");

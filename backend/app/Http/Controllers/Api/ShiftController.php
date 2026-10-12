@@ -7,10 +7,8 @@ use App\Http\Requests\Shift\AssignShiftRequest;
 use App\Http\Requests\Shift\StoreShiftRequest;
 use App\Http\Requests\Shift\UpdateShiftRequest;
 use App\Models\Employee;
-use App\Models\EmployeeShift;
 use App\Models\Shift;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 class ShiftController extends Controller
 {
@@ -53,7 +51,7 @@ class ShiftController extends Controller
     {
         $shift = Shift::findOrFail($id_shifts);
 
-        if ($shift->employeeShifts()->exists()) {
+        if (Employee::where('id_shifts', $id_shifts)->exists()) {
             return $this->errorResponse('Shift tidak dapat dihapus karena masih digunakan pada jadwal karyawan.', null, 422);
         }
 
@@ -64,30 +62,12 @@ class ShiftController extends Controller
 
     public function assignShift(AssignShiftRequest $request): JsonResponse
     {
-        $dates = $request->getDates();
         $employeeId = $request->input('id_employees');
         $shiftId = $request->input('id_shifts');
 
-        $assigned = [];
-        DB::transaction(function () use ($dates, $employeeId, $shiftId, &$assigned) {
-            $companyId = auth()->user()?->id_companies
-                ?? Employee::withoutGlobalScopes()->find($employeeId)?->id_companies
-                ?? 1;
+        $employee = Employee::findOrFail($employeeId);
+        $employee->update(['id_shifts' => $shiftId]);
 
-            foreach ($dates as $date) {
-                $assigned[] = EmployeeShift::updateOrCreate(
-                    [
-                        'id_companies' => $companyId,
-                        'id_employees' => $employeeId,
-                        'date' => $date,
-                    ],
-                    [
-                        'id_shifts' => $shiftId,
-                    ]
-                );
-            }
-        });
-
-        return $this->successResponse($assigned, 'Jadwal shift berhasil ditugaskan.', 200);
+        return $this->successResponse($employee, 'Jadwal shift berhasil ditugaskan.', 200);
     }
 }

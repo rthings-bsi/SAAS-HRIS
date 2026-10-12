@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\OvertimeRequest;
@@ -37,12 +36,6 @@ class OvertimeApiTest extends TestCase
             'slug' => 'pt-perusahaan-a',
             'email' => 'info@a.test',
             'subscription_status' => 'active',
-        ]);
-
-        $branchA = Branch::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'Kantor Pusat A',
-            'address' => 'Jakarta',
             'latitude' => -6.2088,
             'longitude' => 106.8456,
             'radius_meters' => 100,
@@ -78,7 +71,6 @@ class OvertimeApiTest extends TestCase
         $this->employeeA = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $this->userEmpA->id_users,
-            'id_branches' => $branchA->id_branches,
             'nik' => 'EMP-001',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -92,12 +84,6 @@ class OvertimeApiTest extends TestCase
             'slug' => 'pt-perusahaan-b',
             'email' => 'info@b.test',
             'subscription_status' => 'active',
-        ]);
-
-        $branchB = Branch::create([
-            'id_companies' => $this->companyB->id_companies,
-            'name' => 'Kantor Pusat B',
-            'address' => 'Bandung',
             'latitude' => -6.9175,
             'longitude' => 107.6191,
             'radius_meters' => 100,
@@ -124,7 +110,6 @@ class OvertimeApiTest extends TestCase
         $this->employeeB = Employee::create([
             'id_companies' => $this->companyB->id_companies,
             'id_users' => $this->userEmpB->id_users,
-            'id_branches' => $branchB->id_branches,
             'nik' => 'EMP-002',
             'gender' => 'female',
             'hire_date' => '2024-01-01',

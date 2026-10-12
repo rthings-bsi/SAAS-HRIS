@@ -5,7 +5,6 @@ namespace App\Services\Leave;
 use App\Exceptions\LeaveException;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
-use App\Models\LeaveType;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -13,6 +12,32 @@ use Illuminate\Support\Facades\Storage;
 
 class LeaveService
 {
+    public static function getStandardTypes(int $annualQuota = 12): array
+    {
+        return [
+            ['id_leave_types' => 1, 'name' => 'Cuti Tahunan', 'quota_days' => $annualQuota, 'is_paid' => true],
+            ['id_leave_types' => 2, 'name' => 'Cuti Sakit', 'quota_days' => 14, 'is_paid' => true],
+            ['id_leave_types' => 3, 'name' => 'Izin Khusus', 'quota_days' => 5, 'is_paid' => true],
+            ['id_leave_types' => 4, 'name' => 'Cuti Melahirkan', 'quota_days' => 90, 'is_paid' => true],
+            ['id_leave_types' => 5, 'name' => 'Cuti Tanpa Gaji', 'quota_days' => 30, 'is_paid' => false],
+        ];
+    }
+
+    public function resolveTypeName(int|string|null $identifier): string
+    {
+        if (is_numeric($identifier)) {
+            return match ((int) $identifier) {
+                2 => 'Cuti Sakit',
+                3 => 'Izin Khusus',
+                4 => 'Cuti Melahirkan',
+                5 => 'Cuti Tanpa Gaji',
+                default => 'Cuti Tahunan',
+            };
+        }
+
+        return ! empty($identifier) ? (string) $identifier : 'Cuti Tahunan';
+    }
+
     public function calculateTotalDays(string $startDate, string $endDate): int
     {
         $start = Carbon::parse($startDate)->startOfDay();
@@ -25,30 +50,34 @@ class LeaveService
         return (int) $start->diffInDays($end) + 1;
     }
 
-    public function getUsedDays(int $employeeId, int $leaveTypeId, int $year): int
+    public function getUsedDays(int $employeeId, string|int $leaveType, int $year): int
     {
+        $typeName = $this->resolveTypeName($leaveType);
+
         return (int) LeaveRequest::where('id_employees', $employeeId)
-            ->where('id_leave_types', $leaveTypeId)
+            ->where('leave_type', $typeName)
             ->where('status', 'approved')
             ->whereYear('start_date', $year)
             ->sum('total_days');
     }
 
-    public function getPendingDays(int $employeeId, int $leaveTypeId, int $year): int
+    public function getPendingDays(int $employeeId, string|int $leaveType, int $year): int
     {
+        $typeName = $this->resolveTypeName($leaveType);
+
         return (int) LeaveRequest::where('id_employees', $employeeId)
-            ->where('id_leave_types', $leaveTypeId)
+            ->where('leave_type', $typeName)
             ->where('status', 'pending')
             ->whereYear('start_date', $year)
             ->sum('total_days');
     }
 
-    public function checkQuotaBalance(Employee $employee, LeaveType $leaveType, int $requestedDays, int $year): void
+    public function checkQuotaBalance(Employee $employee, string $leaveTypeName, int $quotaDays, int $requestedDays, int $year): void
     {
-        $usedDays = $this->getUsedDays($employee->id_employees, $leaveType->id_leave_types, $year);
-        $pendingDays = $this->getPendingDays($employee->id_employees, $leaveType->id_leave_types, $year);
+        $usedDays = $this->getUsedDays($employee->id_employees, $leaveTypeName, $year);
+        $pendingDays = $this->getPendingDays($employee->id_employees, $leaveTypeName, $year);
 
-        $remainingQuota = $leaveType->quota_days - ($usedDays + $pendingDays);
+        $remainingQuota = $quotaDays - ($usedDays + $pendingDays);
 
         if ($requestedDays > $remainingQuota) {
             throw new LeaveException(
@@ -79,43 +108,43 @@ class LeaveService
     public function getEmployeeLeaveBalance(Employee $employee, ?int $year = null): array
     {
         $year = $year ?? (int) Carbon::now()->year;
-        $leaveTypes = LeaveType::where('id_companies', $employee->id_companies)->get();
+        $standardTypes = self::getStandardTypes($employee->annual_leave_quota ?? 12);
 
-        return $leaveTypes->map(function (LeaveType $type) use ($employee, $year) {
-            $usedDays = $this->getUsedDays($employee->id_employees, $type->id_leave_types, $year);
-            $pendingDays = $this->getPendingDays($employee->id_employees, $type->id_leave_types, $year);
+        return array_map(function (array $type) use ($employee, $year) {
+            $usedDays = $this->getUsedDays($employee->id_employees, $type['name'], $year);
+            $pendingDays = $this->getPendingDays($employee->id_employees, $type['name'], $year);
 
             return [
-                'id_leave_types' => $type->id_leave_types,
-                'name' => $type->name,
-                'quota_days' => (int) $type->quota_days,
+                'id_leave_types' => $type['id_leave_types'],
+                'name' => $type['name'],
+                'quota_days' => (int) $type['quota_days'],
                 'used_days' => $usedDays,
                 'pending_days' => $pendingDays,
-                'remaining_days' => max(0, $type->quota_days - $usedDays),
-                'available_days' => max(0, $type->quota_days - ($usedDays + $pendingDays)),
-                'is_paid' => (bool) $type->is_paid,
+                'remaining_days' => max(0, $type['quota_days'] - $usedDays),
+                'available_days' => max(0, $type['quota_days'] - ($usedDays + $pendingDays)),
+                'is_paid' => (bool) $type['is_paid'],
                 'year' => $year,
             ];
-        })->values()->toArray();
+        }, $standardTypes);
     }
 
     public function applyLeave(Employee $employee, array $data, ?UploadedFile $attachment = null): LeaveRequest
     {
-        $leaveType = LeaveType::where('id_companies', $employee->id_companies)
-            ->where('id_leave_types', $data['id_leave_types'])
-            ->first();
-
-        if (! $leaveType) {
-            throw new LeaveException('Jenis cuti tidak ditemukan pada perusahaan Anda.', 404);
-        }
+        $leaveTypeName = ! empty($data['leave_type'])
+            ? (string) $data['leave_type']
+            : $this->resolveTypeName($data['id_leave_types'] ?? 1);
 
         $startDate = $data['start_date'];
         $endDate = $data['end_date'];
         $totalDays = $this->calculateTotalDays($startDate, $endDate);
         $year = (int) Carbon::parse($startDate)->year;
 
-        // Check quota balance
-        $this->checkQuotaBalance($employee, $leaveType, $totalDays, $year);
+        // Quota check
+        $standardTypes = self::getStandardTypes($employee->annual_leave_quota ?? 12);
+        $matchedType = collect($standardTypes)->firstWhere('name', $leaveTypeName)
+            ?? ['quota_days' => ($employee->annual_leave_quota ?? 12), 'is_paid' => true];
+
+        $this->checkQuotaBalance($employee, $leaveTypeName, $matchedType['quota_days'], $totalDays, $year);
 
         // Check overlapping dates
         $this->checkOverlap($employee->id_employees, $startDate, $endDate);
@@ -130,7 +159,8 @@ class LeaveService
         return LeaveRequest::create([
             'id_companies' => $employee->id_companies,
             'id_employees' => $employee->id_employees,
-            'id_leave_types' => $leaveType->id_leave_types,
+            'leave_type' => $leaveTypeName,
+            'is_paid' => (bool) ($matchedType['is_paid'] ?? true),
             'start_date' => $startDate,
             'end_date' => $endDate,
             'total_days' => $totalDays,
@@ -158,6 +188,6 @@ class LeaveService
             'rejected_reason' => $isApprove ? null : $notes,
         ]);
 
-        return $leaveRequest->fresh(['employee.user', 'leaveType', 'approver']);
+        return $leaveRequest->fresh(['employee.user', 'approver']);
     }
 }

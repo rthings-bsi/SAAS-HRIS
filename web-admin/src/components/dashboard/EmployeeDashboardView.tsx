@@ -23,7 +23,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { Modal } from "@/components/ui/Modal";
 import apiClient from "@/lib/axios";
-import { cn, formatRupiah, formatDate, formatTime } from "@/lib/utils";
+import { cn, formatRupiah, formatDate, formatTime, getLocalDateIso, getLocalMonthIso } from "@/lib/utils";
 import type {
   ApiResponse,
   Attendance,
@@ -67,8 +67,8 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const todayIso = useMemo(() => new Date().toISOString().split("T")[0], []);
-  const currentMonth = useMemo(() => todayIso.slice(0, 7), [todayIso]);
+  const todayIso = useMemo(() => getLocalDateIso(), []);
+  const currentMonth = useMemo(() => getLocalMonthIso(), []);
 
   // Modal State
   const [selectedSlip, setSelectedSlip] = useState<PayrollSlip | null>(null);

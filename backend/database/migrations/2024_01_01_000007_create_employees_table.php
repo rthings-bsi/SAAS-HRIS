@@ -12,9 +12,9 @@ return new class extends Migration
             $table->id('id_employees');
             $table->unsignedBigInteger('id_companies');
             $table->unsignedBigInteger('id_users')->unique();
-            $table->unsignedBigInteger('id_branches')->nullable();
-            $table->unsignedBigInteger('id_departments')->nullable();
-            $table->unsignedBigInteger('id_job_positions')->nullable();
+            $table->string('department_name', 100)->nullable();
+            $table->string('job_position_name', 100)->nullable();
+            $table->unsignedBigInteger('id_shifts')->nullable();
             $table->string('nik', 50);
             $table->string('phone', 30)->nullable();
             $table->enum('gender', ['male', 'female']);
@@ -23,6 +23,7 @@ return new class extends Migration
             $table->enum('employment_status', ['permanent', 'contract', 'probation', 'intern'])->default('contract');
             $table->decimal('basic_salary', 14, 2)->default(0);
             $table->decimal('allowance_fixed', 14, 2)->default(0);
+            $table->unsignedInteger('annual_leave_quota')->default(12);
             $table->string('bank_name', 50)->nullable();
             $table->string('bank_account_number', 50)->nullable();
             $table->string('bank_account_holder', 100)->nullable();
@@ -38,19 +39,9 @@ return new class extends Migration
                 ->on('users')
                 ->onDelete('cascade');
 
-            $table->foreign('id_branches')
-                ->references('id_branches')
-                ->on('branches')
-                ->onDelete('set null');
-
-            $table->foreign('id_departments')
-                ->references('id_departments')
-                ->on('departments')
-                ->onDelete('set null');
-
-            $table->foreign('id_job_positions')
-                ->references('id_job_positions')
-                ->on('job_positions')
+            $table->foreign('id_shifts')
+                ->references('id_shifts')
+                ->on('shifts')
                 ->onDelete('set null');
         });
     }

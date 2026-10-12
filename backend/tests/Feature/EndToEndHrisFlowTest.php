@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Company;
-use App\Models\LeaveType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -165,16 +164,16 @@ class EndToEndHrisFlowTest extends TestCase
 
         // 11. Buat Master Tipe Cuti & Pengajuan Cuti Karyawan
         Sanctum::actingAs($ownerUser);
-        $leaveType = LeaveType::create([
-            'id_companies' => $company->id_companies,
-            'name' => 'Cuti Sakit Resmi',
+        $leaveTypeResponse = $this->postJson('/api/v1/leave/types', [
+            'name' => 'Cuti Sakit',
             'quota_days' => 14,
             'is_paid' => true,
         ]);
+        $leaveTypeResponse->assertStatus(201);
 
         Sanctum::actingAs($employeeUser);
         $leaveRequestResponse = $this->postJson('/api/v1/leave/request', [
-            'id_leave_types' => $leaveType->id_leave_types,
+            'leave_type' => 'Cuti Sakit',
             'start_date' => '2026-10-05',
             'end_date' => '2026-10-06',
             'reason' => 'Demam dan istirahat dokter',
@@ -274,7 +273,7 @@ class EndToEndHrisFlowTest extends TestCase
         // Cek bahwa data tenant SDM tidak terlihat oleh tenant lain
         $this->getJson("/api/v1/payroll/periods/{$idPeriod}")->assertStatus(404);
         $this->getJson("/api/v1/payroll/periods/{$idPeriod}/slips")->assertStatus(404);
-        $this->getJson("/api/v1/branches/{$idBranch}")->assertStatus(404);
+        $this->getJson("/api/v1/branches/999")->assertStatus(404);
         $this->getJson("/api/v1/employees/{$idEmployee}")->assertStatus(404);
     }
 }

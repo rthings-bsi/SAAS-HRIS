@@ -5,7 +5,6 @@ namespace App\Services\Attendance;
 use App\Exceptions\AttendanceException;
 use App\Models\Attendance;
 use App\Models\Employee;
-use App\Models\EmployeeShift;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -14,7 +13,7 @@ class AttendanceService
 {
     public function getTodayAttendance(Employee $employee, string $date): array
     {
-        $employee->loadMissing('branch');
+        $employee->loadMissing('company');
         $shift = $this->resolveShift($employee, $date);
 
         $attendance = Attendance::where('id_employees', $employee->id_employees)
@@ -31,12 +30,7 @@ class AttendanceService
 
     public function resolveShift(Employee $employee, string $date): ?Shift
     {
-        $employeeShift = EmployeeShift::where('id_employees', $employee->id_employees)
-            ->whereDate('date', $date)
-            ->with('shift')
-            ->first();
-
-        return $employeeShift?->shift
+        return $employee->shift
             ?? Shift::where('id_companies', $employee->id_companies)->orderBy('id_shifts', 'asc')->first();
     }
 
@@ -240,9 +234,7 @@ class AttendanceService
 
         $attendances = $query->with([
             'employee.user',
-            'employee.branch',
-            'employee.department',
-            'employee.jobPosition',
+            'employee.company',
         ])->get();
 
         $totalEmployees = Employee::where('id_companies', $companyId)->count();

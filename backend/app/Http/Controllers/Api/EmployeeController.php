@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Http\Requests\Employee\UpdateEmployeeRequest;
 use App\Models\Employee;
+use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ class EmployeeController extends Controller
 {
     public function index(): JsonResponse
     {
-        $employees = Employee::with(['user', 'branch', 'department', 'jobPosition'])
+        $employees = Employee::with(['user', 'shift'])
             ->orderBy('id_employees', 'desc')
             ->get();
 
@@ -36,12 +37,39 @@ class EmployeeController extends Controller
                 'is_active' => true,
             ]);
 
+            $deptName = $request->input('department_name');
+            if (!$deptName && $request->filled('id_departments')) {
+                $deptMap = [
+                    1 => 'Teknologi Informasi',
+                    2 => 'Sumber Daya Manusia',
+                    3 => 'Operasional & Produksi',
+                    4 => 'Keuangan & Akuntansi',
+                    5 => 'Pemasaran & Penjualan',
+                ];
+                $deptName = $deptMap[$request->input('id_departments')] ?? ('Departemen ' . $request->input('id_departments'));
+            }
+
+            $posName = $request->input('job_position_name');
+            if (!$posName && $request->filled('id_job_positions')) {
+                $posMap = [
+                    1 => 'Direktur Utama',
+                    2 => 'Manajer HRD',
+                    3 => 'Software Engineer',
+                    4 => 'Staff Administrasi',
+                    5 => 'Operator Mesin',
+                ];
+                $posName = $posMap[$request->input('id_job_positions')] ?? ('Jabatan ' . $request->input('id_job_positions'));
+            }
+
+            $shiftId = $request->input('id_shifts') ?? Shift::first()?->id_shifts;
+
             $employee = Employee::create([
                 'id_companies' => $companyId,
                 'id_users' => $user->id_users,
-                'id_branches' => $request->input('id_branches'),
-                'id_departments' => $request->input('id_departments'),
-                'id_job_positions' => $request->input('id_job_positions'),
+                'department_name' => $deptName,
+                'job_position_name' => $posName,
+                'id_shifts' => $shiftId,
+                'annual_leave_quota' => $request->input('annual_leave_quota', 12),
                 'nik' => $request->input('nik'),
                 'phone' => $request->input('phone'),
                 'gender' => $request->input('gender'),
@@ -58,14 +86,14 @@ class EmployeeController extends Controller
             return $employee;
         });
 
-        $employee->load(['user', 'branch', 'department', 'jobPosition']);
+        $employee->load(['user', 'shift']);
 
         return $this->successResponse($employee, 'Karyawan berhasil ditambahkan.', 201);
     }
 
     public function show(string|int $id_employees): JsonResponse
     {
-        $employee = Employee::with(['user', 'branch', 'department', 'jobPosition'])
+        $employee = Employee::with(['user', 'shift'])
             ->findOrFail($id_employees);
 
         return $this->successResponse($employee, 'Detail karyawan berhasil diambil.');
@@ -97,9 +125,6 @@ class EmployeeController extends Controller
             }
 
             $employeeFields = [
-                'id_branches',
-                'id_departments',
-                'id_job_positions',
                 'nik',
                 'phone',
                 'gender',
@@ -111,15 +136,44 @@ class EmployeeController extends Controller
                 'bank_name',
                 'bank_account_number',
                 'bank_account_holder',
+                'annual_leave_quota',
+                'id_shifts',
             ];
 
             $employeeData = $request->only($employeeFields);
+
+            if ($request->has('department_name')) {
+                $employeeData['department_name'] = $request->input('department_name');
+            } elseif ($request->filled('id_departments')) {
+                $deptMap = [
+                    1 => 'Teknologi Informasi',
+                    2 => 'Sumber Daya Manusia',
+                    3 => 'Operasional & Produksi',
+                    4 => 'Keuangan & Akuntansi',
+                    5 => 'Pemasaran & Penjualan',
+                ];
+                $employeeData['department_name'] = $deptMap[$request->input('id_departments')] ?? ('Departemen ' . $request->input('id_departments'));
+            }
+
+            if ($request->has('job_position_name')) {
+                $employeeData['job_position_name'] = $request->input('job_position_name');
+            } elseif ($request->filled('id_job_positions')) {
+                $posMap = [
+                    1 => 'Direktur Utama',
+                    2 => 'Manajer HRD',
+                    3 => 'Software Engineer',
+                    4 => 'Staff Administrasi',
+                    5 => 'Operator Mesin',
+                ];
+                $employeeData['job_position_name'] = $posMap[$request->input('id_job_positions')] ?? ('Jabatan ' . $request->input('id_job_positions'));
+            }
+
             if (!empty($employeeData)) {
                 $employee->update($employeeData);
             }
         });
 
-        $employee->load(['user', 'branch', 'department', 'jobPosition']);
+        $employee->load(['user', 'shift']);
 
         return $this->successResponse($employee, 'Data karyawan berhasil diperbarui.');
     }
@@ -139,3 +193,4 @@ class EmployeeController extends Controller
         return $this->successResponse(null, 'Karyawan berhasil dihapus.');
     }
 }
+

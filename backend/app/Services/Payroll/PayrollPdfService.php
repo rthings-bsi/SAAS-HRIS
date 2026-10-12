@@ -3,7 +3,6 @@
 namespace App\Services\Payroll;
 
 use App\Exceptions\PayrollException;
-use App\Models\PayrollPeriod;
 use App\Models\PayrollSlip;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -16,15 +15,12 @@ class PayrollPdfService
     public function generateSlipPdf(PayrollSlip $slip): string
     {
         $slip->loadMissing([
-            'payrollPeriod',
             'employee.user',
-            'employee.department',
-            'employee.jobPosition',
             'company',
         ]);
 
         $company = $slip->company;
-        $period = $slip->payrollPeriod;
+        $period = $slip->payroll_period;
         $employee = $slip->employee;
 
         $pdf = Pdf::loadView('pdf.payslip', [
@@ -36,7 +32,7 @@ class PayrollPdfService
 
         $pdf->setPaper('a4', 'portrait');
 
-        $directory = "{$slip->id_companies}/payroll/{$slip->id_payroll_periods}";
+        $directory = "{$slip->id_companies}/payroll/{$slip->id_payroll_slips}";
         $filename = "slip_{$slip->id_employees}.pdf";
         $relativePath = "{$directory}/{$filename}";
 
@@ -50,13 +46,19 @@ class PayrollPdfService
     /**
      * Finalisasi periode penggajian: generate PDF seluruh slip dan kunci status ke 'finalized'.
      */
-    public function finalizePeriod(PayrollPeriod $period): int
+    public function finalizePeriod(object $period): int
     {
-        if ($period->status === 'finalized') {
+        $status = $period->status ?? 'calculated';
+        if ($status === 'finalized') {
             throw new PayrollException('Periode penggajian sudah difinalisasi sebelumnya.', 422);
         }
 
-        $slips = PayrollSlip::where('id_payroll_periods', $period->id_payroll_periods)->get();
+        $periodName = $period->period_name ?? $period->name ?? '';
+        $companyId = (int) $period->id_companies;
+
+        $slips = PayrollSlip::where('id_companies', $companyId)
+            ->when($periodName, fn ($q) => $q->where('period_name', $periodName))
+            ->get();
 
         if ($slips->isEmpty()) {
             throw new PayrollException('Tidak ada slip gaji dalam periode ini. Jalankan kalkulasi terlebih dahulu.', 422);
@@ -65,10 +67,9 @@ class PayrollPdfService
         $count = 0;
         foreach ($slips as $slip) {
             $this->generateSlipPdf($slip);
+            $slip->update(['status' => 'finalized']);
             $count++;
         }
-
-        $period->update(['status' => 'finalized']);
 
         return $count;
     }

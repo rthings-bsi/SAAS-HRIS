@@ -16,8 +16,12 @@ class PayrollSlip extends Model
 
     protected $fillable = [
         'id_companies',
-        'id_payroll_periods',
         'id_employees',
+        'period_name',
+        'start_date',
+        'end_date',
+        'payment_date',
+        'status',
         'basic_salary',
         'allowance_fixed',
         'overtime_pay',
@@ -28,9 +32,16 @@ class PayrollSlip extends Model
         'pdf_path',
     ];
 
+    protected $appends = [
+        'payroll_period',
+    ];
+
     protected function casts(): array
     {
         return [
+            'start_date' => 'date',
+            'end_date' => 'date',
+            'payment_date' => 'date',
             'basic_salary' => 'decimal:2',
             'allowance_fixed' => 'decimal:2',
             'overtime_pay' => 'decimal:2',
@@ -41,13 +52,20 @@ class PayrollSlip extends Model
         ];
     }
 
-    public function payrollPeriod(): BelongsTo
-    {
-        return $this->belongsTo(PayrollPeriod::class, 'id_payroll_periods', 'id_payroll_periods');
-    }
-
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'id_employees', 'id_employees');
+    }
+
+    public function getPayrollPeriodAttribute(): object
+    {
+        return (object) [
+            'id_payroll_periods' => $this->id_payroll_slips,
+            'name' => $this->period_name ?? 'Periode Penggajian',
+            'start_date' => $this->start_date ? $this->start_date->format('Y-m-d') : null,
+            'end_date' => $this->end_date ? $this->end_date->format('Y-m-d') : null,
+            'payment_date' => $this->payment_date ? $this->payment_date->format('Y-m-d') : null,
+            'status' => $this->status ?? 'paid',
+        ];
     }
 }

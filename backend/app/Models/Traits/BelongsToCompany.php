@@ -16,6 +16,10 @@ trait BelongsToCompany
         });
 
         static::creating(function ($model) {
+            if ($model instanceof \App\Models\User && $model->role === 'superadmin') {
+                return;
+            }
+
             if (empty($model->id_companies)) {
                 $model->id_companies = auth()->user()?->id_companies ?? 1;
             }

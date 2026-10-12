@@ -17,7 +17,8 @@ class LeaveRequest extends Model
     protected $fillable = [
         'id_companies',
         'id_employees',
-        'id_leave_types',
+        'leave_type',
+        'is_paid',
         'start_date',
         'end_date',
         'total_days',
@@ -28,12 +29,17 @@ class LeaveRequest extends Model
         'rejected_reason',
     ];
 
+    protected $appends = [
+        'leave_type_obj',
+    ];
+
     protected function casts(): array
     {
         return [
             'start_date' => 'date:Y-m-d',
             'end_date' => 'date:Y-m-d',
             'total_days' => 'integer',
+            'is_paid' => 'boolean',
         ];
     }
 
@@ -42,9 +48,13 @@ class LeaveRequest extends Model
         return $this->belongsTo(Employee::class, 'id_employees', 'id_employees');
     }
 
-    public function leaveType(): BelongsTo
+    public function getLeaveTypeObjAttribute(): ?object
     {
-        return $this->belongsTo(LeaveType::class, 'id_leave_types', 'id_leave_types');
+        return (object) [
+            'id_leave_types' => 1,
+            'name' => $this->leave_type ?? 'Cuti Tahunan',
+            'is_paid' => (bool) $this->is_paid,
+        ];
     }
 
     public function approver(): BelongsTo

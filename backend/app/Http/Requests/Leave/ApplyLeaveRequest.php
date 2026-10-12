@@ -9,7 +9,8 @@ class ApplyLeaveRequest extends BaseFormRequest
     public function rules(): array
     {
         return [
-            'id_leave_types' => ['required', 'integer', 'exists:leave_types,id_leave_types'],
+            'leave_type' => ['nullable', 'string', 'max:50'],
+            'id_leave_types' => ['nullable'],
             'start_date' => ['required', 'date_format:Y-m-d'],
             'end_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'reason' => ['required', 'string', 'max:1000'],
@@ -20,9 +21,7 @@ class ApplyLeaveRequest extends BaseFormRequest
     public function messages(): array
     {
         return [
-            'id_leave_types.required' => 'Jenis cuti wajib dipilih.',
-            'id_leave_types.integer' => 'ID jenis cuti harus berupa angka.',
-            'id_leave_types.exists' => 'Jenis cuti tidak ditemukan.',
+            'leave_type.string' => 'Jenis cuti harus berupa teks.',
             'start_date.required' => 'Tanggal mulai cuti wajib diisi.',
             'start_date.date_format' => 'Format tanggal mulai cuti tidak valid (gunakan format YYYY-MM-DD).',
             'end_date.required' => 'Tanggal selesai cuti wajib diisi.',

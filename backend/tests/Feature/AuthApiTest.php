@@ -2,11 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Branch;
 use App\Models\Company;
-use App\Models\Department;
 use App\Models\Employee;
-use App\Models\JobPosition;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -79,25 +76,9 @@ class AuthApiTest extends TestCase
         $company = Company::create([
             'name' => 'PT Solusi Digital',
             'email' => 'info@solusidigital.co.id',
-        ]);
-
-        $branch = Branch::create([
-            'id_companies' => $company->id_companies,
-            'name' => 'Kantor Pusat',
-            'address' => 'Jl. Sudirman',
             'latitude' => -6.200000,
             'longitude' => 106.816666,
             'radius_meters' => 50,
-        ]);
-
-        $department = Department::create([
-            'id_companies' => $company->id_companies,
-            'name' => 'IT',
-        ]);
-
-        $jobPosition = JobPosition::create([
-            'id_companies' => $company->id_companies,
-            'name' => 'Software Engineer',
         ]);
 
         $user = User::create([
@@ -112,9 +93,8 @@ class AuthApiTest extends TestCase
         Employee::create([
             'id_companies' => $company->id_companies,
             'id_users' => $user->id_users,
-            'id_branches' => $branch->id_branches,
-            'id_departments' => $department->id_departments,
-            'id_job_positions' => $jobPosition->id_job_positions,
+            'department_name' => 'IT',
+            'job_position_name' => 'Software Engineer',
             'nik' => 'EMP-001',
             'phone' => '081234567801',
             'gender' => 'male',

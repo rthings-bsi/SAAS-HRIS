@@ -3,9 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\PerformanceCriterion;
 use App\Models\PerformanceEvaluation;
-use App\Models\PerformanceEvaluationDetail;
 use App\Models\PerformancePeriod;
 use App\Services\Performance\SmartCalculationService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -22,11 +20,8 @@ class PerformanceController extends Controller
 
     public function criteria(): JsonResponse
     {
-        if (PerformanceCriterion::count() === 0) {
-            PerformanceCriterion::seedDefaults();
-        }
-
-        $criteria = PerformanceCriterion::orderBy('code', 'asc')->get();
+        $latestPeriod = PerformancePeriod::orderBy('id_performance_periods', 'desc')->first();
+        $criteria = $latestPeriod ? $latestPeriod->getCriteriaList() : collect(PerformancePeriod::defaultCriteria());
 
         return $this->successResponse($criteria, 'Daftar kriteria penilaian kinerja berhasil diambil.');
     }
@@ -34,30 +29,30 @@ class PerformanceController extends Controller
     public function storeCriterion(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:20|unique:performance_criteria,code',
+            'code' => 'required|string|max:20',
             'name' => 'required|string|max:100',
             'type' => 'required|in:benefit,cost',
             'weight' => 'required|numeric|min:0.01|max:100',
             'c_min' => 'required|numeric',
             'c_max' => 'required|numeric|gt:c_min',
             'source_type' => 'nullable|in:manual,attendance',
-        ], [
-            'code.required' => 'Kode kriteria wajib diisi.',
-            'code.unique' => 'Kode kriteria sudah digunakan.',
-            'name.required' => 'Nama kriteria wajib diisi.',
-            'weight.required' => 'Bobot kriteria wajib diisi.',
-            'c_max.gt' => 'Nilai C_max harus lebih besar dari C_min.',
         ]);
 
-        $criterion = PerformanceCriterion::create($validated);
+        $period = PerformancePeriod::orderBy('id_performance_periods', 'desc')->first();
+        if ($period) {
+            $criteria = $period->getCriteriaList()->toArray();
+            $maxId = collect($criteria)->max('id_performance_criteria') ?? 0;
+            $validated['id_performance_criteria'] = $maxId + 1;
+            $validated['is_active'] = true;
+            $criteria[] = $validated;
+            $period->update(['criteria_config' => $criteria]);
+        }
 
-        return $this->successResponse($criterion, 'Kriteria berhasil ditambahkan.', 201);
+        return $this->successResponse($validated, 'Kriteria berhasil ditambahkan.', 201);
     }
 
     public function updateCriterion(Request $request, int $id): JsonResponse
     {
-        $criterion = PerformanceCriterion::findOrFail($id);
-
         $validated = $request->validate([
             'name' => 'sometimes|string|max:100',
             'type' => 'sometimes|in:benefit,cost',
@@ -67,17 +62,31 @@ class PerformanceController extends Controller
             'is_active' => 'sometimes|boolean',
         ]);
 
-        $criterion->update($validated);
+        $period = PerformancePeriod::orderBy('id_performance_periods', 'desc')->first();
+        if ($period) {
+            $criteria = $period->getCriteriaList()->map(function ($c) use ($id, $validated) {
+                if ($c->id_performance_criteria == $id) {
+                    return array_merge((array) $c, $validated);
+                }
 
-        return $this->successResponse($criterion, 'Kriteria berhasil diperbarui.');
+                return (array) $c;
+            })->toArray();
+
+            $period->update(['criteria_config' => $criteria]);
+        }
+
+        return $this->successResponse($validated, 'Kriteria berhasil diperbarui.');
     }
 
     public function resetDefaultCriteria(): JsonResponse
     {
-        PerformanceCriterion::seedDefaults();
-        $criteria = PerformanceCriterion::orderBy('code', 'asc')->get();
+        $default = PerformancePeriod::defaultCriteria();
+        $period = PerformancePeriod::orderBy('id_performance_periods', 'desc')->first();
+        if ($period) {
+            $period->update(['criteria_config' => $default]);
+        }
 
-        return $this->successResponse($criteria, 'Kriteria berhasil direset ke standar default.');
+        return $this->successResponse($default, 'Kriteria berhasil direset ke standar default.');
     }
 
     public function periods(): JsonResponse
@@ -102,12 +111,10 @@ class PerformanceController extends Controller
             'end_date.after_or_equal' => 'Tanggal akhir harus sama atau setelah tanggal mulai.',
         ]);
 
-        $period = PerformancePeriod::create($validated);
+        $validated['criteria_config'] = PerformancePeriod::defaultCriteria();
+        $validated['status'] = 'draft';
 
-        // Auto-seed default criteria if not yet present
-        if (PerformanceCriterion::count() === 0) {
-            PerformanceCriterion::seedDefaults();
-        }
+        $period = PerformancePeriod::create($validated);
 
         // Auto-sync active employees into the period
         $this->smartService->syncEmployeesForPeriod($period);
@@ -118,10 +125,10 @@ class PerformanceController extends Controller
     public function showPeriod(int $id): JsonResponse
     {
         $period = PerformancePeriod::withCount('evaluations')->findOrFail($id);
-        $criteria = PerformanceCriterion::where('is_active', true)->orderBy('code', 'asc')->get();
+        $criteria = $period->getCriteriaList()->where('is_active', true)->values();
 
         $evaluations = PerformanceEvaluation::where('id_performance_periods', $period->id_performance_periods)
-            ->with(['employee.user', 'employee.department', 'employee.jobPosition', 'details.criterion'])
+            ->with(['employee.user'])
             ->orderByRaw('CASE WHEN `rank` IS NULL THEN 1 ELSE 0 END, `rank` ASC, id_performance_evaluations ASC')
             ->get();
 
@@ -156,21 +163,49 @@ class PerformanceController extends Controller
         $validated = $request->validate([
             'scores' => 'required|array',
             'scores.*.id_performance_evaluations' => 'required|exists:performance_evaluations,id_performance_evaluations',
-            'scores.*.id_performance_criteria' => 'required|exists:performance_criteria,id_performance_criteria',
+            'scores.*.id_performance_criteria' => 'required',
             'scores.*.raw_score' => 'required|numeric|min:0',
         ]);
 
         DB::transaction(function () use ($validated) {
-            foreach ($validated['scores'] as $item) {
-                PerformanceEvaluationDetail::updateOrCreate(
-                    [
-                        'id_performance_evaluations' => $item['id_performance_evaluations'],
-                        'id_performance_criteria' => $item['id_performance_criteria'],
-                    ],
-                    [
-                        'raw_score' => $item['raw_score'],
-                    ]
-                );
+            $scoresByEval = collect($validated['scores'])->groupBy('id_performance_evaluations');
+
+            foreach ($scoresByEval as $evalId => $items) {
+                $eval = PerformanceEvaluation::find($evalId);
+                if (! $eval) {
+                    continue;
+                }
+
+                $breakdown = $eval->scores_breakdown ?? [];
+                $breakdownKeyed = collect($breakdown)->keyBy('id_performance_criteria');
+
+                foreach ($items as $item) {
+                    $critId = $item['id_performance_criteria'];
+                    $rawScore = (float) $item['raw_score'];
+
+                    if ($breakdownKeyed->has($critId)) {
+                        $entry = $breakdownKeyed->get($critId);
+                        $entry['raw_score'] = $rawScore;
+                        $breakdownKeyed->put($critId, $entry);
+                    } else {
+                        $breakdownKeyed->put($critId, [
+                            'id_performance_criteria' => $critId,
+                            'criterion_code' => 'K' . $critId,
+                            'criterion_name' => 'Kriteria ' . $critId,
+                            'type' => 'benefit',
+                            'weight' => 25.0,
+                            'c_min' => 0.0,
+                            'c_max' => 100.0,
+                            'source_type' => 'manual',
+                            'raw_score' => $rawScore,
+                            'normalized_weight' => 0.0,
+                            'utility_score' => 0.0,
+                            'weighted_score' => 0.0,
+                        ]);
+                    }
+                }
+
+                $eval->update(['scores_breakdown' => $breakdownKeyed->values()->toArray()]);
             }
         });
 
@@ -206,10 +241,10 @@ class PerformanceController extends Controller
     public function exportPdf(int $id)
     {
         $period = PerformancePeriod::findOrFail($id);
-        $criteria = PerformanceCriterion::where('is_active', true)->orderBy('code', 'asc')->get();
+        $criteria = $period->getCriteriaList()->where('is_active', true)->values();
 
         $evaluations = PerformanceEvaluation::where('id_performance_periods', $period->id_performance_periods)
-            ->with(['employee.user', 'employee.department', 'employee.jobPosition', 'details.criterion'])
+            ->with(['employee.user'])
             ->orderByRaw('CASE WHEN `rank` IS NULL THEN 1 ELSE 0 END, `rank` ASC, id_performance_evaluations ASC')
             ->get();
 

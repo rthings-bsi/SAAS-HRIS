@@ -25,9 +25,7 @@ class AuthController extends Controller
 
         $user->load([
             'company',
-            'employee.branch',
-            'employee.department',
-            'employee.jobPosition',
+            'employee.shift',
         ]);
         $token = $user->createToken('access_token')->plainTextToken;
 

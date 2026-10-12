@@ -3,17 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Attendance;
-use App\Models\Branch;
 use App\Models\Company;
-use App\Models\Department;
 use App\Models\Employee;
-use App\Models\JobPosition;
-use App\Models\LeaveRequest;
-use App\Models\LeaveType;
-use App\Models\PayrollPeriod;
 use App\Models\PayrollSlip;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -46,6 +39,9 @@ class PayrollApiTest extends TestCase
             'slug' => 'pt-nusantara-sejahtera',
             'email' => 'info@nusantara.test',
             'subscription_status' => 'active',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+            'radius_meters' => 100,
         ]);
 
         $this->ownerA = User::create([
@@ -75,22 +71,12 @@ class PayrollApiTest extends TestCase
             'is_active' => true,
         ]);
 
-        $deptA = Department::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'Teknologi Informasi',
-        ]);
-
-        $posA = JobPosition::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'Software Engineer',
-        ]);
-
         $this->employeeA = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $this->userEmpA->id_users,
-            'id_departments' => $deptA->id_departments,
-            'id_job_positions' => $posA->id_job_positions,
             'nik' => 'EMP001',
+            'department_name' => 'Teknologi Informasi',
+            'job_position_name' => 'Software Engineer',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
             'basic_salary' => 8000000,
@@ -104,6 +90,9 @@ class PayrollApiTest extends TestCase
             'slug' => 'pt-maju-makmur-bersama',
             'email' => 'info@majumakmur.test',
             'subscription_status' => 'active',
+            'latitude' => -6.9175,
+            'longitude' => 107.6191,
+            'radius_meters' => 100,
         ]);
 
         $this->ownerB = User::create([
@@ -128,10 +117,13 @@ class PayrollApiTest extends TestCase
             'id_companies' => $this->companyB->id_companies,
             'id_users' => $this->userEmpB->id_users,
             'nik' => 'EMP999',
+            'department_name' => 'Keuangan',
+            'job_position_name' => 'Staff Keuangan',
             'gender' => 'female',
             'hire_date' => '2024-01-01',
             'basic_salary' => 6000000,
             'allowance_fixed' => 500000,
+            'employment_status' => 'permanent',
         ]);
     }
 
@@ -175,9 +167,9 @@ class PayrollApiTest extends TestCase
                 ],
             ]);
 
-        $this->assertDatabaseHas('payroll_periods', [
+        $this->assertDatabaseHas('payroll_slips', [
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Oktober 2026',
+            'period_name' => 'Oktober 2026',
             'status' => 'draft',
         ]);
     }
@@ -194,22 +186,38 @@ class PayrollApiTest extends TestCase
 
     public function test_hr_or_owner_can_list_payroll_periods_scoped_to_tenant(): void
     {
-        PayrollPeriod::create([
+        PayrollSlip::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'September 2026',
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'September 2026',
             'start_date' => '2026-09-01',
             'end_date' => '2026-09-30',
             'payment_date' => '2026-10-01',
             'status' => 'finalized',
+            'basic_salary' => 8000000,
+            'allowance_fixed' => 1000000,
+            'overtime_pay' => 0,
+            'deduction_late' => 0,
+            'deduction_absence' => 0,
+            'deduction_other' => 0,
+            'net_salary' => 9000000,
         ]);
 
-        PayrollPeriod::create([
+        PayrollSlip::create([
             'id_companies' => $this->companyB->id_companies,
-            'name' => 'September 2026 Maju',
+            'id_employees' => $this->employeeB->id_employees,
+            'period_name' => 'September 2026 Maju',
             'start_date' => '2026-09-01',
             'end_date' => '2026-09-30',
             'payment_date' => '2026-10-01',
             'status' => 'draft',
+            'basic_salary' => 6000000,
+            'allowance_fixed' => 500000,
+            'overtime_pay' => 0,
+            'deduction_late' => 0,
+            'deduction_absence' => 0,
+            'deduction_other' => 0,
+            'net_salary' => 6500000,
         ]);
 
         Sanctum::actingAs($this->ownerA);
@@ -224,18 +232,26 @@ class PayrollApiTest extends TestCase
 
     public function test_hr_can_calculate_payroll_for_a_period(): void
     {
-        $period = PayrollPeriod::create([
+        $slip = PayrollSlip::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Oktober 2026',
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'Oktober 2026',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'draft',
+            'basic_salary' => 8000000,
+            'allowance_fixed' => 1000000,
+            'overtime_pay' => 0,
+            'deduction_late' => 0,
+            'deduction_absence' => 0,
+            'deduction_other' => 0,
+            'net_salary' => 9000000,
         ]);
 
         Sanctum::actingAs($this->hrA);
 
-        $response = $this->postJson("/api/v1/payroll/periods/{$period->id_payroll_periods}/calculate");
+        $response = $this->postJson("/api/v1/payroll/periods/{$slip->id_payroll_slips}/calculate");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -245,14 +261,9 @@ class PayrollApiTest extends TestCase
                 ],
             ]);
 
-        $this->assertDatabaseHas('payroll_periods', [
-            'id_payroll_periods' => $period->id_payroll_periods,
-            'status' => 'calculated',
-        ]);
-
         $this->assertDatabaseHas('payroll_slips', [
-            'id_payroll_periods' => $period->id_payroll_periods,
-            'id_employees' => $this->employeeA->id_employees,
+            'id_payroll_slips' => $slip->id_payroll_slips,
+            'status' => 'calculated',
             'basic_salary' => 8000000,
             'allowance_fixed' => 1000000,
         ]);
@@ -260,13 +271,21 @@ class PayrollApiTest extends TestCase
 
     public function test_payroll_calculation_correctly_computes_deductions_from_attendance(): void
     {
-        $period = PayrollPeriod::create([
+        $slip = PayrollSlip::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Oktober 2026',
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'Oktober 2026',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'draft',
+            'basic_salary' => 8000000,
+            'allowance_fixed' => 1000000,
+            'overtime_pay' => 0,
+            'deduction_late' => 0,
+            'deduction_absence' => 0,
+            'deduction_other' => 0,
+            'net_salary' => 9000000,
         ]);
 
         // Buat data absensi: hadir 20 hari dengan terlambat 30 menit
@@ -280,33 +299,28 @@ class PayrollApiTest extends TestCase
 
         Sanctum::actingAs($this->ownerA);
 
-        $this->postJson("/api/v1/payroll/periods/{$period->id_payroll_periods}/calculate")->assertStatus(200);
+        $this->postJson("/api/v1/payroll/periods/{$slip->id_payroll_slips}/calculate")->assertStatus(200);
 
-        $slip = PayrollSlip::where('id_payroll_periods', $period->id_payroll_periods)
+        $calculatedSlip = PayrollSlip::where('period_name', 'Oktober 2026')
             ->where('id_employees', $this->employeeA->id_employees)
             ->first();
 
-        $this->assertNotNull($slip);
+        $this->assertNotNull($calculatedSlip);
         // Potongan keterlambatan 30 menit * Rp 1.000 = Rp 30.000
-        $this->assertEquals(30000, (float) $slip->deduction_late);
-        $this->assertGreaterThan(0, (float) $slip->deduction_absence);
+        $this->assertEquals(30000, (float) $calculatedSlip->deduction_late);
+        $this->assertGreaterThan(0, (float) $calculatedSlip->deduction_absence);
     }
 
     public function test_hr_can_review_slips_for_a_period(): void
     {
-        $period = PayrollPeriod::create([
+        $slip = PayrollSlip::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Oktober 2026',
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'Oktober 2026',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'draft',
-        ]);
-
-        PayrollSlip::create([
-            'id_companies' => $this->companyA->id_companies,
-            'id_payroll_periods' => $period->id_payroll_periods,
-            'id_employees' => $this->employeeA->id_employees,
             'basic_salary' => 8000000,
             'allowance_fixed' => 1000000,
             'overtime_pay' => 0,
@@ -318,7 +332,7 @@ class PayrollApiTest extends TestCase
 
         Sanctum::actingAs($this->hrA);
 
-        $response = $this->getJson("/api/v1/payroll/periods/{$period->id_payroll_periods}/slips");
+        $response = $this->getJson("/api/v1/payroll/periods/{$slip->id_payroll_slips}/slips");
 
         $response->assertStatus(200)
             ->assertJsonCount(1, 'data')
@@ -330,19 +344,14 @@ class PayrollApiTest extends TestCase
 
     public function test_hr_can_finalize_payroll_period_and_generate_pdf(): void
     {
-        $period = PayrollPeriod::create([
+        $slip = PayrollSlip::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Oktober 2026',
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'Oktober 2026',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'calculated',
-        ]);
-
-        PayrollSlip::create([
-            'id_companies' => $this->companyA->id_companies,
-            'id_payroll_periods' => $period->id_payroll_periods,
-            'id_employees' => $this->employeeA->id_employees,
             'basic_salary' => 8000000,
             'allowance_fixed' => 1000000,
             'overtime_pay' => 0,
@@ -354,7 +363,7 @@ class PayrollApiTest extends TestCase
 
         Sanctum::actingAs($this->hrA);
 
-        $response = $this->postJson("/api/v1/payroll/periods/{$period->id_payroll_periods}/finalize");
+        $response = $this->postJson("/api/v1/payroll/periods/{$slip->id_payroll_slips}/finalize");
 
         $response->assertStatus(200)
             ->assertJson([
@@ -364,30 +373,38 @@ class PayrollApiTest extends TestCase
                 ],
             ]);
 
-        $this->assertDatabaseHas('payroll_periods', [
-            'id_payroll_periods' => $period->id_payroll_periods,
+        $this->assertDatabaseHas('payroll_slips', [
+            'id_payroll_slips' => $slip->id_payroll_slips,
             'status' => 'finalized',
         ]);
 
-        $slip = PayrollSlip::where('id_payroll_periods', $period->id_payroll_periods)->first();
-        $this->assertNotEmpty($slip->pdf_path);
-        Storage::disk('public')->assertExists($slip->pdf_path);
+        $finalizedSlip = PayrollSlip::find($slip->id_payroll_slips);
+        $this->assertNotEmpty($finalizedSlip->pdf_path);
+        Storage::disk('public')->assertExists($finalizedSlip->pdf_path);
     }
 
     public function test_cannot_recalculate_already_finalized_payroll_period(): void
     {
-        $period = PayrollPeriod::create([
+        $slip = PayrollSlip::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Oktober 2026',
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'Oktober 2026',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'finalized',
+            'basic_salary' => 8000000,
+            'allowance_fixed' => 1000000,
+            'overtime_pay' => 0,
+            'deduction_late' => 0,
+            'deduction_absence' => 0,
+            'deduction_other' => 0,
+            'net_salary' => 9000000,
         ]);
 
         Sanctum::actingAs($this->hrA);
 
-        $response = $this->postJson("/api/v1/payroll/periods/{$period->id_payroll_periods}/calculate");
+        $response = $this->postJson("/api/v1/payroll/periods/{$slip->id_payroll_slips}/calculate");
 
         $response->assertStatus(422)
             ->assertJson([
@@ -397,19 +414,14 @@ class PayrollApiTest extends TestCase
 
     public function test_employee_can_view_their_own_payroll_slips(): void
     {
-        $period = PayrollPeriod::create([
+        PayrollSlip::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Oktober 2026',
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'Oktober 2026',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'finalized',
-        ]);
-
-        PayrollSlip::create([
-            'id_companies' => $this->companyA->id_companies,
-            'id_payroll_periods' => $period->id_payroll_periods,
-            'id_employees' => $this->employeeA->id_employees,
             'basic_salary' => 8000000,
             'allowance_fixed' => 1000000,
             'overtime_pay' => 0,
@@ -433,19 +445,14 @@ class PayrollApiTest extends TestCase
 
     public function test_employee_can_download_their_own_payroll_slip_pdf(): void
     {
-        $period = PayrollPeriod::create([
+        $slip = PayrollSlip::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Oktober 2026',
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'Oktober 2026',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'finalized',
-        ]);
-
-        $slip = PayrollSlip::create([
-            'id_companies' => $this->companyA->id_companies,
-            'id_payroll_periods' => $period->id_payroll_periods,
-            'id_employees' => $this->employeeA->id_employees,
             'basic_salary' => 8000000,
             'allowance_fixed' => 1000000,
             'overtime_pay' => 0,
@@ -465,19 +472,14 @@ class PayrollApiTest extends TestCase
 
     public function test_employee_cannot_download_another_employees_slip(): void
     {
-        $period = PayrollPeriod::create([
+        $slipB = PayrollSlip::create([
             'id_companies' => $this->companyB->id_companies,
-            'name' => 'Oktober 2026',
+            'id_employees' => $this->employeeB->id_employees,
+            'period_name' => 'Oktober 2026',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'finalized',
-        ]);
-
-        $slipB = PayrollSlip::create([
-            'id_companies' => $this->companyB->id_companies,
-            'id_payroll_periods' => $period->id_payroll_periods,
-            'id_employees' => $this->employeeB->id_employees,
             'basic_salary' => 6000000,
             'allowance_fixed' => 500000,
             'overtime_pay' => 0,
@@ -495,19 +497,27 @@ class PayrollApiTest extends TestCase
 
     public function test_tenant_isolation_tenant_a_cannot_view_or_calculate_tenant_b_payroll(): void
     {
-        $periodB = PayrollPeriod::create([
+        $slipB = PayrollSlip::create([
             'id_companies' => $this->companyB->id_companies,
-            'name' => 'Oktober 2026 B',
+            'id_employees' => $this->employeeB->id_employees,
+            'period_name' => 'Oktober 2026 B',
             'start_date' => '2026-10-01',
             'end_date' => '2026-10-31',
             'payment_date' => '2026-11-01',
             'status' => 'draft',
+            'basic_salary' => 6000000,
+            'allowance_fixed' => 500000,
+            'overtime_pay' => 0,
+            'deduction_late' => 0,
+            'deduction_absence' => 0,
+            'deduction_other' => 0,
+            'net_salary' => 6500000,
         ]);
 
         Sanctum::actingAs($this->ownerA);
 
-        $this->getJson("/api/v1/payroll/periods/{$periodB->id_payroll_periods}")->assertStatus(404);
-        $this->postJson("/api/v1/payroll/periods/{$periodB->id_payroll_periods}/calculate")->assertStatus(404);
-        $this->postJson("/api/v1/payroll/periods/{$periodB->id_payroll_periods}/finalize")->assertStatus(404);
+        $this->getJson("/api/v1/payroll/periods/{$slipB->id_payroll_slips}")->assertStatus(404);
+        $this->postJson("/api/v1/payroll/periods/{$slipB->id_payroll_slips}/calculate")->assertStatus(404);
+        $this->postJson("/api/v1/payroll/periods/{$slipB->id_payroll_slips}/finalize")->assertStatus(404);
     }
 }

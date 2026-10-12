@@ -2,11 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Branch;
 use App\Models\Company;
-use App\Models\Department;
 use App\Models\Employee;
-use App\Models\JobPosition;
 use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -16,7 +13,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 0. Platform Superadmin (SaaS Owner / Web Master)
+        // 1. Company (PT Steel Pipe Industry of Indonesia / PT SPINDO with Geofencing)
+        $company = Company::create([
+            'name' => 'PT Steel Pipe Industry of Indonesia Tbk',
+            'industry' => 'Manufaktur & Pipa Baja',
+            'email' => 'corporate@spindo.com',
+            'phone' => '031-7402345',
+            'address' => 'Jl. Kalibutuh No. 189-191, Surabaya, Jawa Timur',
+            'latitude' => -7.257500,
+            'longitude' => 112.752100,
+            'radius_meters' => 100,
+        ]);
+
+        // 2. Platform Superadmin (SaaS Owner / Web Master)
         User::create([
             'id_companies' => null,
             'name' => 'Platform Superadmin',
@@ -26,49 +35,16 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 1. Company
-        $company = Company::create([
-            'name' => 'PT Solusi Digital',
-            'slug' => 'pt-solusi-digital',
-            'email' => 'info@solusidigital.co.id',
-            'phone' => '021-5551234',
-            'address' => 'Jl. Jenderal Sudirman No. 45, Jakarta Selatan',
-            'subscription_status' => 'active',
-            'trial_ends_at' => null,
-        ]);
-
-        // 2. Branch
-        $branch = Branch::create([
+        // 2. Shift Master
+        $shift = Shift::create([
             'id_companies' => $company->id_companies,
-            'name' => 'Kantor Pusat Jakarta',
-            'address' => 'Jl. Jenderal Sudirman No. 45, Jakarta Selatan',
-            'latitude' => -6.200000,
-            'longitude' => 106.816666,
-            'radius_meters' => 50,
-        ]);
-
-        // 3. Department
-        $department = Department::create([
-            'id_companies' => $company->id_companies,
-            'name' => 'Teknologi Informasi',
-        ]);
-
-        // 4. Job Position
-        $jobPosition = JobPosition::create([
-            'id_companies' => $company->id_companies,
-            'name' => 'Software Engineer',
-        ]);
-
-        // 5. Shift
-        Shift::create([
-            'id_companies' => $company->id_companies,
-            'name' => 'Shift Reguler',
+            'name' => 'Shift Reguler Operasional',
             'start_time' => '08:00:00',
             'end_time' => '17:00:00',
             'late_tolerance_minutes' => 15,
         ]);
 
-        // 6. Owner User
+        // 3. Owner User
         User::create([
             'id_companies' => $company->id_companies,
             'name' => 'Budi Santoso',
@@ -78,7 +54,7 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 7. HR User
+        // 4. HR User
         User::create([
             'id_companies' => $company->id_companies,
             'name' => 'Siti Rahma',
@@ -88,11 +64,13 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 8. 3 Employee Users & Employee Profiles
+        // 5. Employees Data with Denormalized Department, Job Position, and Shift
         $employeesData = [
             [
                 'name' => 'Ahmad Fauzi',
                 'email' => 'ahmad.fauzi@solusidigital.co.id',
+                'department_name' => 'Teknologi Informasi',
+                'job_position_name' => 'Software Engineer',
                 'nik' => 'EMP-001',
                 'phone' => '081234567801',
                 'gender' => 'male',
@@ -108,6 +86,8 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Dewi Lestari',
                 'email' => 'dewi.lestari@solusidigital.co.id',
+                'department_name' => 'Sumber Daya Manusia',
+                'job_position_name' => 'Manajer HRD',
                 'nik' => 'EMP-002',
                 'phone' => '081234567802',
                 'gender' => 'female',
@@ -123,6 +103,8 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Rizky Pratama',
                 'email' => 'rizky.pratama@solusidigital.co.id',
+                'department_name' => 'Operasional & Produksi',
+                'job_position_name' => 'Operator Mesin',
                 'nik' => 'EMP-003',
                 'phone' => '081234567803',
                 'gender' => 'male',
@@ -150,9 +132,10 @@ class DatabaseSeeder extends Seeder
             Employee::create([
                 'id_companies' => $company->id_companies,
                 'id_users' => $user->id_users,
-                'id_branches' => $branch->id_branches,
-                'id_departments' => $department->id_departments,
-                'id_job_positions' => $jobPosition->id_job_positions,
+                'department_name' => $data['department_name'],
+                'job_position_name' => $data['job_position_name'],
+                'id_shifts' => $shift->id_shifts,
+                'annual_leave_quota' => 12,
                 'nik' => $data['nik'],
                 'phone' => $data['phone'],
                 'gender' => $data['gender'],

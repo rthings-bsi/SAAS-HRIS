@@ -29,8 +29,8 @@ class Shift extends Model
         ];
     }
 
-    public function employeeShifts(): HasMany
+    public function employees(): HasMany
     {
-        return $this->hasMany(EmployeeShift::class, 'id_shifts', 'id_shifts');
+        return $this->hasMany(Employee::class, 'id_shifts', 'id_shifts');
     }
 }

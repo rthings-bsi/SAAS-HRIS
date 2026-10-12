@@ -86,7 +86,7 @@ class OvertimeController extends Controller
         }
 
         $query = OvertimeRequest::where('id_companies', $user->id_companies)
-            ->with(['employee.user', 'employee.department', 'employee.jobPosition', 'approver']);
+            ->with(['employee.user', 'approver']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));

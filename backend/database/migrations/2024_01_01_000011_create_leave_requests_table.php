@@ -12,7 +12,8 @@ return new class extends Migration
             $table->id('id_leave_requests');
             $table->unsignedBigInteger('id_companies');
             $table->unsignedBigInteger('id_employees');
-            $table->unsignedBigInteger('id_leave_types');
+            $table->string('leave_type', 50)->default('Cuti Tahunan');
+            $table->boolean('is_paid')->default(true);
             $table->date('start_date');
             $table->date('end_date');
             $table->unsignedInteger('total_days');
@@ -32,11 +33,6 @@ return new class extends Migration
                 ->references('id_employees')
                 ->on('employees')
                 ->onDelete('cascade');
-
-            $table->foreign('id_leave_types')
-                ->references('id_leave_types')
-                ->on('leave_types')
-                ->onDelete('restrict');
 
             $table->foreign('approved_by')
                 ->references('id_users')

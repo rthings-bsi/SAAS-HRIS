@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Branch;
 use App\Models\Company;
-use App\Models\Department;
 use App\Models\Employee;
-use App\Models\JobPosition;
+use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -21,12 +19,8 @@ class EmployeeApiTest extends TestCase
     protected Company $companyB;
     protected User $userA;
     protected User $userB;
-    protected Branch $branchA;
-    protected Branch $branchB;
-    protected Department $departmentA;
-    protected Department $departmentB;
-    protected JobPosition $positionA;
-    protected JobPosition $positionB;
+    protected Shift $shiftA;
+    protected Shift $shiftB;
 
     protected function setUp(): void
     {
@@ -38,6 +32,9 @@ class EmployeeApiTest extends TestCase
             'slug' => 'company-a',
             'email' => 'comp-a@test.com',
             'subscription_status' => 'active',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+            'radius_meters' => 100,
         ]);
 
         $this->userA = User::create([
@@ -49,23 +46,12 @@ class EmployeeApiTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->branchA = Branch::create([
+        $this->shiftA = Shift::create([
             'id_companies' => $this->companyA->id_companies,
-            'name' => 'Branch Jakarta',
-            'address' => 'Jl. Sudirman No 1',
-            'latitude' => -6.2088,
-            'longitude' => 106.8456,
-            'radius_meters' => 100,
-        ]);
-
-        $this->departmentA = Department::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'IT Department',
-        ]);
-
-        $this->positionA = JobPosition::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'Backend Developer',
+            'name' => 'Shift Reguler A',
+            'start_time' => '08:00:00',
+            'end_time' => '17:00:00',
+            'late_tolerance_minutes' => 15,
         ]);
 
         // Setup Company B
@@ -74,6 +60,9 @@ class EmployeeApiTest extends TestCase
             'slug' => 'company-b',
             'email' => 'comp-b@test.com',
             'subscription_status' => 'active',
+            'latitude' => -7.2575,
+            'longitude' => 112.7521,
+            'radius_meters' => 100,
         ]);
 
         $this->userB = User::create([
@@ -85,23 +74,12 @@ class EmployeeApiTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->branchB = Branch::create([
+        $this->shiftB = Shift::create([
             'id_companies' => $this->companyB->id_companies,
-            'name' => 'Branch Surabaya',
-            'address' => 'Jl. Pemuda No 2',
-            'latitude' => -7.2575,
-            'longitude' => 112.7521,
-            'radius_meters' => 100,
-        ]);
-
-        $this->departmentB = Department::create([
-            'id_companies' => $this->companyB->id_companies,
-            'name' => 'HR Department B',
-        ]);
-
-        $this->positionB = JobPosition::create([
-            'id_companies' => $this->companyB->id_companies,
-            'name' => 'Recruiter B',
+            'name' => 'Shift Reguler B',
+            'start_time' => '09:00:00',
+            'end_time' => '18:00:00',
+            'late_tolerance_minutes' => 10,
         ]);
     }
 
@@ -128,12 +106,12 @@ class EmployeeApiTest extends TestCase
             'is_active' => true,
         ]);
 
-        $empA = Employee::create([
+        Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $userEmpA->id_users,
-            'id_branches' => $this->branchA->id_branches,
-            'id_departments' => $this->departmentA->id_departments,
-            'id_job_positions' => $this->positionA->id_job_positions,
+            'department_name' => 'IT Department',
+            'job_position_name' => 'Backend Developer',
+            'id_shifts' => $this->shiftA->id_shifts,
             'nik' => 'EMP-001',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -153,7 +131,9 @@ class EmployeeApiTest extends TestCase
         Employee::create([
             'id_companies' => $this->companyB->id_companies,
             'id_users' => $userEmpB->id_users,
-            'id_branches' => $this->branchB->id_branches,
+            'department_name' => 'HR Department B',
+            'job_position_name' => 'Recruiter B',
+            'id_shifts' => $this->shiftB->id_shifts,
             'nik' => 'EMP-B-001',
             'gender' => 'female',
             'hire_date' => '2024-02-01',
@@ -168,7 +148,7 @@ class EmployeeApiTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.nik', 'EMP-001')
             ->assertJsonPath('data.0.user.name', 'Budi Santoso')
-            ->assertJsonPath('data.0.branch.name', 'Branch Jakarta')
+            ->assertJsonPath('data.0.branch.name', 'Company A')
             ->assertJsonPath('data.0.department.name', 'IT Department')
             ->assertJsonPath('data.0.job_position.name', 'Backend Developer');
     }
@@ -181,9 +161,9 @@ class EmployeeApiTest extends TestCase
             'name' => 'Ahmad Dani',
             'email' => 'ahmad.dani@companya.com',
             'password' => 'secret1234',
-            'id_branches' => $this->branchA->id_branches,
-            'id_departments' => $this->departmentA->id_departments,
-            'id_job_positions' => $this->positionA->id_job_positions,
+            'department_name' => 'Teknologi Informasi',
+            'job_position_name' => 'Software Engineer',
+            'id_shifts' => $this->shiftA->id_shifts,
             'nik' => 'NIK-1001',
             'phone' => '081234567890',
             'gender' => 'male',
@@ -204,8 +184,9 @@ class EmployeeApiTest extends TestCase
             ->assertJsonPath('data.nik', 'NIK-1001')
             ->assertJsonPath('data.user.name', 'Ahmad Dani')
             ->assertJsonPath('data.user.email', 'ahmad.dani@companya.com')
-            ->assertJsonPath('data.branch.id_branches', $this->branchA->id_branches)
-            ->assertJsonPath('data.department.id_departments', $this->departmentA->id_departments);
+            ->assertJsonPath('data.branch.name', 'Company A')
+            ->assertJsonPath('data.department.name', 'Teknologi Informasi')
+            ->assertJsonPath('data.job_position.name', 'Software Engineer');
 
         // Verify user in DB
         $user = User::where('email', 'ahmad.dani@companya.com')->first();
@@ -234,7 +215,6 @@ class EmployeeApiTest extends TestCase
             'name' => 'Rina Nose',
             'email' => 'rina@companya.com',
             'password' => 'secret1234',
-            'id_branches' => $this->branchA->id_branches,
             'nik' => 'NIK-MINIMAL',
             'gender' => 'female',
             'hire_date' => '2024-04-01',
@@ -250,8 +230,8 @@ class EmployeeApiTest extends TestCase
         $this->assertDatabaseHas('employees', [
             'id_companies' => $this->companyA->id_companies,
             'nik' => 'NIK-MINIMAL',
-            'id_departments' => null,
-            'id_job_positions' => null,
+            'department_name' => null,
+            'job_position_name' => null,
         ]);
     }
 
@@ -271,7 +251,6 @@ class EmployeeApiTest extends TestCase
             'name' => 'New User Duplicate Email',
             'email' => 'existing@companya.com',
             'password' => 'secret1234',
-            'id_branches' => $this->branchA->id_branches,
             'nik' => 'NIK-DUP',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -289,7 +268,6 @@ class EmployeeApiTest extends TestCase
             'name' => '',
             'email' => 'not-an-email',
             'password' => 'short',
-            'id_branches' => 99999,
             'nik' => '',
             'gender' => 'unknown',
             'hire_date' => 'invalid-date',
@@ -301,7 +279,6 @@ class EmployeeApiTest extends TestCase
                 'name',
                 'email',
                 'password',
-                'id_branches',
                 'nik',
                 'gender',
                 'hire_date',
@@ -309,42 +286,22 @@ class EmployeeApiTest extends TestCase
             ]);
     }
 
-    public function test_cannot_create_employee_with_branch_from_another_company(): void
+    public function test_cannot_create_employee_with_invalid_shift(): void
     {
         Sanctum::actingAs($this->userA, ['*']);
 
         $response = $this->postJson('/api/v1/employees', [
-            'name' => 'Cross Branch Worker',
-            'email' => 'crossbranch@companya.com',
+            'name' => 'Invalid Shift Worker',
+            'email' => 'invalidshift@companya.com',
             'password' => 'secret1234',
-            'id_branches' => $this->branchB->id_branches,
-            'nik' => 'NIK-CROSS-BR',
+            'id_shifts' => 99999,
+            'nik' => 'NIK-INVALID-SHIFT',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['id_branches']);
-    }
-
-    public function test_cannot_create_employee_with_department_or_position_from_another_company(): void
-    {
-        Sanctum::actingAs($this->userA, ['*']);
-
-        $response = $this->postJson('/api/v1/employees', [
-            'name' => 'Cross Org Worker',
-            'email' => 'crossorg@companya.com',
-            'password' => 'secret1234',
-            'id_branches' => $this->branchA->id_branches,
-            'id_departments' => $this->departmentB->id_departments,
-            'id_job_positions' => $this->positionB->id_job_positions,
-            'nik' => 'NIK-CROSS-ORG',
-            'gender' => 'male',
-            'hire_date' => '2024-01-01',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['id_departments', 'id_job_positions']);
+            ->assertJsonValidationErrors(['id_shifts']);
     }
 
     public function test_can_get_employee_detail_with_relations(): void
@@ -360,9 +317,9 @@ class EmployeeApiTest extends TestCase
         $emp = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $userEmp->id_users,
-            'id_branches' => $this->branchA->id_branches,
-            'id_departments' => $this->departmentA->id_departments,
-            'id_job_positions' => $this->positionA->id_job_positions,
+            'department_name' => 'IT Department',
+            'job_position_name' => 'Backend Developer',
+            'id_shifts' => $this->shiftA->id_shifts,
             'nik' => 'EMP-JOKO',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -376,7 +333,7 @@ class EmployeeApiTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.nik', 'EMP-JOKO')
             ->assertJsonPath('data.user.name', 'Joko Anwar')
-            ->assertJsonPath('data.branch.name', 'Branch Jakarta')
+            ->assertJsonPath('data.branch.name', 'Company A')
             ->assertJsonPath('data.department.name', 'IT Department')
             ->assertJsonPath('data.job_position.name', 'Backend Developer');
     }
@@ -394,7 +351,7 @@ class EmployeeApiTest extends TestCase
         $empB = Employee::create([
             'id_companies' => $this->companyB->id_companies,
             'id_users' => $userEmpB->id_users,
-            'id_branches' => $this->branchB->id_branches,
+            'department_name' => 'HR',
             'nik' => 'EMP-B-SECRET',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -421,7 +378,6 @@ class EmployeeApiTest extends TestCase
         $emp = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $userEmp->id_users,
-            'id_branches' => $this->branchA->id_branches,
             'nik' => 'NIK-OLD',
             'phone' => '0811111111',
             'gender' => 'male',
@@ -473,7 +429,6 @@ class EmployeeApiTest extends TestCase
         $emp = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $userEmp->id_users,
-            'id_branches' => $this->branchA->id_branches,
             'nik' => 'NIK-TETAP',
             'gender' => 'female',
             'hire_date' => '2024-01-01',
@@ -513,7 +468,6 @@ class EmployeeApiTest extends TestCase
         $emp = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $userEmp->id_users,
-            'id_branches' => $this->branchA->id_branches,
             'nik' => 'NIK-MY',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -542,7 +496,6 @@ class EmployeeApiTest extends TestCase
         $empB = Employee::create([
             'id_companies' => $this->companyB->id_companies,
             'id_users' => $userEmpB->id_users,
-            'id_branches' => $this->branchB->id_branches,
             'nik' => 'EMP-B-TGT',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -571,7 +524,6 @@ class EmployeeApiTest extends TestCase
         $emp = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $userEmp->id_users,
-            'id_branches' => $this->branchA->id_branches,
             'nik' => 'EMP-DEL',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -606,7 +558,6 @@ class EmployeeApiTest extends TestCase
         $empB = Employee::create([
             'id_companies' => $this->companyB->id_companies,
             'id_users' => $userEmpB->id_users,
-            'id_branches' => $this->branchB->id_branches,
             'nik' => 'EMP-B-PROT',
             'gender' => 'male',
             'hire_date' => '2024-01-01',

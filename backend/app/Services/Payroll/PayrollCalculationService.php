@@ -7,7 +7,6 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
-use App\Models\PayrollPeriod;
 use App\Models\PayrollSlip;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -17,20 +16,24 @@ class PayrollCalculationService
     /**
      * Hitung gaji seluruh karyawan aktif dalam satu periode penggajian.
      */
-    public function calculate(PayrollPeriod $period): Collection
+    public function calculate(object $period): Collection
     {
-        if ($period->status === 'finalized') {
+        $status = $period->status ?? 'draft';
+        if ($status === 'finalized') {
             throw new PayrollException('Periode penggajian telah dikunci (final) dan tidak dapat dihitung ulang.', 422);
         }
 
         $startDate = Carbon::parse($period->start_date)->startOfDay();
         $endDate = Carbon::parse($period->end_date)->endOfDay();
+        $paymentDate = ! empty($period->payment_date) ? Carbon::parse($period->payment_date)->toDateString() : Carbon::now()->toDateString();
+        $periodName = $period->period_name ?? $period->name ?? ('Periode ' . $startDate->isoFormat('MMMM Y'));
+        $companyId = (int) $period->id_companies;
 
         // Hitung total hari kerja efektif (Senin - Jumat)
         $workDays = $startDate->diffInDaysFiltered(fn (Carbon $date) => ! $date->isWeekend(), $endDate) + 1;
         $workDays = max(1, $workDays);
 
-        $employees = Employee::where('id_companies', $period->id_companies)->get();
+        $employees = Employee::where('id_companies', $companyId)->get();
 
         if ($employees->isEmpty()) {
             throw new PayrollException('Tidak ada data karyawan pada perusahaan ini untuk diproses.', 422);
@@ -44,7 +47,7 @@ class PayrollCalculationService
 
             // Ambil absensi dalam rentang periode
             $attendances = Attendance::where('id_employees', $employee->id_employees)
-                ->whereBetween('date', [$period->start_date, $period->end_date])
+                ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
                 ->get();
 
             // Total menit keterlambatan (potongan Rp 1.000 / menit)
@@ -57,10 +60,10 @@ class PayrollCalculationService
             // Jumlah hari cuti berbayar yang telah disetujui
             $paidLeaveDays = (int) LeaveRequest::where('id_employees', $employee->id_employees)
                 ->where('status', 'approved')
-                ->whereHas('leaveType', fn ($q) => $q->where('is_paid', true))
-                ->where(function ($q) use ($period) {
-                    $q->whereBetween('start_date', [$period->start_date, $period->end_date])
-                        ->orWhereBetween('end_date', [$period->start_date, $period->end_date]);
+                ->where('is_paid', true)
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->whereBetween('start_date', [$startDate->toDateString(), $endDate->toDateString()])
+                        ->orWhereBetween('end_date', [$startDate->toDateString(), $endDate->toDateString()]);
                 })
                 ->sum('total_days');
 
@@ -72,7 +75,7 @@ class PayrollCalculationService
             // Upah Lembur disetujui
             $approvedOvertimeHours = (float) OvertimeRequest::where('id_employees', $employee->id_employees)
                 ->where('status', 'approved')
-                ->whereBetween('date', [$period->start_date, $period->end_date])
+                ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
                 ->sum('duration_hours');
 
             // Formula standar upah lembur per jam (PP 35/2021): 1/173 x (Gaji Pokok + Tunjangan Tetap)
@@ -87,11 +90,15 @@ class PayrollCalculationService
 
             $slip = PayrollSlip::updateOrCreate(
                 [
-                    'id_payroll_periods' => $period->id_payroll_periods,
+                    'id_companies' => $companyId,
                     'id_employees' => $employee->id_employees,
+                    'period_name' => $periodName,
                 ],
                 [
-                    'id_companies' => $period->id_companies,
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'payment_date' => $paymentDate,
+                    'status' => 'calculated',
                     'basic_salary' => $basicSalary,
                     'allowance_fixed' => $allowanceFixed,
                     'overtime_pay' => $overtimePay,
@@ -104,8 +111,6 @@ class PayrollCalculationService
 
             $slips->push($slip);
         }
-
-        $period->update(['status' => 'calculated']);
 
         return $slips;
     }

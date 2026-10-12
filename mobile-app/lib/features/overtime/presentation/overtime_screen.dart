@@ -45,15 +45,6 @@ class OvertimeStatusBadge extends StatelessWidget {
 class OvertimeScreen extends ConsumerWidget {
   const OvertimeScreen({super.key});
 
-  String _formatDate(String dateStr) {
-    try {
-      final date = DateTime.parse(dateStr);
-      return DateFormat('EEEE, d MMM yyyy', 'id_ID').format(date);
-    } catch (_) {
-      return dateStr;
-    }
-  }
-
   void _openApplyOvertime(BuildContext context, WidgetRef ref) {
     showModalBottomSheet<bool>(
       context: context,
@@ -61,7 +52,7 @@ class OvertimeScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => const ApplyOvertimeSheet(),
     ).then((submitted) {
-      if (submitted == true) {
+      if (submitted == true && context.mounted) {
         ref.invalidate(myOvertimeListProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -234,7 +225,7 @@ class OvertimeScreen extends ConsumerWidget {
             return ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (ctx, idx) {
                 final item = items[idx];
                 return _OvertimeCard(item: item);

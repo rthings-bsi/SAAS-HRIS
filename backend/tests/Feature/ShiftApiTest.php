@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Employee;
-use App\Models\EmployeeShift;
 use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,8 +21,6 @@ class ShiftApiTest extends TestCase
     protected User $userB;
     protected Employee $employeeA;
     protected Employee $employeeB;
-    protected Branch $branchA;
-    protected Branch $branchB;
 
     protected function setUp(): void
     {
@@ -36,6 +32,9 @@ class ShiftApiTest extends TestCase
             'slug' => 'company-a',
             'email' => 'comp-a@test.com',
             'subscription_status' => 'active',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+            'radius_meters' => 100,
         ]);
 
         $this->userA = User::create([
@@ -45,15 +44,6 @@ class ShiftApiTest extends TestCase
             'password' => Hash::make('password123'),
             'role' => 'owner',
             'is_active' => true,
-        ]);
-
-        $this->branchA = Branch::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'Branch Jakarta',
-            'address' => 'Jl. Sudirman No 1',
-            'latitude' => -6.2088,
-            'longitude' => 106.8456,
-            'radius_meters' => 100,
         ]);
 
         $userEmpA = User::create([
@@ -68,7 +58,6 @@ class ShiftApiTest extends TestCase
         $this->employeeA = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $userEmpA->id_users,
-            'id_branches' => $this->branchA->id_branches,
             'nik' => 'NIK-001',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
@@ -80,6 +69,9 @@ class ShiftApiTest extends TestCase
             'slug' => 'company-b',
             'email' => 'comp-b@test.com',
             'subscription_status' => 'active',
+            'latitude' => -7.2575,
+            'longitude' => 112.7521,
+            'radius_meters' => 100,
         ]);
 
         $this->userB = User::create([
@@ -89,15 +81,6 @@ class ShiftApiTest extends TestCase
             'password' => Hash::make('password123'),
             'role' => 'owner',
             'is_active' => true,
-        ]);
-
-        $this->branchB = Branch::create([
-            'id_companies' => $this->companyB->id_companies,
-            'name' => 'Branch Surabaya',
-            'address' => 'Jl. Pemuda No 2',
-            'latitude' => -7.2575,
-            'longitude' => 112.7521,
-            'radius_meters' => 100,
         ]);
 
         $userEmpB = User::create([
@@ -112,7 +95,6 @@ class ShiftApiTest extends TestCase
         $this->employeeB = Employee::create([
             'id_companies' => $this->companyB->id_companies,
             'id_users' => $userEmpB->id_users,
-            'id_branches' => $this->branchB->id_branches,
             'nik' => 'NIK-002',
             'gender' => 'female',
             'hire_date' => '2024-01-01',
@@ -316,12 +298,7 @@ class ShiftApiTest extends TestCase
             'end_time' => '17:00:00',
         ]);
 
-        EmployeeShift::create([
-            'id_companies' => $this->companyA->id_companies,
-            'id_employees' => $this->employeeA->id_employees,
-            'id_shifts' => $shift->id_shifts,
-            'date' => '2026-10-05',
-        ]);
+        $this->employeeA->update(['id_shifts' => $shift->id_shifts]);
 
         Sanctum::actingAs($this->userA, ['*']);
 
@@ -355,11 +332,9 @@ class ShiftApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('success', true);
 
-        $this->assertDatabaseHas('employee_shifts', [
-            'id_companies' => $this->companyA->id_companies,
+        $this->assertDatabaseHas('employees', [
             'id_employees' => $this->employeeA->id_employees,
             'id_shifts' => $shift->id_shifts,
-            'date' => '2026-10-10',
         ]);
     }
 
@@ -383,15 +358,9 @@ class ShiftApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('success', true);
 
-        $this->assertDatabaseHas('employee_shifts', [
+        $this->assertDatabaseHas('employees', [
             'id_employees' => $this->employeeA->id_employees,
             'id_shifts' => $shift->id_shifts,
-            'date' => '2026-10-11',
-        ]);
-        $this->assertDatabaseHas('employee_shifts', [
-            'id_employees' => $this->employeeA->id_employees,
-            'id_shifts' => $shift->id_shifts,
-            'date' => '2026-10-12',
         ]);
     }
 
@@ -416,17 +385,9 @@ class ShiftApiTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('success', true);
 
-        $this->assertDatabaseHas('employee_shifts', [
+        $this->assertDatabaseHas('employees', [
             'id_employees' => $this->employeeA->id_employees,
-            'date' => '2026-10-15',
-        ]);
-        $this->assertDatabaseHas('employee_shifts', [
-            'id_employees' => $this->employeeA->id_employees,
-            'date' => '2026-10-16',
-        ]);
-        $this->assertDatabaseHas('employee_shifts', [
-            'id_employees' => $this->employeeA->id_employees,
-            'date' => '2026-10-17',
+            'id_shifts' => $shift->id_shifts,
         ]);
     }
 
@@ -464,13 +425,10 @@ class ShiftApiTest extends TestCase
 
         $response->assertStatus(200);
 
-        $this->assertDatabaseHas('employee_shifts', [
+        $this->assertDatabaseHas('employees', [
             'id_employees' => $this->employeeA->id_employees,
             'id_shifts' => $shift2->id_shifts,
-            'date' => '2026-10-20',
         ]);
-
-        $this->assertEquals(1, EmployeeShift::where('id_employees', $this->employeeA->id_employees)->where('date', '2026-10-20')->count());
     }
 
     public function test_cannot_assign_shift_to_employee_of_another_company(): void

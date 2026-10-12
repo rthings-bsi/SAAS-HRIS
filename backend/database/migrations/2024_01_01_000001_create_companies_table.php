@@ -11,13 +11,17 @@ return new class extends Migration
         Schema::create('companies', function (Blueprint $table) {
             $table->id('id_companies');
             $table->string('name', 150);
-            $table->string('slug', 100)->unique();
+            $table->string('industry', 150)->nullable();
             $table->string('email', 150);
+            $table->string('website', 150)->nullable();
             $table->string('phone', 30)->nullable();
             $table->text('address')->nullable();
+            $table->string('director_name', 150)->nullable();
+            $table->string('hr_manager_name', 150)->nullable();
             $table->string('logo_url', 255)->nullable();
-            $table->enum('subscription_status', ['trial', 'active', 'suspended', 'cancelled'])->default('trial');
-            $table->timestamp('trial_ends_at')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable()->default(-6.20000000);
+            $table->decimal('longitude', 11, 8)->nullable()->default(106.81666600);
+            $table->unsignedInteger('radius_meters')->default(100);
             $table->timestamps();
         });
     }

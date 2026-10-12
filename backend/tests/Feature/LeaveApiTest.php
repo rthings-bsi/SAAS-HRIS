@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
-use App\Models\LeaveType;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,14 +25,11 @@ class LeaveApiTest extends TestCase
     protected User $managerA;
     protected User $userEmpA;
     protected Employee $employeeA;
-    protected LeaveType $annualLeaveA;
 
-    protected Company $companyB_model;
     protected User $ownerB;
     protected User $managerB;
     protected User $userEmpB;
     protected Employee $employeeB;
-    protected LeaveType $annualLeaveB;
 
     protected function setUp(): void
     {
@@ -46,6 +41,9 @@ class LeaveApiTest extends TestCase
             'slug' => 'pt-solusi-teknologi-nusantara',
             'email' => 'info@nusantara.test',
             'subscription_status' => 'active',
+            'latitude' => -6.2088,
+            'longitude' => 106.8456,
+            'radius_meters' => 100,
         ]);
 
         $this->ownerA = User::create([
@@ -94,13 +92,7 @@ class LeaveApiTest extends TestCase
             'hire_date' => '2023-01-01',
             'employment_status' => 'permanent',
             'basic_salary' => 6000000,
-        ]);
-
-        $this->annualLeaveA = LeaveType::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'Cuti Tahunan',
-            'quota_days' => 12,
-            'is_paid' => true,
+            'annual_leave_quota' => 12,
         ]);
 
         // Setup Company B
@@ -109,6 +101,9 @@ class LeaveApiTest extends TestCase
             'slug' => 'pt-maju-bersama-jaya',
             'email' => 'info@majubersama.test',
             'subscription_status' => 'active',
+            'latitude' => -7.2575,
+            'longitude' => 112.7521,
+            'radius_meters' => 100,
         ]);
 
         $this->ownerB = User::create([
@@ -148,13 +143,7 @@ class LeaveApiTest extends TestCase
             'hire_date' => '2023-02-01',
             'employment_status' => 'permanent',
             'basic_salary' => 5500000,
-        ]);
-
-        $this->annualLeaveB = LeaveType::create([
-            'id_companies' => $this->companyB->id_companies,
-            'name' => 'Cuti Tahunan B',
-            'quota_days' => 10,
-            'is_paid' => true,
+            'annual_leave_quota' => 10,
         ]);
     }
 
@@ -180,12 +169,6 @@ class LeaveApiTest extends TestCase
                 ],
                 'errors' => null,
             ]);
-
-        $this->assertDatabaseHas('leave_types', [
-            'name' => 'Cuti Menikah',
-            'quota_days' => 3,
-            'id_companies' => $this->companyA->id_companies,
-        ]);
 
         // HR can also create leave type
         Sanctum::actingAs($this->hrA, ['*']);
@@ -241,11 +224,11 @@ class LeaveApiTest extends TestCase
                 'message' => 'Daftar jenis cuti berhasil diambil.',
             ])
             ->assertJsonFragment([
-                'id_leave_types' => $this->annualLeaveA->id_leave_types,
                 'name' => 'Cuti Tahunan',
+                'quota_days' => 12,
             ])
-            ->assertJsonMissing([
-                'name' => 'Cuti Tahunan B',
+            ->assertJsonFragment([
+                'name' => 'Cuti Sakit',
             ]);
     }
 
@@ -257,7 +240,8 @@ class LeaveApiTest extends TestCase
         LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => Carbon::now()->startOfYear()->addDays(10)->toDateString(),
             'end_date' => Carbon::now()->startOfYear()->addDays(11)->toDateString(),
             'total_days' => 2,
@@ -270,7 +254,8 @@ class LeaveApiTest extends TestCase
         LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => Carbon::now()->startOfYear()->addDays(20)->toDateString(),
             'end_date' => Carbon::now()->startOfYear()->addDays(20)->toDateString(),
             'total_days' => 1,
@@ -286,7 +271,6 @@ class LeaveApiTest extends TestCase
                 'message' => 'Informasi kuota cuti berhasil diambil.',
             ])
             ->assertJsonFragment([
-                'id_leave_types' => $this->annualLeaveA->id_leave_types,
                 'name' => 'Cuti Tahunan',
                 'quota_days' => 12,
                 'used_days' => 2,
@@ -307,7 +291,7 @@ class LeaveApiTest extends TestCase
         $endDate = Carbon::now()->addDays(7)->toDateString(); // 3 days
 
         $response = $this->postJson('/api/v1/leave/request', [
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Sakit',
             'start_date' => $startDate,
             'end_date' => $endDate,
             'reason' => 'Rawat inap di rumah sakit',
@@ -321,7 +305,7 @@ class LeaveApiTest extends TestCase
                 'data' => [
                     'id_companies' => $this->companyA->id_companies,
                     'id_employees' => $this->employeeA->id_employees,
-                    'id_leave_types' => $this->annualLeaveA->id_leave_types,
+                    'leave_type' => 'Cuti Sakit',
                     'total_days' => 3,
                     'status' => 'pending',
                 ],
@@ -333,6 +317,7 @@ class LeaveApiTest extends TestCase
             'id_leave_requests' => $leaveRequestId,
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
+            'leave_type' => 'Cuti Sakit',
             'status' => 'pending',
             'total_days' => 3,
         ]);
@@ -346,19 +331,14 @@ class LeaveApiTest extends TestCase
     {
         Sanctum::actingAs($this->userEmpA, ['*']);
 
-        // Create a custom leave type with quota 2
-        $shortLeave = LeaveType::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'Cuti Singkat',
-            'quota_days' => 2,
-            'is_paid' => true,
-        ]);
+        // Set low quota for test
+        $this->employeeA->update(['annual_leave_quota' => 2]);
 
         $startDate = Carbon::now()->addDays(1)->toDateString();
         $endDate = Carbon::now()->addDays(3)->toDateString(); // 3 days requested > 2 quota
 
         $response = $this->postJson('/api/v1/leave/request', [
-            'id_leave_types' => $shortLeave->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
             'start_date' => $startDate,
             'end_date' => $endDate,
             'reason' => 'Liburan',
@@ -379,21 +359,21 @@ class LeaveApiTest extends TestCase
         $startDate = Carbon::now()->addDays(10)->toDateString();
         $endDate = Carbon::now()->addDays(12)->toDateString();
 
-        // 1st request (March 10 - 12)
+        // 1st request (Day 10 - 12)
         $firstResponse = $this->postJson('/api/v1/leave/request', [
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
             'start_date' => $startDate,
             'end_date' => $endDate,
             'reason' => 'Acara keluarga',
         ]);
         $firstResponse->assertStatus(201);
 
-        // 2nd request overlapping (March 11 - 13)
+        // 2nd request overlapping (Day 11 - 13)
         $overlapStart = Carbon::now()->addDays(11)->toDateString();
         $overlapEnd = Carbon::now()->addDays(13)->toDateString();
 
         $secondResponse = $this->postJson('/api/v1/leave/request', [
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
             'start_date' => $overlapStart,
             'end_date' => $overlapEnd,
             'reason' => 'Pengajuan susulan',
@@ -415,7 +395,8 @@ class LeaveApiTest extends TestCase
         $leaveRequest = LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'total_days' => 2,
@@ -456,7 +437,8 @@ class LeaveApiTest extends TestCase
         $leaveRequest = LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'total_days' => 2,
@@ -495,7 +477,8 @@ class LeaveApiTest extends TestCase
         $leaveRequest = LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => Carbon::now()->addDays(10)->toDateString(),
             'end_date' => Carbon::now()->addDays(11)->toDateString(),
             'total_days' => 2,
@@ -523,7 +506,8 @@ class LeaveApiTest extends TestCase
         $leaveRequest = LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => Carbon::now()->addDays(10)->toDateString(),
             'end_date' => Carbon::now()->addDays(11)->toDateString(),
             'total_days' => 2,
@@ -547,13 +531,14 @@ class LeaveApiTest extends TestCase
         $viewResponse->assertStatus(403);
     }
 
-    public function test_multi_tenant_isolation_leave_requests_and_types(): void
+    public function test_multi_tenant_isolation_leave_requests(): void
     {
         // Company A employee creates leave request
         $leaveRequestA = LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => Carbon::now()->addDays(10)->toDateString(),
             'end_date' => Carbon::now()->addDays(11)->toDateString(),
             'total_days' => 2,
@@ -579,17 +564,6 @@ class LeaveApiTest extends TestCase
                 'success' => false,
                 'message' => 'Pengajuan cuti tidak ditemukan.',
             ]);
-
-        // Company A employee cannot apply using Company B leave type
-        Sanctum::actingAs($this->userEmpA, ['*']);
-        $crossApplyResponse = $this->postJson('/api/v1/leave/request', [
-            'id_leave_types' => $this->annualLeaveB->id_leave_types,
-            'start_date' => Carbon::now()->addDays(15)->toDateString(),
-            'end_date' => Carbon::now()->addDays(16)->toDateString(),
-            'reason' => 'Mencoba cross-tenant',
-        ]);
-
-        $crossApplyResponse->assertStatus(404);
     }
 
     public function test_employee_can_view_own_paginated_leave_requests(): void
@@ -599,7 +573,8 @@ class LeaveApiTest extends TestCase
         LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => Carbon::now()->addDays(1)->toDateString(),
             'end_date' => Carbon::now()->addDays(1)->toDateString(),
             'total_days' => 1,
@@ -610,7 +585,8 @@ class LeaveApiTest extends TestCase
         LeaveRequest::create([
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
-            'id_leave_types' => $this->annualLeaveA->id_leave_types,
+            'leave_type' => 'Cuti Tahunan',
+            'is_paid' => true,
             'start_date' => Carbon::now()->addDays(5)->toDateString(),
             'end_date' => Carbon::now()->addDays(5)->toDateString(),
             'total_days' => 1,

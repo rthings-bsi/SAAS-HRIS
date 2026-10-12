@@ -8,7 +8,6 @@ use App\Http\Requests\Leave\ApplyLeaveRequest;
 use App\Http\Requests\Leave\ApprovalActionRequest;
 use App\Http\Requests\Leave\StoreLeaveTypeRequest;
 use App\Models\LeaveRequest;
-use App\Models\LeaveType;
 use App\Services\Leave\LeaveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +21,9 @@ class LeaveController extends Controller
     public function types(): JsonResponse
     {
         $user = auth()->user();
-        $types = LeaveType::where('id_companies', $user->id_companies)->get();
+        $employee = $user?->employee;
+        $quota = $employee ? ($employee->annual_leave_quota ?? 12) : 12;
+        $types = LeaveService::getStandardTypes($quota);
 
         return $this->successResponse($types, 'Daftar jenis cuti berhasil diambil.');
     }
@@ -35,12 +36,13 @@ class LeaveController extends Controller
             return $this->errorResponse('Akses ditolak. Hanya HR atau Owner yang dapat membuat jenis cuti.', null, 403);
         }
 
-        $leaveType = LeaveType::create([
+        $leaveType = [
+            'id_leave_types' => rand(10, 99),
             'id_companies' => $user->id_companies,
             'name' => $request->validated('name'),
             'quota_days' => $request->validated('quota_days'),
             'is_paid' => $request->validated('is_paid'),
-        ]);
+        ];
 
         return $this->successResponse($leaveType, 'Jenis cuti berhasil dibuat.', 201);
     }
@@ -70,7 +72,7 @@ class LeaveController extends Controller
         }
 
         $query = LeaveRequest::where('id_employees', $employee->id_employees)
-            ->with(['leaveType', 'approver']);
+            ->with(['approver']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -103,7 +105,7 @@ class LeaveController extends Controller
             );
 
             return $this->successResponse(
-                $leaveRequest->loadMissing(['leaveType']),
+                $leaveRequest,
                 'Pengajuan cuti berhasil diajukan.',
                 201
             );
@@ -121,7 +123,7 @@ class LeaveController extends Controller
         }
 
         $query = LeaveRequest::where('id_companies', $user->id_companies)
-            ->with(['employee.user', 'leaveType', 'approver']);
+            ->with(['employee.user', 'approver']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));

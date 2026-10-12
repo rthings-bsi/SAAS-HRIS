@@ -3,10 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Attendance;
-use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Employee;
-use App\Models\EmployeeShift;
 use App\Models\Shift;
 use App\Models\User;
 use Carbon\Carbon;
@@ -28,25 +26,26 @@ class AttendanceApiTest extends TestCase
     protected User $managerA;
     protected User $userEmpA;
     protected Employee $employeeA;
-    protected Branch $branchA;
     protected Shift $shiftA;
 
     protected User $ownerB;
     protected User $userEmpB;
     protected Employee $employeeB;
-    protected Branch $branchB;
     protected Shift $shiftB;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Company A setup
+        // Company A setup with geofencing coordinates
         $this->companyA = Company::create([
             'name' => 'PT Nusantara Sejahtera',
             'slug' => 'pt-nusantara-sejahtera',
             'email' => 'nusantara@test.com',
             'subscription_status' => 'active',
+            'latitude' => -6.20880000,
+            'longitude' => 106.84560000,
+            'radius_meters' => 100,
         ]);
 
         $this->ownerA = User::create([
@@ -76,15 +75,6 @@ class AttendanceApiTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->branchA = Branch::create([
-            'id_companies' => $this->companyA->id_companies,
-            'name' => 'Kantor Pusat Jakarta',
-            'address' => 'Jl. Jend. Sudirman Kav. 1, Jakarta Pusat',
-            'latitude' => -6.20880000,
-            'longitude' => 106.84560000,
-            'radius_meters' => 100,
-        ]);
-
         $this->shiftA = Shift::create([
             'id_companies' => $this->companyA->id_companies,
             'name' => 'Shift Normal Pagi',
@@ -105,19 +95,22 @@ class AttendanceApiTest extends TestCase
         $this->employeeA = Employee::create([
             'id_companies' => $this->companyA->id_companies,
             'id_users' => $this->userEmpA->id_users,
-            'id_branches' => $this->branchA->id_branches,
+            'id_shifts' => $this->shiftA->id_shifts,
             'nik' => 'EMP-001',
             'phone' => '08123456789',
             'gender' => 'male',
             'hire_date' => '2024-01-01',
         ]);
 
-        // Company B setup
+        // Company B setup with geofencing coordinates
         $this->companyB = Company::create([
             'name' => 'PT Maju Bersama',
             'slug' => 'pt-maju-bersama',
             'email' => 'maju@test.com',
             'subscription_status' => 'active',
+            'latitude' => -7.25750000,
+            'longitude' => 112.75210000,
+            'radius_meters' => 100,
         ]);
 
         $this->ownerB = User::create([
@@ -127,15 +120,6 @@ class AttendanceApiTest extends TestCase
             'password' => Hash::make('password123'),
             'role' => 'owner',
             'is_active' => true,
-        ]);
-
-        $this->branchB = Branch::create([
-            'id_companies' => $this->companyB->id_companies,
-            'name' => 'Kantor Surabaya',
-            'address' => 'Jl. Pemuda No. 10, Surabaya',
-            'latitude' => -7.25750000,
-            'longitude' => 112.75210000,
-            'radius_meters' => 100,
         ]);
 
         $this->shiftB = Shift::create([
@@ -158,7 +142,7 @@ class AttendanceApiTest extends TestCase
         $this->employeeB = Employee::create([
             'id_companies' => $this->companyB->id_companies,
             'id_users' => $this->userEmpB->id_users,
-            'id_branches' => $this->branchB->id_branches,
+            'id_shifts' => $this->shiftB->id_shifts,
             'nik' => 'EMP-B-001',
             'gender' => 'female',
             'hire_date' => '2024-01-01',
@@ -182,15 +166,13 @@ class AttendanceApiTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.branch.name', 'Kantor Pusat Jakarta')
+            ->assertJsonPath('data.branch.name', 'PT Nusantara Sejahtera')
             ->assertJsonPath('data.shift.name', 'Shift Normal Pagi')
             ->assertJsonPath('data.attendance', null);
     }
 
     public function test_today_endpoint_returns_assigned_employee_shift(): void
     {
-        $today = Carbon::today()->toDateString();
-
         $customShift = Shift::create([
             'id_companies' => $this->companyA->id_companies,
             'name' => 'Shift Khusus Siang',
@@ -199,11 +181,8 @@ class AttendanceApiTest extends TestCase
             'late_tolerance_minutes' => 15,
         ]);
 
-        EmployeeShift::create([
-            'id_companies' => $this->companyA->id_companies,
-            'id_employees' => $this->employeeA->id_employees,
+        $this->employeeA->update([
             'id_shifts' => $customShift->id_shifts,
-            'date' => $today,
         ]);
 
         Sanctum::actingAs($this->userEmpA, ['*']);
@@ -374,8 +353,17 @@ class AttendanceApiTest extends TestCase
     {
         Storage::fake('public');
 
+        $companyNoGeo = Company::create([
+            'name' => 'Company Without Geo',
+            'slug' => 'company-without-geo',
+            'email' => 'nogeo@test.com',
+            'subscription_status' => 'active',
+            'latitude' => null,
+            'longitude' => null,
+        ]);
+
         $userWithoutBranch = User::create([
-            'id_companies' => $this->companyA->id_companies,
+            'id_companies' => $companyNoGeo->id_companies,
             'name' => 'No Branch User',
             'email' => 'nobranch@nusantara.com',
             'password' => Hash::make('password123'),
@@ -384,9 +372,8 @@ class AttendanceApiTest extends TestCase
         ]);
 
         Employee::create([
-            'id_companies' => $this->companyA->id_companies,
+            'id_companies' => $companyNoGeo->id_companies,
             'id_users' => $userWithoutBranch->id_users,
-            'id_branches' => $this->branchB->id_branches,
             'nik' => 'EMP-NOBRANCH',
             'gender' => 'male',
             'hire_date' => '2024-01-01',

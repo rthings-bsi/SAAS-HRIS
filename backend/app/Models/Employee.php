@@ -18,9 +18,10 @@ class Employee extends Model
     protected $fillable = [
         'id_companies',
         'id_users',
-        'id_branches',
-        'id_departments',
-        'id_job_positions',
+        'department_name',
+        'job_position_name',
+        'id_shifts',
+        'annual_leave_quota',
         'nik',
         'phone',
         'gender',
@@ -34,6 +35,16 @@ class Employee extends Model
         'bank_account_holder',
     ];
 
+    protected $appends = [
+        'branch',
+        'department',
+        'job_position',
+        'jobPosition',
+        'id_branches',
+        'id_departments',
+        'id_job_positions',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -41,6 +52,7 @@ class Employee extends Model
             'hire_date' => 'date',
             'basic_salary' => 'decimal:2',
             'allowance_fixed' => 'decimal:2',
+            'annual_leave_quota' => 'integer',
         ];
     }
 
@@ -59,24 +71,70 @@ class Employee extends Model
         return $this->belongsTo(User::class, 'id_users', 'id_users');
     }
 
-    public function branch(): BelongsTo
+    public function shift(): BelongsTo
     {
-        return $this->belongsTo(Branch::class, 'id_branches', 'id_branches');
+        return $this->belongsTo(Shift::class, 'id_shifts', 'id_shifts');
     }
 
-    public function department(): BelongsTo
+    public function getBranchAttribute(): ?object
     {
-        return $this->belongsTo(Department::class, 'id_departments', 'id_departments');
+        $company = $this->company;
+        if (!$company || $company->latitude === null || $company->longitude === null) {
+            return null;
+        }
+        return (object) [
+            'id_branches' => 1,
+            'name' => $company->name,
+            'address' => $company->address,
+            'latitude' => (float) $company->latitude,
+            'longitude' => (float) $company->longitude,
+            'radius_meters' => (int) ($company->radius_meters ?: 100),
+        ];
     }
 
-    public function jobPosition(): BelongsTo
+    public function getDepartmentAttribute(): ?object
     {
-        return $this->belongsTo(JobPosition::class, 'id_job_positions', 'id_job_positions');
+        return $this->department_name ? (object) ['id_departments' => $this->id_departments ?? 1, 'name' => $this->department_name] : null;
     }
 
-    public function employeeShifts(): HasMany
+    public function getJobPositionAttribute(): ?object
     {
-        return $this->hasMany(EmployeeShift::class, 'id_employees', 'id_employees');
+        return $this->job_position_name ? (object) ['id_job_positions' => $this->id_job_positions ?? 1, 'name' => $this->job_position_name] : null;
+    }
+
+    public function getIdBranchesAttribute(): int
+    {
+        return 1;
+    }
+
+    public function getIdDepartmentsAttribute(): ?int
+    {
+        if (!$this->department_name) {
+            return null;
+        }
+        $map = [
+            'Teknologi Informasi' => 1,
+            'Sumber Daya Manusia' => 2,
+            'Operasional & Produksi' => 3,
+            'Keuangan & Akuntansi' => 4,
+            'Pemasaran & Penjualan' => 5,
+        ];
+        return $map[$this->department_name] ?? 1;
+    }
+
+    public function getIdJobPositionsAttribute(): ?int
+    {
+        if (!$this->job_position_name) {
+            return null;
+        }
+        $map = [
+            'Direktur Utama' => 1,
+            'Manajer HRD' => 2,
+            'Software Engineer' => 3,
+            'Staff Administrasi' => 4,
+            'Operator Mesin' => 5,
+        ];
+        return $map[$this->job_position_name] ?? 3;
     }
 
     public function attendances(): HasMany

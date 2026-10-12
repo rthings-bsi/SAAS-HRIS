@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Payroll\StorePayrollPeriodRequest;
-use App\Models\PayrollPeriod;
+use App\Models\Employee;
 use App\Models\PayrollSlip;
-use App\Models\User;
 use App\Services\Payroll\PayrollCalculationService;
 use App\Services\Payroll\PayrollPdfService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -33,23 +33,26 @@ class PayrollController extends Controller
             return $this->errorResponse('Akses ditolak. Hanya HR atau Owner yang dapat mengelola periode penggajian.', null, 403);
         }
 
-        $periods = PayrollPeriod::where('id_companies', $user->id_companies)
-            ->withCount('payrollSlips')
-            ->orderBy('start_date', 'desc')
+        $periods = PayrollSlip::where('id_companies', $user->id_companies)
+            ->select('period_name', 'start_date', 'end_date', 'payment_date', 'status')
+            ->selectRaw('MIN(id_payroll_slips) as id_payroll_periods')
+            ->selectRaw('COUNT(*) as total_slips')
+            ->selectRaw('SUM(net_salary) as total_net_salary')
+            ->selectRaw('MAX(created_at) as created_at')
+            ->groupBy('period_name', 'start_date', 'end_date', 'payment_date', 'status')
+            ->orderByDesc('start_date')
             ->get()
             ->map(function ($period) {
-                $totalNet = (float) PayrollSlip::where('id_payroll_periods', $period->id_payroll_periods)->sum('net_salary');
-
                 return [
-                    'id_payroll_periods' => $period->id_payroll_periods,
-                    'name' => $period->name,
-                    'start_date' => $period->start_date?->format('Y-m-d'),
-                    'end_date' => $period->end_date?->format('Y-m-d'),
-                    'payment_date' => $period->payment_date?->format('Y-m-d'),
+                    'id_payroll_periods' => (int) $period->id_payroll_periods,
+                    'name' => $period->period_name,
+                    'start_date' => $period->start_date ? Carbon::parse($period->start_date)->format('Y-m-d') : null,
+                    'end_date' => $period->end_date ? Carbon::parse($period->end_date)->format('Y-m-d') : null,
+                    'payment_date' => $period->payment_date ? Carbon::parse($period->payment_date)->format('Y-m-d') : null,
                     'status' => $period->status,
-                    'total_slips' => $period->payroll_slips_count,
-                    'total_net_salary' => $totalNet,
-                    'created_at' => $period->created_at?->toIso8601String(),
+                    'total_slips' => (int) $period->total_slips,
+                    'total_net_salary' => (float) $period->total_net_salary,
+                    'created_at' => $period->created_at ? Carbon::parse($period->created_at)->toIso8601String() : null,
                 ];
             });
 
@@ -68,16 +71,50 @@ class PayrollController extends Controller
             return $this->errorResponse('Akses ditolak. Hanya HR atau Owner yang dapat membuat periode penggajian.', null, 403);
         }
 
-        $period = PayrollPeriod::create([
-            'id_companies' => $user->id_companies,
-            'name' => $request->validated('name'),
-            'start_date' => $request->validated('start_date'),
-            'end_date' => $request->validated('end_date'),
-            'payment_date' => $request->validated('payment_date'),
-            'status' => 'draft',
-        ]);
+        $employees = Employee::where('id_companies', $user->id_companies)->get();
+        $name = $request->validated('name');
+        $startDate = $request->validated('start_date');
+        $endDate = $request->validated('end_date');
+        $paymentDate = $request->validated('payment_date');
 
-        return $this->successResponse($period, 'Periode penggajian berhasil dibuka.', 201);
+        $firstSlip = null;
+        foreach ($employees as $employee) {
+            $basicSalary = (float) ($employee->basic_salary ?? 0);
+            $allowanceFixed = (float) ($employee->allowance_fixed ?? 0);
+            $netSalary = $basicSalary + $allowanceFixed;
+
+            $slip = PayrollSlip::create([
+                'id_companies' => $user->id_companies,
+                'id_employees' => $employee->id_employees,
+                'period_name' => $name,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'payment_date' => $paymentDate,
+                'status' => 'draft',
+                'basic_salary' => $basicSalary,
+                'allowance_fixed' => $allowanceFixed,
+                'overtime_pay' => 0,
+                'deduction_late' => 0,
+                'deduction_absence' => 0,
+                'deduction_other' => 0,
+                'net_salary' => $netSalary,
+            ]);
+
+            if (! $firstSlip) {
+                $firstSlip = $slip;
+            }
+        }
+
+        $periodData = [
+            'id_payroll_periods' => $firstSlip ? $firstSlip->id_payroll_slips : 1,
+            'name' => $name,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'payment_date' => $paymentDate,
+            'status' => 'draft',
+        ];
+
+        return $this->successResponse($periodData, 'Periode penggajian berhasil dibuka.', 201);
     }
 
     /**
@@ -92,35 +129,32 @@ class PayrollController extends Controller
             return $this->errorResponse('Akses ditolak. Hanya HR atau Owner yang dapat melihat detail periode.', null, 403);
         }
 
-        $period = PayrollPeriod::where('id_companies', $user->id_companies)
-            ->where('id_payroll_periods', $id)
-            ->first();
+        $refSlip = PayrollSlip::where('id_companies', $user->id_companies)->find($id);
 
-        if (! $period) {
+        if (! $refSlip) {
             return $this->errorResponse('Periode penggajian tidak ditemukan.', null, 404);
         }
 
-        $slipsCount = PayrollSlip::where('id_payroll_periods', $id)->count();
-        $totalGross = (float) PayrollSlip::where('id_payroll_periods', $id)
-            ->selectRaw('SUM(basic_salary + allowance_fixed + overtime_pay) as gross')
-            ->value('gross');
-        $totalDeductions = (float) PayrollSlip::where('id_payroll_periods', $id)
-            ->selectRaw('SUM(deduction_late + deduction_absence + deduction_other) as deductions')
-            ->value('deductions');
-        $totalNet = (float) PayrollSlip::where('id_payroll_periods', $id)->sum('net_salary');
+        $periodQuery = PayrollSlip::where('id_companies', $user->id_companies)
+            ->where('period_name', $refSlip->period_name);
+
+        $slipsCount = (clone $periodQuery)->count();
+        $totalGross = (float) (clone $periodQuery)->selectRaw('SUM(basic_salary + allowance_fixed + overtime_pay) as gross')->value('gross');
+        $totalDeductions = (float) (clone $periodQuery)->selectRaw('SUM(deduction_late + deduction_absence + deduction_other) as deductions')->value('deductions');
+        $totalNet = (float) (clone $periodQuery)->sum('net_salary');
 
         $data = [
-            'id_payroll_periods' => $period->id_payroll_periods,
-            'name' => $period->name,
-            'start_date' => $period->start_date?->format('Y-m-d'),
-            'end_date' => $period->end_date?->format('Y-m-d'),
-            'payment_date' => $period->payment_date?->format('Y-m-d'),
-            'status' => $period->status,
+            'id_payroll_periods' => $refSlip->id_payroll_slips,
+            'name' => $refSlip->period_name,
+            'start_date' => $refSlip->start_date ? $refSlip->start_date->format('Y-m-d') : null,
+            'end_date' => $refSlip->end_date ? $refSlip->end_date->format('Y-m-d') : null,
+            'payment_date' => $refSlip->payment_date ? $refSlip->payment_date->format('Y-m-d') : null,
+            'status' => $refSlip->status,
             'total_slips' => $slipsCount,
             'total_gross' => $totalGross,
             'total_deductions' => $totalDeductions,
             'total_net_salary' => $totalNet,
-            'created_at' => $period->created_at?->toIso8601String(),
+            'created_at' => $refSlip->created_at ? $refSlip->created_at->toIso8601String() : null,
         ];
 
         return $this->successResponse($data, 'Detail periode penggajian berhasil diambil.');
@@ -138,18 +172,25 @@ class PayrollController extends Controller
             return $this->errorResponse('Akses ditolak. Hanya HR atau Owner yang dapat menjalankan kalkulasi.', null, 403);
         }
 
-        $period = PayrollPeriod::where('id_companies', $user->id_companies)
-            ->where('id_payroll_periods', $id)
-            ->first();
+        $refSlip = PayrollSlip::where('id_companies', $user->id_companies)->find($id);
 
-        if (! $period) {
+        if (! $refSlip) {
             return $this->errorResponse('Periode penggajian tidak ditemukan.', null, 404);
         }
 
-        $slips = $this->calculationService->calculate($period);
+        $slips = $this->calculationService->calculate($refSlip);
+
+        $periodData = [
+            'id_payroll_periods' => $refSlip->id_payroll_slips,
+            'name' => $refSlip->period_name,
+            'start_date' => $refSlip->start_date ? $refSlip->start_date->format('Y-m-d') : null,
+            'end_date' => $refSlip->end_date ? $refSlip->end_date->format('Y-m-d') : null,
+            'payment_date' => $refSlip->payment_date ? $refSlip->payment_date->format('Y-m-d') : null,
+            'status' => 'calculated',
+        ];
 
         return $this->successResponse([
-            'period' => $period->fresh(),
+            'period' => $periodData,
             'slips_calculated' => $slips->count(),
             'total_net_salary' => (float) $slips->sum('net_salary'),
         ], 'Kalkulasi penggajian berhasil dilakukan.');
@@ -167,32 +208,27 @@ class PayrollController extends Controller
             return $this->errorResponse('Akses ditolak. Hanya HR atau Owner yang dapat meninjau rincian slip.', null, 403);
         }
 
-        $period = PayrollPeriod::where('id_companies', $user->id_companies)
-            ->where('id_payroll_periods', $id)
-            ->first();
+        $refSlip = PayrollSlip::where('id_companies', $user->id_companies)->find($id);
 
-        if (! $period) {
+        if (! $refSlip) {
             return $this->errorResponse('Periode penggajian tidak ditemukan.', null, 404);
         }
 
-        $slips = PayrollSlip::where('id_payroll_periods', $period->id_payroll_periods)
-            ->with([
-                'employee.user',
-                'employee.department',
-                'employee.jobPosition',
-            ])
+        $slips = PayrollSlip::where('id_companies', $user->id_companies)
+            ->where('period_name', $refSlip->period_name)
+            ->with(['employee.user'])
             ->get()
             ->map(function ($slip) {
                 return [
                     'id_payroll_slips' => $slip->id_payroll_slips,
-                    'id_payroll_periods' => $slip->id_payroll_periods,
+                    'id_payroll_periods' => $slip->id_payroll_slips,
                     'id_employees' => $slip->id_employees,
                     'employee' => [
                         'id_employees' => $slip->employee?->id_employees,
                         'name' => $slip->employee?->user?->name,
                         'nik' => $slip->employee?->nik,
-                        'department' => $slip->employee?->department?->name,
-                        'job_position' => $slip->employee?->jobPosition?->name,
+                        'department' => $slip->employee?->department_name,
+                        'job_position' => $slip->employee?->job_position_name,
                     ],
                     'basic_salary' => (float) $slip->basic_salary,
                     'allowance_fixed' => (float) $slip->allowance_fixed,
@@ -221,18 +257,25 @@ class PayrollController extends Controller
             return $this->errorResponse('Akses ditolak. Hanya HR atau Owner yang dapat memfinalisasi periode.', null, 403);
         }
 
-        $period = PayrollPeriod::where('id_companies', $user->id_companies)
-            ->where('id_payroll_periods', $id)
-            ->first();
+        $refSlip = PayrollSlip::where('id_companies', $user->id_companies)->find($id);
 
-        if (! $period) {
+        if (! $refSlip) {
             return $this->errorResponse('Periode penggajian tidak ditemukan.', null, 404);
         }
 
-        $count = $this->pdfService->finalizePeriod($period);
+        $count = $this->pdfService->finalizePeriod($refSlip);
+
+        $periodData = [
+            'id_payroll_periods' => $refSlip->id_payroll_slips,
+            'name' => $refSlip->period_name,
+            'start_date' => $refSlip->start_date ? $refSlip->start_date->format('Y-m-d') : null,
+            'end_date' => $refSlip->end_date ? $refSlip->end_date->format('Y-m-d') : null,
+            'payment_date' => $refSlip->payment_date ? $refSlip->payment_date->format('Y-m-d') : null,
+            'status' => 'finalized',
+        ];
 
         return $this->successResponse([
-            'period' => $period->fresh(),
+            'period' => $periodData,
             'slips_finalized' => $count,
         ], 'Periode penggajian berhasil dikunci dan slip PDF telah dibuat.');
     }
@@ -244,22 +287,21 @@ class PayrollController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $employee = $user->employee;
+        $employee = $user?->employee;
 
         if (! $employee) {
             return $this->errorResponse('Profil karyawan tidak ditemukan.', null, 404);
         }
 
         $slips = PayrollSlip::where('id_employees', $employee->id_employees)
-            ->with('payrollPeriod')
             ->orderBy('id_payroll_slips', 'desc')
             ->get()
             ->map(function ($slip) {
                 return [
                     'id_payroll_slips' => $slip->id_payroll_slips,
-                    'id_payroll_periods' => $slip->id_payroll_periods,
-                    'period_name' => $slip->payrollPeriod?->name,
-                    'payment_date' => $slip->payrollPeriod?->payment_date?->format('Y-m-d'),
+                    'id_payroll_periods' => $slip->id_payroll_slips,
+                    'period_name' => $slip->period_name,
+                    'payment_date' => $slip->payment_date ? $slip->payment_date->format('Y-m-d') : null,
                     'basic_salary' => (float) $slip->basic_salary,
                     'allowance_fixed' => (float) $slip->allowance_fixed,
                     'overtime_pay' => (float) $slip->overtime_pay,
@@ -268,7 +310,7 @@ class PayrollController extends Controller
                     'deduction_other' => (float) $slip->deduction_other,
                     'net_salary' => (float) $slip->net_salary,
                     'pdf_path' => $slip->pdf_path,
-                    'status' => $slip->payrollPeriod?->status,
+                    'status' => $slip->status,
                 ];
             });
 
@@ -282,7 +324,7 @@ class PayrollController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $employee = $user->employee;
+        $employee = $user?->employee;
 
         if (! $employee) {
             return $this->errorResponse('Profil karyawan tidak ditemukan.', null, 404);
@@ -338,7 +380,7 @@ class PayrollController extends Controller
             return $this->errorResponse('Berkas slip gaji tidak ditemukan.', null, 404);
         }
 
-        $periodName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $slip->payrollPeriod?->name ?? 'Gaji');
+        $periodName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $slip->period_name ?? 'Gaji');
         $fileName = "Slip_Gaji_{$periodName}_{$slip->id_employees}.pdf";
 
         return response()->download($filePath, $fileName, [

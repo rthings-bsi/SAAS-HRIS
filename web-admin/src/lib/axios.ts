@@ -52,10 +52,7 @@ apiClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         localStorage.removeItem("hris_token");
         localStorage.removeItem("hris_user");
-        if (
-          !window.location.pathname.startsWith("/login") &&
-          !window.location.pathname.startsWith("/register")
-        ) {
+        if (!window.location.pathname.startsWith("/login")) {
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination
           window.location.href = "/login";
         }

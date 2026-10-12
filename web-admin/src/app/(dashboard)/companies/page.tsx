@@ -1,8 +1,15 @@
 "use client";
 
-import React from "react";
-import { SuperAdminDashboardView } from "@/components/superadmin/SuperAdminDashboardView";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import CompanyProfilePage from "../company-profile/page";
 
-export default function CompaniesPage() {
-  return <SuperAdminDashboardView />;
+export default function CompaniesRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/company-profile");
+  }, [router]);
+
+  return <CompanyProfilePage />;
 }

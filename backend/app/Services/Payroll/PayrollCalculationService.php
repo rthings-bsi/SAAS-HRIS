@@ -6,6 +6,7 @@ use App\Exceptions\PayrollException;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
+use App\Models\OvertimeRequest;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollSlip;
 use Carbon\Carbon;
@@ -68,7 +69,16 @@ class PayrollCalculationService
             $dailyRate = $basicSalary / $workDays;
             $deductionAbsence = round($dailyRate * $unexcusedAbsences, 2);
 
-            $overtimePay = 0.0;
+            // Upah Lembur disetujui
+            $approvedOvertimeHours = (float) OvertimeRequest::where('id_employees', $employee->id_employees)
+                ->where('status', 'approved')
+                ->whereBetween('date', [$period->start_date, $period->end_date])
+                ->sum('duration_hours');
+
+            // Formula standar upah lembur per jam (PP 35/2021): 1/173 x (Gaji Pokok + Tunjangan Tetap)
+            $hourlyRate = ($basicSalary + $allowanceFixed) > 0 ? round(($basicSalary + $allowanceFixed) / 173, 2) : 0.0;
+            $overtimePay = round($hourlyRate * $approvedOvertimeHours, 2);
+
             $deductionOther = 0.0;
 
             $grossSalary = $basicSalary + $allowanceFixed + $overtimePay;

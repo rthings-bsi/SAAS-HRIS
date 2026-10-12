@@ -42,7 +42,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: AppDimensions.cardBorderRadius,
           side: const BorderSide(
-            color: AppColors.borderNeutral,
+            color: AppColors.hairline,
             width: AppDimensions.borderWidth,
           ),
         ),
@@ -137,7 +137,7 @@ class AppTheme {
         ),
       ),
       dividerTheme: const DividerThemeData(
-        color: AppColors.borderNeutral,
+        color: AppColors.separator,
         thickness: AppDimensions.borderWidth,
         space: 1,
       ),

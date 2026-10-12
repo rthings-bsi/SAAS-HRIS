@@ -22,7 +22,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
         color: AppColors.canvasLight,
         borderRadius: AppDimensions.cardBorderRadius,
         border: Border.all(
-          color: AppColors.borderNeutral,
+          color: AppColors.hairline,
           width: AppDimensions.borderWidth,
         ),
       ),
@@ -83,7 +83,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppDimensions.space12),
           const Divider(
-            color: AppColors.borderNeutral,
+            color: AppColors.separator,
             thickness: AppDimensions.borderWidth,
           ),
           const SizedBox(height: AppDimensions.space12),
@@ -154,7 +154,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
         color: AppColors.canvasLight,
         borderRadius: AppDimensions.cardBorderRadius,
         border: Border.all(
-          color: AppColors.borderNeutral,
+          color: AppColors.hairline,
           width: AppDimensions.borderWidth,
         ),
       ),
@@ -194,7 +194,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppDimensions.space8),
           const Divider(
-            color: AppColors.borderNeutral,
+            color: AppColors.separator,
             thickness: AppDimensions.borderWidth,
           ),
           const SizedBox(height: AppDimensions.space8),
@@ -216,7 +216,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
         color: AppColors.canvasLight,
         borderRadius: AppDimensions.cardBorderRadius,
         border: Border.all(
-          color: AppColors.borderNeutral,
+          color: AppColors.hairline,
           width: AppDimensions.borderWidth,
         ),
       ),
@@ -256,7 +256,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppDimensions.space8),
           const Divider(
-            color: AppColors.borderNeutral,
+            color: AppColors.separator,
             thickness: AppDimensions.borderWidth,
           ),
           const SizedBox(height: AppDimensions.space8),

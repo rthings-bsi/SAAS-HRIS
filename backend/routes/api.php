@@ -7,6 +7,7 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/api_emp_shift.php';
     require __DIR__ . '/api_attendance.php';
     require __DIR__ . '/api_leave.php';
+    require __DIR__ . '/api_overtime.php';
     require __DIR__ . '/api_payroll.php';
-    require __DIR__ . '/api_superadmin.php';
+    require __DIR__ . '/api_performance.php';
 });

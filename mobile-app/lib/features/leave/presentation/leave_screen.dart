@@ -67,7 +67,7 @@ class LeaveScreen extends ConsumerWidget {
 
     if (isNonEmployee) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: AppColors.surfaceMuted,
         appBar: AppBar(
           title: const Row(
             children: [
@@ -102,11 +102,10 @@ class LeaveScreen extends ConsumerWidget {
     }
 
     final currentFilter = ref.watch(leaveStatusFilterProvider);
-    final balancesAsync = ref.watch(leaveBalanceProvider);
     final requestsAsync = ref.watch(leaveMyRequestsProvider(currentFilter));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceMuted,
       appBar: AppBar(
         title: const Row(
           children: [
@@ -123,16 +122,6 @@ class LeaveScreen extends ConsumerWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Segarkan',
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.inkMuted),
-            onPressed: () {
-              ref.invalidate(leaveBalanceProvider);
-              ref.invalidate(leaveMyRequestsProvider);
-            },
-          ),
-        ],
       ),
       floatingActionButton: FloatingActionButton(
         tooltip: 'Ajukan Cuti / Izin',
@@ -155,7 +144,6 @@ class LeaveScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(leaveBalanceProvider);
           ref.invalidate(leaveMyRequestsProvider);
         },
         child: ListView(
@@ -165,218 +153,6 @@ class LeaveScreen extends ConsumerWidget {
             vertical: AppDimensions.space16,
           ),
           children: [
-            // Section 1 Header: Sisa Kuota Cuti
-            _buildSectionHeader(
-              title: 'Sisa Kuota Cuti',
-              icon: Icons.pie_chart_outline_rounded,
-            ),
-            const SizedBox(height: AppDimensions.space8),
-
-            // Kuota Card / Loading / Empty
-            balancesAsync.when(
-              loading: () => const AppSkeleton(height: 110),
-              error: (error, _) => AppErrorState(
-                isCard: true,
-                title: 'Gagal Memuat Kuota Cuti',
-                message: error is ApiException
-                    ? error.userFriendlyMessage
-                    : error.toString(),
-                onRetry: () => ref.invalidate(leaveBalanceProvider),
-              ),
-              data: (balances) {
-                if (balances.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(AppDimensions.space16),
-                    decoration: BoxDecoration(
-                      color: AppColors.canvasLight,
-                      borderRadius: AppDimensions.cardBorderRadius,
-                      border: Border.all(
-                        color: const Color(0xFFE2E8F0),
-                        width: AppDimensions.borderWidth,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFDBEAFE)),
-                          ),
-                          child: const Icon(
-                            Icons.info_outline_rounded,
-                            color: Color(0xFF2563EB),
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: AppDimensions.space12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Informasi Kuota Cuti',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.inkPrimary,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Data kuota belum diatur oleh HR. Anda tetap dapat mengajukan izin/cuti.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.inkMuted,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: balances.map((balance) {
-                    final total = balance.total_quota;
-                    final used = balance.used_days;
-                    final remaining = balance.remaining_days;
-                    final progress = total > 0
-                        ? (used / total).clamp(0.0, 1.0)
-                        : 0.0;
-
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: AppDimensions.space8),
-                      padding: const EdgeInsets.all(AppDimensions.space16),
-                      decoration: BoxDecoration(
-                        color: AppColors.canvasLight,
-                        borderRadius: AppDimensions.cardBorderRadius,
-                        border: Border.all(
-                          color: const Color(0xFFE2E8F0),
-                          width: AppDimensions.borderWidth,
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x04000000),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                balance.name,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.inkPrimary,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.orangeTint,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: AppColors.orangeBorder,
-                                    width: 1.0,
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Tahun Berjalan',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.actionAccent,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppDimensions.space8),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                '$remaining Hari',
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.inkPrimary,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Tersedia',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppDimensions.space12),
-
-                          // Progress Bar
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              minHeight: 6,
-                              backgroundColor: const Color(0xFFF1F5F9),
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                AppColors.actionAccent,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.space8),
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Terpakai: $used hari',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                              Text(
-                                'Total Kuota: $total hari',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                );
-              },
-            ),
-
-            const SizedBox(height: AppDimensions.space20),
 
             // Section 2 Header: Riwayat Pengajuan Cuti
             Row(
@@ -478,7 +254,7 @@ class LeaveScreen extends ConsumerWidget {
                       color: AppColors.canvasLight,
                       borderRadius: AppDimensions.cardBorderRadius,
                       border: Border.all(
-                        color: const Color(0xFFE2E8F0),
+                        color: AppColors.hairline,
                         width: AppDimensions.borderWidth,
                       ),
                     ),
@@ -513,14 +289,14 @@ class LeaveScreen extends ConsumerWidget {
                       padding: const EdgeInsets.all(AppDimensions.space16),
                       decoration: BoxDecoration(
                         color: AppColors.canvasLight,
-                        borderRadius: AppDimensions.cardBorderRadius,
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: const Color(0xFFE2E8F0),
-                          width: AppDimensions.borderWidth,
+                          width: 1.0,
                         ),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x03000000),
+                            color: Color(0x04000000),
                             blurRadius: 6,
                             offset: Offset(0, 2),
                           ),
@@ -539,10 +315,10 @@ class LeaveScreen extends ConsumerWidget {
                                     Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFF8FAFC),
+                                        color: AppColors.surfaceMuted,
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: const Color(0xFFE2E8F0),
+                                          color: const Color(0xFFF1F5F9),
                                         ),
                                       ),
                                       child: const Icon(
@@ -579,10 +355,10 @@ class LeaveScreen extends ConsumerWidget {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: AppColors.surfaceMuted,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: const Color(0xFFE2E8F0),
+                                color: AppColors.hairline,
                                 width: 1.0,
                               ),
                             ),
@@ -610,7 +386,7 @@ class LeaveScreen extends ConsumerWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE2E8F0),
+                                    color: AppColors.hairline,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
@@ -776,13 +552,13 @@ class LeaveScreen extends ConsumerWidget {
     required VoidCallback onTap,
   }) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 44),
+      constraints: const BoxConstraints(minHeight: AppDimensions.minTouchTarget),
       child: Material(
         color: isSelected ? AppColors.actionAccent : AppColors.canvasLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(999),
           side: BorderSide(
-            color: isSelected ? AppColors.actionAccent : const Color(0xFFCBD5E1),
+            color: isSelected ? AppColors.actionAccent : const Color(0xFFE2E8F0),
             width: 1.0,
           ),
         ),

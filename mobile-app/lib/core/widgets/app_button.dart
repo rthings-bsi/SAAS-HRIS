@@ -80,7 +80,7 @@ class AppButton extends StatelessWidget {
       ),
       child: Material(
         color: backgroundColor,
-        borderRadius: AppDimensions.buttonBorderRadius,
+        borderRadius: borderSide == null ? AppDimensions.buttonBorderRadius : null,
         shape: borderSide != null
             ? RoundedRectangleBorder(
                 borderRadius: AppDimensions.buttonBorderRadius,
@@ -113,13 +113,17 @@ class AppButton extends StatelessWidget {
                         icon!,
                         const SizedBox(width: AppDimensions.space8),
                       ],
-                      Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: foregroundColor,
-                          letterSpacing: 0.1,
+                      Flexible(
+                        child: Text(
+                          text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: foregroundColor,
+                            letterSpacing: 0.1,
+                          ),
                         ),
                       ),
                     ],

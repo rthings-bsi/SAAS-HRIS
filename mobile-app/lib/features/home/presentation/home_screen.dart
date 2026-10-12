@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/hr_hub_logo.dart';
-import '../../attendance/presentation/attendance_screen.dart';
 import '../../auth/provider/auth_provider.dart';
+import '../../attendance/presentation/attendance_screen.dart';
 import '../../leave/presentation/leave_screen.dart';
+import '../../overtime/presentation/overtime_screen.dart';
 import '../../payroll/presentation/payroll_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
+import 'home_dashboard_view.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -20,16 +22,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
   bool _dialogShown = false;
 
-  final List<Widget> _pages = const [
-    AttendanceScreen(),
-    LeaveScreen(),
-    PayrollScreen(),
-    ProfileScreen(),
-  ];
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    _pages = [
+      HomeDashboardView(
+        onNavigateToTab: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+      const OvertimeScreen(),
+      const LeaveScreen(),
+      const PayrollScreen(),
+      const ProfileScreen(),
+    ];
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAdminNotice();
     });
@@ -45,19 +55,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         barrierDismissible: true,
         builder: (ctx) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: AppDimensions.cardBorderRadius,
           ),
           title: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(10),
+                decoration: const BoxDecoration(
+                  color: AppColors.warningBg,
+                  borderRadius: AppDimensions.cardBorderRadius,
                 ),
                 child: const Icon(
                   Icons.admin_panel_settings_rounded,
-                  color: Color(0xFFD97706),
+                  color: AppColors.warningText,
                   size: 24,
                 ),
               ),
@@ -117,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: AppDimensions.buttonBorderRadius,
                 ),
               ),
               onPressed: () => Navigator.of(ctx).pop(),
@@ -157,46 +167,100 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Color(0x05000000),
-              blurRadius: 10,
+              color: Color(0x06000000),
+              blurRadius: 8,
               offset: Offset(0, -2),
             ),
           ],
         ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          backgroundColor: AppColors.canvasLight,
-          indicatorColor: AppColors.orangeTint,
-          elevation: 0,
-          height: 65,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.access_time_rounded, color: AppColors.inkMuted, size: 22),
-              selectedIcon: Icon(Icons.access_time_filled_rounded, color: AppColors.actionAccent, size: 22),
-              label: 'Presensi',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.calendar_month_outlined, color: AppColors.inkMuted, size: 22),
-              selectedIcon: Icon(Icons.calendar_month_rounded, color: AppColors.actionAccent, size: 22),
-              label: 'Cuti',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined, color: AppColors.inkMuted, size: 22),
-              selectedIcon: Icon(Icons.receipt_long_rounded, color: AppColors.actionAccent, size: 22),
-              label: 'Slip Gaji',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline_rounded, color: AppColors.inkMuted, size: 22),
-              selectedIcon: Icon(Icons.person_rounded, color: AppColors.actionAccent, size: 22),
-              label: 'Profil',
-            ),
-          ],
+        child: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            indicatorColor: Colors.transparent,
+            iconTheme: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const IconThemeData(color: AppColors.navActive, size: 23);
+              }
+              return const IconThemeData(color: Color(0xFF64748B), size: 23);
+            }),
+            labelTextStyle: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.navActive,
+                  letterSpacing: -0.2,
+                );
+              }
+              return const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF64748B),
+                letterSpacing: -0.2,
+              );
+            }),
+          ),
+          child: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            backgroundColor: AppColors.canvasLight,
+            indicatorColor: Colors.transparent,
+            elevation: 0,
+            height: 60,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home_rounded),
+                label: 'Home',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.more_time_outlined),
+                selectedIcon: Icon(Icons.more_time_rounded),
+                label: 'Lembur',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.calendar_month_outlined),
+                selectedIcon: Icon(Icons.calendar_month_rounded),
+                label: 'Cuti',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.receipt_long_outlined),
+                selectedIcon: Icon(Icons.receipt_long_rounded),
+                label: 'Slip Gaji',
+              ),
+              NavigationDestination(
+                icon: CircleAvatar(
+                  radius: 11,
+                  backgroundColor: AppColors.avatarBg,
+                  child: Text(
+                    getInitials(userName),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.avatarText,
+                    ),
+                  ),
+                ),
+                selectedIcon: CircleAvatar(
+                  radius: 12,
+                  backgroundColor: AppColors.navActive,
+                  child: Text(
+                    getInitials(userName),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                label: 'Profil',
+              ),
+            ],
+          ),
         ),
       ),
       drawer: Drawer(
@@ -205,24 +269,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Drawer Brand Header
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.space20,
-                  vertical: AppDimensions.space20,
-                ),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Color(0xFFE2E8F0),
-                      width: 1.0,
-                    ),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Drawer Brand Header
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.space20,
+                          vertical: AppDimensions.space20,
+                        ),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: AppColors.hairline,
+                              width: AppDimensions.borderWidth,
+                            ),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                       children: [
                         const HrHubLogo(size: 32),
                         const SizedBox(width: 10),
@@ -256,11 +325,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(AppDimensions.space12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(14),
+                        color: AppColors.surfaceMuted,
+                        borderRadius: AppDimensions.cardBorderRadius,
                         border: Border.all(
-                          color: const Color(0xFFE2E8F0),
-                          width: 1.0,
+                          color: AppColors.hairline,
+                          width: AppDimensions.borderWidth,
                         ),
                       ),
                       child: Row(
@@ -310,14 +379,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: (auth.isAdministrator || !auth.hasEmployeeProfile)
-                                        ? const Color(0xFFFEF3C7)
+                                        ? AppColors.warningBg
                                         : AppColors.orangeTint,
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
                                       color: (auth.isAdministrator || !auth.hasEmployeeProfile)
-                                          ? const Color(0xFFF59E0B)
+                                          ? AppColors.warningBorder
                                           : AppColors.orangeBorder,
-                                      width: 1.0,
+                                      width: AppDimensions.borderWidth,
                                     ),
                                   ),
                                   child: Text(
@@ -326,7 +395,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                       color: (auth.isAdministrator || !auth.hasEmployeeProfile)
-                                          ? const Color(0xFF92400E)
+                                          ? AppColors.warningText
                                           : AppColors.actionAccent,
                                     ),
                                   ),
@@ -342,16 +411,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFFDE68A)),
+                          color: AppColors.warningBg,
+                          borderRadius: AppDimensions.cardBorderRadius,
+                          border: Border.all(color: AppColors.warningBorder),
                         ),
                         child: const Row(
                           children: [
                             Icon(
                               Icons.info_outline_rounded,
                               size: 16,
-                              color: Color(0xFFB45309),
+                              color: AppColors.warningText,
                             ),
                             SizedBox(width: 8),
                             Expanded(
@@ -359,7 +428,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 'Mobile khusus presensi & cuti karyawan. Gunakan Web Admin untuk persetujuan & kelola tim.',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Color(0xFF92400E),
+                                  color: AppColors.warningText,
                                   height: 1.3,
                                 ),
                               ),
@@ -381,8 +450,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: Column(
                   children: [
                     _DrawerNavTile(
-                      icon: Icons.access_time_rounded,
-                      title: 'Presensi Hari Ini',
+                      icon: Icons.home_rounded,
+                      title: 'Home (Beranda)',
                       isSelected: _currentIndex == 0,
                       onTap: () {
                         Navigator.pop(context);
@@ -390,8 +459,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       },
                     ),
                     _DrawerNavTile(
-                      icon: Icons.calendar_month_rounded,
-                      title: 'Pengajuan Cuti & Izin',
+                      icon: Icons.more_time_rounded,
+                      title: 'Pengajuan Lembur',
                       isSelected: _currentIndex == 1,
                       onTap: () {
                         Navigator.pop(context);
@@ -399,8 +468,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       },
                     ),
                     _DrawerNavTile(
-                      icon: Icons.receipt_long_rounded,
-                      title: 'Riwayat Slip Gaji',
+                      icon: Icons.calendar_month_rounded,
+                      title: 'Pengajuan Cuti',
                       isSelected: _currentIndex == 2,
                       onTap: () {
                         Navigator.pop(context);
@@ -408,19 +477,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       },
                     ),
                     _DrawerNavTile(
-                      icon: Icons.person_rounded,
-                      title: 'Profil Saya',
+                      icon: Icons.receipt_long_rounded,
+                      title: 'Slip Gaji Saya',
                       isSelected: _currentIndex == 3,
                       onTap: () {
                         Navigator.pop(context);
                         setState(() => _currentIndex = 3);
                       },
                     ),
+                    _DrawerNavTile(
+                      icon: Icons.person_rounded,
+                      title: 'Profil Saya',
+                      isSelected: _currentIndex == 4,
+                      onTap: () {
+                        Navigator.pop(context);
+                        setState(() => _currentIndex = 4);
+                      },
+                    ),
+                    const Divider(height: 16),
+                    _DrawerNavTile(
+                      icon: Icons.camera_alt_outlined,
+                      title: 'Presensi Kamera & GPS',
+                      isSelected: false,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const AttendanceScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
-
-              const Spacer(),
+                    ],
+                  ),
+                ),
+              ),
 
               // Logout Action
               Padding(
@@ -430,9 +524,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 child: Material(
                   color: AppColors.dangerBg,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppDimensions.cardBorderRadius,
+                    side: BorderSide(
                       color: AppColors.dangerBorder,
                       width: 1.0,
                     ),
@@ -458,7 +552,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         context: context,
                         builder: (ctx) => AlertDialog(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: AppDimensions.cardBorderRadius,
                           ),
                           title: Row(
                             children: [
@@ -466,7 +560,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: AppColors.dangerBg,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: AppDimensions.cardBorderRadius,
                                   border: Border.all(color: AppColors.dangerBorder),
                                 ),
                                 child: const Icon(
@@ -517,7 +611,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 elevation: 0,
                                 minimumSize: const Size(100, AppDimensions.minTouchTarget),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: AppDimensions.buttonBorderRadius,
                                 ),
                               ),
                               onPressed: () {
@@ -565,7 +659,7 @@ class _DrawerNavTile extends StatelessWidget {
       child: Material(
         color: isSelected ? AppColors.orangeTint : Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppDimensions.cardBorderRadius,
           side: isSelected
               ? const BorderSide(color: AppColors.orangeBorder, width: 1.0)
               : BorderSide.none,

@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ShieldCheck,
-  RotateCcw,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   Briefcase,
   Building,
@@ -87,6 +87,7 @@ export default function RolesPage() {
   // Edit Role Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [togglingUser, setTogglingUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState<UserRole>("employee");
   const [modalError, setModalError] = useState<string | null>(null);
 
@@ -149,6 +150,7 @@ export default function RolesPage() {
       return response.data;
     },
     onSuccess: (data) => {
+      setTogglingUser(null);
       if (data.success) {
         setActionNotice(data.message || "Status pengguna berhasil diperbarui.");
         queryClient.invalidateQueries({ queryKey: ["users-roles"] });
@@ -157,7 +159,9 @@ export default function RolesPage() {
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : "Gagal mengubah status akun.";
-      alert(msg);
+      setTogglingUser(null);
+      setActionNotice(msg);
+      setTimeout(() => setActionNotice(null), 4000);
     },
   });
 
@@ -178,10 +182,10 @@ export default function RolesPage() {
     });
   };
 
-  const handleToggleStatus = (user: User) => {
-    const action = user.is_active ? "menonaktifkan" : "mengaktifkan";
-    if (!window.confirm(`Yakin ingin ${action} akun "${user.name}"?`)) return;
-    toggleStatusMutation.mutate(user.id_users);
+  const confirmToggleStatus = () => {
+    if (togglingUser) {
+      toggleStatusMutation.mutate(togglingUser.id_users);
+    }
   };
 
   // Filtered Users
@@ -222,17 +226,6 @@ export default function RolesPage() {
           <p className="text-sm text-slate-500 mt-0.5 font-normal">
             Atur wewenang persetujuan cuti, kelola operasional HR, dan hak administrasi sistem.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => refetch()}
-            leftIcon={<RotateCcw className="w-4 h-4 text-slate-500" />}
-          >
-            Segarkan
-          </Button>
         </div>
       </div>
 
@@ -423,7 +416,7 @@ export default function RolesPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleToggleStatus(user)}
+                          onClick={() => setTogglingUser(user)}
                           title={user.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"}
                           aria-label={user.is_active ? `Nonaktifkan akun ${user.name}` : `Aktifkan akun ${user.name}`}
                           className={`p-1.5 rounded-xl transition-all active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 ${
@@ -536,6 +529,59 @@ export default function RolesPage() {
             </div>
           </div>
         </form>
+      </Modal>
+
+      {/* Confirmation Modal for Toggle Status */}
+      <Modal
+        isOpen={!!togglingUser}
+        onClose={() => setTogglingUser(null)}
+        title={togglingUser?.is_active ? "Konfirmasi Nonaktifkan Akun" : "Konfirmasi Aktifkan Akun"}
+        maxWidth="md"
+        footer={
+          <div className="flex items-center justify-end gap-2 w-full">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setTogglingUser(null)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant={togglingUser?.is_active ? "danger" : "primary"}
+              size="sm"
+              isLoading={toggleStatusMutation.isPending}
+              onClick={confirmToggleStatus}
+            >
+              {togglingUser?.is_active ? "Nonaktifkan Akun" : "Aktifkan Akun"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex items-start gap-3 py-2">
+          <div
+            className={`p-2 rounded-xl flex-shrink-0 ${
+              togglingUser?.is_active
+                ? "bg-rose-50 text-rose-600"
+                : "bg-emerald-50 text-emerald-600"
+            }`}
+          >
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-slate-700">
+              Apakah Anda yakin ingin{" "}
+              {togglingUser?.is_active ? "menonaktifkan" : "mengaktifkan"} akun{" "}
+              <strong className="text-slate-900">{togglingUser?.name}</strong>?
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              {togglingUser?.is_active
+                ? "Pengguna tidak akan dapat login ke aplikasi seluler maupun dashboard web."
+                : "Pengguna akan dapat kembali login dan menggunakan hak akses sesuai role-nya."}
+            </p>
+          </div>
+        </div>
       </Modal>
     </div>
   );

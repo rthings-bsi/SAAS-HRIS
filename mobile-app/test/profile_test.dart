@@ -188,7 +188,7 @@ void main() {
     expect(repo.logoutCalled, isTrue);
   });
 
-  testWidgets('HomeScreen has 4 navigation tabs and can navigate to Profile',
+  testWidgets('HomeScreen has 5 navigation tabs and can navigate to Profile',
       (tester) async {
     final repo = _MockAuthRepo();
 
@@ -213,8 +213,9 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // Verify all 4 tabs exist
-    expect(find.text('Presensi'), findsOneWidget);
+    // Verify all 5 tabs exist
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Lembur'), findsOneWidget);
     expect(find.text('Cuti'), findsOneWidget);
     expect(find.text('Slip Gaji'), findsOneWidget);
     expect(find.text('Profil'), findsOneWidget);

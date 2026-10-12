@@ -104,11 +104,7 @@ class AttendanceController extends Controller
             return $this->errorResponse('Akses ditolak. Anda tidak memiliki izin melihat rekap presensi.', null, 403);
         }
 
-        $companyId = $user->id_companies ?? (int) $request->input('id_companies');
-
-        if (! $companyId) {
-            return $this->errorResponse('Parameter id_companies wajib ditentukan untuk Superadmin.', null, 422);
-        }
+        $companyId = $user->id_companies ?? (int) $request->input('id_companies', 1) ?: 1;
 
         $date = $request->input('date');
         $month = $request->input('month');

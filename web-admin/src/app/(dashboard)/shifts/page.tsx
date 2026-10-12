@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, CalendarClock, Trash2, RotateCcw } from "lucide-react";
+import { Plus, CalendarClock, Trash2, Edit2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -17,7 +17,12 @@ export default function ShiftsPage() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Delete Confirmation State
+  const [deletingShift, setDeletingShift] = useState<Shift | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Form Fields
   const [name, setName] = useState("");
@@ -57,9 +62,41 @@ export default function ShiftsPage() {
     onSuccess: (data) => {
       if (data.success) {
         setIsModalOpen(false);
+        setEditingShift(null);
         queryClient.invalidateQueries({ queryKey: ["shifts"] });
       } else {
         setFormError(data.message || "Gagal menyimpan shift baru.");
+      }
+    },
+    onError: (err: Error) => {
+      setFormError(err.message || "Terjadi kendala pada server.");
+    },
+  });
+
+  // Update Mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: {
+        name: string;
+        start_time: string;
+        end_time: string;
+        late_tolerance_minutes: number;
+      };
+    }) => {
+      const response = await apiClient.put<ApiResponse<Shift>>(`/shifts/${id}`, payload);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        setIsModalOpen(false);
+        setEditingShift(null);
+        queryClient.invalidateQueries({ queryKey: ["shifts"] });
+      } else {
+        setFormError(data.message || "Gagal memperbarui shift.");
       }
     },
     onError: (err: Error) => {
@@ -73,14 +110,17 @@ export default function ShiftsPage() {
       await apiClient.delete(`/shifts/${id}`);
     },
     onSuccess: () => {
+      setDeletingShift(null);
+      setDeleteError(null);
       queryClient.invalidateQueries({ queryKey: ["shifts"] });
     },
     onError: (err: Error) => {
-      alert(err.message || "Gagal menghapus shift.");
+      setDeleteError(err.message || "Gagal menghapus shift.");
     },
   });
 
-  const handleOpenModal = () => {
+  const handleOpenCreateModal = () => {
+    setEditingShift(null);
     setName("");
     setStartTime("08:00");
     setEndTime("17:00");
@@ -89,20 +129,38 @@ export default function ShiftsPage() {
     setIsModalOpen(true);
   };
 
-  const handleCreateShift = (e: React.FormEvent) => {
+  const handleOpenEditModal = (shift: Shift) => {
+    setEditingShift(shift);
+    setName(shift.name);
+    setStartTime(shift.start_time.slice(0, 5));
+    setEndTime(shift.end_time.slice(0, 5));
+    setLateTolerance(String(shift.late_tolerance_minutes));
+    setFormError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    createMutation.mutate({
-      name,
+
+    const payload = {
+      name: name.trim(),
       start_time: startTime.length === 5 ? `${startTime}:00` : startTime,
       end_time: endTime.length === 5 ? `${endTime}:00` : endTime,
       late_tolerance_minutes: parseInt(lateTolerance, 10),
-    });
+    };
+
+    if (editingShift) {
+      updateMutation.mutate({ id: editingShift.id_shifts, payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
-  const handleDeleteShift = (id: number) => {
-    if (!window.confirm("Yakin ingin menghapus jadwal shift ini?")) return;
-    deleteMutation.mutate(id);
+  const confirmDelete = () => {
+    if (deletingShift) {
+      deleteMutation.mutate(deletingShift.id_shifts);
+    }
   };
 
   return (
@@ -113,23 +171,15 @@ export default function ShiftsPage() {
             Master Shift Kerja
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Konfigurasi jam masuk, jam pulang, dan toleransi keterlambatan presensi.
+            Konfigurasi jam masuk, jam pulang, dan toleransi keterlambatan presensi internal.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => refetch()}
-            leftIcon={<RotateCcw className="w-4 h-4 text-slate-500" />}
-          >
-            Segarkan
-          </Button>
+        <div className="hidden sm:flex items-center gap-2">
           <Button
             variant="primary"
             size="sm"
-            onClick={handleOpenModal}
+            onClick={handleOpenCreateModal}
             leftIcon={<Plus className="w-4 h-4" aria-hidden="true" />}
           >
             Buat Shift Baru
@@ -161,7 +211,7 @@ export default function ShiftsPage() {
               title="Belum ada shift kerja"
               description="Buat shift reguler atau operasional untuk jadwal harian staf."
               actionLabel="Tambah Shift Baru"
-              onAction={handleOpenModal}
+              onAction={handleOpenCreateModal}
             />
           </div>
         ) : (
@@ -203,14 +253,24 @@ export default function ShiftsPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteShift(item.id_shifts)}
-                        aria-label={`Hapus shift ${item.name}`}
-                        className="p-1.5 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="inline-flex items-center gap-1.5 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(item)}
+                          aria-label={`Ubah shift ${item.name}`}
+                          className="p-1.5 rounded-xl text-slate-500 hover:text-orange-600 hover:bg-orange-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingShift(item)}
+                          aria-label={`Hapus shift ${item.name}`}
+                          className="p-1.5 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -220,17 +280,15 @@ export default function ShiftsPage() {
         )}
       </Card>
 
-      {/* Modal Buat Shift */}
+      {/* Modal Buat / Edit Shift */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Buat Shift Kerja Baru"
+        title={editingShift ? "Ubah Jadwal Shift Kerja" : "Buat Shift Kerja Baru"}
       >
-        <form onSubmit={handleCreateShift} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {formError && (
-            <div
-              className="rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-700 font-medium"
-            >
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-700 font-medium">
               {formError}
             </div>
           )}
@@ -310,13 +368,78 @@ export default function ShiftsPage() {
               type="submit"
               variant="primary"
               size="sm"
-              isLoading={createMutation.isPending}
+              isLoading={createMutation.isPending || updateMutation.isPending}
             >
-              Simpan Shift
+              {editingShift ? "Simpan Perubahan" : "Simpan Shift"}
             </Button>
           </div>
         </form>
       </Modal>
+
+      {/* Confirmation Modal for Delete */}
+      <Modal
+        isOpen={!!deletingShift}
+        onClose={() => {
+          setDeletingShift(null);
+          setDeleteError(null);
+        }}
+        title="Konfirmasi Hapus Shift"
+        maxWidth="md"
+        footer={
+          <div className="flex items-center justify-end gap-2 w-full">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setDeletingShift(null);
+                setDeleteError(null);
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              isLoading={deleteMutation.isPending}
+              onClick={confirmDelete}
+            >
+              Hapus Shift
+            </Button>
+          </div>
+        }
+      >
+        {deleteError && (
+          <div role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+            {deleteError}
+          </div>
+        )}
+        <div className="flex items-start gap-3 py-2">
+          <div className="p-2 rounded-xl bg-rose-50 text-rose-600 flex-shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-slate-700">
+              Apakah Anda yakin ingin menghapus shift{" "}
+              <strong className="text-slate-900">{deletingShift?.name}</strong>?
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Tindakan ini tidak dapat dibatalkan. Shift yang masih terhubung dengan jadwal kerja aktif tidak dapat dihapus.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Floating Action Button (FAB) + Mobile */}
+      <button
+        type="button"
+        onClick={handleOpenCreateModal}
+        aria-label="Buat Shift Baru"
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 active:scale-90 text-white shadow-[0_8px_24px_rgba(234,88,12,0.45)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/30"
+      >
+        <Plus className="w-7 h-7 stroke-[2.5]" aria-hidden="true" />
+      </button>
     </div>
   );
 }

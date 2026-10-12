@@ -7,7 +7,6 @@ use App\Models\Company;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\JobPosition;
-use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -17,152 +16,23 @@ class AuthApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_register_company_successful(): void
+    public function test_register_company_endpoint_is_removed_for_single_company(): void
     {
-        $payload = [
-            'company_name' => 'PT Teknologi Nusantara',
-            'name' => 'Budi Santoso',
-            'email' => 'budi@teknus.com',
+        $response = $this->postJson('/api/v1/auth/register-company', [
+            'company_name' => 'PT Any',
+            'name' => 'User',
+            'email' => 'user@any.com',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'phone' => '081234567890',
-            'address' => 'Jl. Jend. Sudirman Kav. 1, Jakarta',
-        ];
-
-        $response = $this->postJson('/api/v1/auth/register-company', $payload);
-
-        $response->assertStatus(201)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Registrasi perusahaan berhasil.',
-                'errors' => null,
-            ])
-            ->assertJsonStructure([
-                'success',
-                'message',
-                'data' => [
-                    'access_token',
-                    'token_type',
-                    'user' => [
-                        'id_users',
-                        'id_companies',
-                        'name',
-                        'email',
-                        'role',
-                        'is_active',
-                    ],
-                    'company' => [
-                        'id_companies',
-                        'name',
-                        'slug',
-                        'email',
-                        'subscription_status',
-                        'trial_ends_at',
-                    ],
-                ],
-                'errors',
-            ]);
-
-        $company = Company::where('slug', 'pt-teknologi-nusantara')->first();
-        $this->assertNotNull($company);
-        $this->assertEquals('trial', $company->subscription_status);
-        $this->assertNotNull($company->trial_ends_at);
-
-        $branch = Branch::where('id_companies', $company->id_companies)->first();
-        $this->assertNotNull($branch);
-        $this->assertEquals('Kantor Utama', $branch->name);
-        $this->assertEquals(-6.2088, (float) $branch->latitude);
-        $this->assertEquals(106.8456, (float) $branch->longitude);
-        $this->assertEquals(50, $branch->radius_meters);
-
-        $shift = Shift::where('id_companies', $company->id_companies)->first();
-        $this->assertNotNull($shift);
-        $this->assertEquals('Shift Normal', $shift->name);
-        $this->assertEquals('08:00:00', $shift->start_time);
-        $this->assertEquals('17:00:00', $shift->end_time);
-        $this->assertEquals(15, $shift->late_tolerance_minutes);
-
-        $user = User::where('email', 'budi@teknus.com')->first();
-        $this->assertNotNull($user);
-        $this->assertEquals('owner', $user->role);
-        $this->assertTrue($user->is_active);
-        $this->assertEquals($company->id_companies, $user->id_companies);
-    }
-
-    public function test_register_company_validation_failure(): void
-    {
-        $response = $this->postJson('/api/v1/auth/register-company', []);
-
-        $response->assertStatus(422)
-            ->assertJson([
-                'success' => false,
-                'message' => 'Validasi gagal.',
-                'data' => null,
-            ])
-            ->assertJsonValidationErrors(['company_name', 'name', 'email', 'password']);
-    }
-
-    public function test_register_company_duplicate_email(): void
-    {
-        User::create([
-            'name' => 'Existing User',
-            'email' => 'existing@test.com',
-            'password' => Hash::make('password'),
-            'role' => 'owner',
-            'is_active' => true,
         ]);
 
-        $payload = [
-            'company_name' => 'PT Baru',
-            'name' => 'User Baru',
-            'email' => 'existing@test.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ];
-
-        $response = $this->postJson('/api/v1/auth/register-company', $payload);
-
-        $response->assertStatus(422)
-            ->assertJson([
-                'success' => false,
-                'message' => 'Validasi gagal.',
-                'data' => null,
-            ])
-            ->assertJsonValidationErrors(['email']);
-    }
-
-    public function test_register_company_duplicate_name_generates_unique_slug(): void
-    {
-        $payload1 = [
-            'company_name' => 'PT Kembar',
-            'name' => 'Owner 1',
-            'email' => 'owner1@test.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ];
-
-        $payload2 = [
-            'company_name' => 'PT Kembar',
-            'name' => 'Owner 2',
-            'email' => 'owner2@test.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ];
-
-        $this->postJson('/api/v1/auth/register-company', $payload1)->assertStatus(201);
-        $this->postJson('/api/v1/auth/register-company', $payload2)->assertStatus(201);
-
-        $this->assertDatabaseHas('companies', ['slug' => 'pt-kembar']);
-        $this->assertDatabaseHas('companies', ['slug' => 'pt-kembar-1']);
+        $response->assertStatus(404);
     }
 
     public function test_login_successful(): void
     {
         $company = Company::create([
             'name' => 'PT Maju Terus',
-            'slug' => 'pt-maju-terus',
             'email' => 'info@majuterus.com',
-            'subscription_status' => 'active',
         ]);
 
         User::create([
@@ -208,9 +78,7 @@ class AuthApiTest extends TestCase
     {
         $company = Company::create([
             'name' => 'PT Solusi Digital',
-            'slug' => 'pt-solusi-digital',
             'email' => 'info@solusidigital.co.id',
-            'subscription_status' => 'active',
         ]);
 
         $branch = Branch::create([
@@ -300,7 +168,6 @@ class AuthApiTest extends TestCase
     {
         $company = Company::create([
             'name' => 'PT Maju Terus',
-            'slug' => 'pt-maju-terus',
             'email' => 'info@majuterus.com',
         ]);
 
@@ -331,7 +198,6 @@ class AuthApiTest extends TestCase
     {
         $company = Company::create([
             'name' => 'PT Maju Terus',
-            'slug' => 'pt-maju-terus',
             'email' => 'info@majuterus.com',
         ]);
 
@@ -362,7 +228,6 @@ class AuthApiTest extends TestCase
     {
         $company = Company::create([
             'name' => 'PT Maju Terus',
-            'slug' => 'pt-maju-terus',
             'email' => 'info@majuterus.com',
         ]);
 
@@ -395,7 +260,6 @@ class AuthApiTest extends TestCase
     {
         $company = Company::create([
             'name' => 'PT Maju Terus',
-            'slug' => 'pt-maju-terus',
             'email' => 'info@majuterus.com',
         ]);
 

@@ -7,6 +7,7 @@ use App\Models\LeaveType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -23,22 +24,25 @@ class EndToEndHrisFlowTest extends TestCase
 
     public function test_full_hris_lifecycle_from_registration_to_payroll_slip_download(): void
     {
-        // 1. Registrasi Tenant Baru (PT Solusi Digital Maju)
-        $registerResponse = $this->postJson('/api/v1/auth/register-company', [
-            'company_name' => 'PT Solusi Digital Maju',
-            'name' => 'Hendro Wijaya',
-            'email' => 'hendro@solusidigital.test',
-            'password' => 'Rahasia123#',
-            'password_confirmation' => 'Rahasia123#',
+        // 1. Setup Company & Owner User di database (Single Company Non-SaaS)
+        $company = Company::create([
+            'name' => 'PT Solusi Digital Maju',
+            'email' => 'info@solusidigital.test',
         ]);
 
-        $registerResponse->assertStatus(201)
-            ->assertJson(['success' => true]);
+        User::create([
+            'id_companies' => $company->id_companies,
+            'name' => 'Hendro Wijaya',
+            'email' => 'hendro@solusidigital.test',
+            'password' => Hash::make('Rahasia123#'),
+            'role' => 'owner',
+            'is_active' => true,
+        ]);
 
-        $tokenOwner = $registerResponse->json('data.access_token');
-        $idCompany = $registerResponse->json('data.company.id_companies');
-        $this->assertNotEmpty($tokenOwner);
-        $this->assertNotNull($idCompany);
+        // Verifikasi endpoint registrasi publik sudah dihapus (404)
+        $this->postJson('/api/v1/auth/register-company', [
+            'company_name' => 'PT Coba',
+        ])->assertStatus(404);
 
         // 2. Owner Login ulang untuk verifikasi kredensial
         $loginResponse = $this->postJson('/api/v1/auth/login', [
@@ -162,7 +166,7 @@ class EndToEndHrisFlowTest extends TestCase
         // 11. Buat Master Tipe Cuti & Pengajuan Cuti Karyawan
         Sanctum::actingAs($ownerUser);
         $leaveType = LeaveType::create([
-            'id_companies' => $idCompany,
+            'id_companies' => $company->id_companies,
             'name' => 'Cuti Sakit Resmi',
             'quota_days' => 14,
             'is_paid' => true,

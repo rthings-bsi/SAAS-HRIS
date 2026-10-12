@@ -107,7 +107,7 @@ const statusMap: Record<string, StatusConfig> = {
     classes: "bg-rose-50 text-rose-700 border border-rose-200",
   },
 
-  // Subscription Status (SaaS Tenant)
+  // Status Akun / Langganan Internal
   trial: {
     label: "Masa Uji Coba",
     classes: "bg-amber-50 text-amber-700 border border-amber-200",

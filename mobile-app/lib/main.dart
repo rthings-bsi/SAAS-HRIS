@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/constants/api_endpoints.dart';
 import 'core/constants/app_colors.dart';
+import 'core/network/network_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/provider/auth_provider.dart';
 import 'features/home/presentation/home_screen.dart';
@@ -11,9 +14,17 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
 
+  final prefs = await SharedPreferences.getInstance();
+  final savedBaseUrl =
+      prefs.getString(serverBaseUrlPrefKey) ?? ApiEndpoints.baseUrl;
+
   runApp(
-    const ProviderScope(
-      child: HrisApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWith((ref) => prefs),
+        initialBaseUrlProvider.overrideWithValue(savedBaseUrl),
+      ],
+      child: const HrisApp(),
     ),
   );
 }
@@ -24,7 +35,7 @@ class HrisApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SaaS HRIS',
+      title: 'HRIS & SPK SMART',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: const AuthGate(),

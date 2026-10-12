@@ -178,6 +178,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
   @override
   Widget build(BuildContext context) {
     final typesAsync = ref.watch(leaveTypesProvider);
+    final balancesAsync = ref.watch(leaveBalanceProvider);
     final actionState = ref.watch(leaveActionProvider);
 
     return Scaffold(
@@ -276,6 +277,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                   );
                 },
               ),
+              _buildRemainingQuotaCard(balancesAsync, typesAsync.valueOrNull),
 
               const SizedBox(height: AppDimensions.space20),
 
@@ -308,7 +310,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                               color: AppColors.canvasLight,
                               borderRadius: AppDimensions.inputBorderRadius,
                               border: Border.all(
-                                color: AppColors.borderNeutral,
+                                color: AppColors.hairline,
                                 width: AppDimensions.borderWidth,
                               ),
                             ),
@@ -368,7 +370,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                               color: AppColors.canvasLight,
                               borderRadius: AppDimensions.inputBorderRadius,
                               border: Border.all(
-                                color: AppColors.borderNeutral,
+                                color: AppColors.hairline,
                                 width: AppDimensions.borderWidth,
                               ),
                             ),
@@ -417,7 +419,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                   color: AppColors.surfaceMuted,
                   borderRadius: AppDimensions.cardBorderRadius,
                   border: Border.all(
-                    color: AppColors.borderNeutral,
+                    color: AppColors.hairline,
                     width: AppDimensions.borderWidth,
                   ),
                 ),
@@ -504,7 +506,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                       color: AppColors.surfaceMuted,
                       borderRadius: AppDimensions.buttonBorderRadius,
                       border: Border.all(
-                        color: AppColors.borderNeutral,
+                        color: AppColors.hairline,
                         width: AppDimensions.borderWidth,
                       ),
                     ),
@@ -539,7 +541,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                     color: AppColors.surfaceMuted,
                     borderRadius: AppDimensions.cardBorderRadius,
                     border: Border.all(
-                      color: AppColors.borderNeutral,
+                      color: AppColors.hairline,
                       width: AppDimensions.borderWidth,
                     ),
                   ),
@@ -589,6 +591,373 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRemainingQuotaCard(
+    AsyncValue<List<LeaveBalanceModel>> balancesAsync,
+    List<LeaveTypeModel>? types,
+  ) {
+    return balancesAsync.when(
+      loading: () {
+        if (_selectedLeaveTypeId != null) {
+          return const Padding(
+            padding: EdgeInsets.only(top: AppDimensions.space8),
+            child: AppSkeleton(height: 56),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+      error: (error, _) => Container(
+        margin: const EdgeInsets.only(top: AppDimensions.space8),
+        padding: const EdgeInsets.all(AppDimensions.space12),
+        decoration: BoxDecoration(
+          color: AppColors.dangerBg,
+          borderRadius: AppDimensions.cardBorderRadius,
+          border: Border.all(
+            color: AppColors.dangerBorder,
+            width: AppDimensions.borderWidth,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.dangerText),
+            const SizedBox(width: AppDimensions.space8),
+            Expanded(
+              child: Text(
+                AppErrorState.cleanErrorMessage(error.toString()) ??
+                    'Gagal memuat informasi sisa kuota cuti.',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.dangerText,
+                ),
+              ),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(AppDimensions.minTouchTarget, AppDimensions.minTouchTarget),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              onPressed: () => ref.invalidate(leaveBalanceProvider),
+              child: const Text('Coba Lagi', style: TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+      ),
+      data: (balances) {
+        if (_selectedLeaveTypeId == null) {
+          if (balances.isNotEmpty && balances.any((b) => b.total_quota > 0)) {
+            final defaultBalance = balances.firstWhere(
+              (b) => b.total_quota > 0,
+              orElse: () => balances.first,
+            );
+            return Container(
+              margin: const EdgeInsets.only(top: AppDimensions.space8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.space12,
+                vertical: AppDimensions.space8,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.hairline),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.inkMuted),
+                  const SizedBox(width: AppDimensions.space8),
+                  Expanded(
+                    child: Text(
+                      'Sisa cuti tahunan: ${defaultBalance.remaining_days} hari. Pilih jenis cuti untuk melihat kuota spesifik.',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.inkMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
+
+        LeaveTypeModel? selectedType;
+        if (types != null) {
+          for (final t in types) {
+            if (t.id_leave_types == _selectedLeaveTypeId) {
+              selectedType = t;
+              break;
+            }
+          }
+        }
+
+        LeaveBalanceModel? matchingBalance;
+        if (balances.isNotEmpty) {
+          for (final b in balances) {
+            if (b.id_leave_types == _selectedLeaveTypeId) {
+              matchingBalance = b;
+              break;
+            }
+          }
+          if (matchingBalance == null && selectedType != null) {
+            final typeName = selectedType.name.trim().toLowerCase();
+            for (final b in balances) {
+              if (b.name.trim().toLowerCase() == typeName) {
+                matchingBalance = b;
+                break;
+              }
+            }
+          }
+          if (matchingBalance == null && balances.length == 1) {
+            matchingBalance = balances.first;
+          }
+        }
+
+        if (matchingBalance != null) {
+          final remaining = matchingBalance.remaining_days;
+          final total = matchingBalance.total_quota;
+          final used = matchingBalance.used_days;
+          final isExceeded = _calculatedWorkingDays > 0 &&
+              remaining > 0 &&
+              _calculatedWorkingDays > remaining;
+          final isDepleted = remaining <= 0 && total > 0;
+
+          final cardBg = isDepleted
+              ? AppColors.dangerBg
+              : isExceeded
+                  ? AppColors.warningBg
+                  : const Color(0xFFF8FAFC);
+          final cardBorder = isDepleted
+              ? AppColors.dangerBorder
+              : isExceeded
+                  ? AppColors.warningBorder
+                  : const Color(0xFFE2E8F0);
+          final accentColor = isDepleted
+              ? AppColors.dangerText
+              : isExceeded
+                  ? AppColors.warningText
+                  : AppColors.actionAccent;
+
+          final progress = total > 0 ? (used / total).clamp(0.0, 1.0) : 0.0;
+
+          return Container(
+            margin: const EdgeInsets.only(top: AppDimensions.space8),
+            padding: const EdgeInsets.all(AppDimensions.space12),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: cardBorder, width: 1.0),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.pie_chart_outline_rounded,
+                          size: 18,
+                          color: accentColor,
+                        ),
+                        const SizedBox(width: AppDimensions.space8),
+                        Text(
+                          'Sisa Kuota: $remaining Hari',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.inkPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isDepleted
+                            ? const Color(0xFFFEE2E2)
+                            : isExceeded
+                                ? const Color(0xFFFEF3C7)
+                                : AppColors.orangeTint,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: cardBorder,
+                          width: 1.0,
+                        ),
+                      ),
+                      child: Text(
+                        '$remaining Hari',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: accentColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (total > 0) ...[
+                  const SizedBox(height: AppDimensions.space8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 5,
+                      backgroundColor: const Color(0xFFE2E8F0),
+                      valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.space4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Terpakai: $used hari',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.inkMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'Total Kuota: $total hari',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.inkMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (isExceeded) ...[
+                  const SizedBox(height: AppDimensions.space8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        size: 15,
+                        color: AppColors.warningText,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Durasi pengajuan ($_calculatedWorkingDays hari kerja) melebihi sisa kuota ($remaining hari).',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.warningText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else if (isDepleted) ...[
+                  const SizedBox(height: AppDimensions.space8),
+                  const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 15,
+                        color: AppColors.dangerText,
+                      ),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Kuota untuk jenis cuti ini telah habis.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.dangerText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else if (_calculatedWorkingDays > 0 && remaining >= _calculatedWorkingDays) ...[
+                  const SizedBox(height: AppDimensions.space4),
+                  Text(
+                    'Estimasi sisa setelah pengajuan: ${remaining - _calculatedWorkingDays} hari',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.inkMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }
+
+        if (selectedType != null && selectedType.quota_days > 0) {
+          return Container(
+            margin: const EdgeInsets.only(top: AppDimensions.space8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.space12,
+              vertical: AppDimensions.space8,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 16, color: AppColors.inkMuted),
+                const SizedBox(width: AppDimensions.space8),
+                Expanded(
+                  child: Text(
+                    'Batas kuota maksimal: ${selectedType.quota_days} hari.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.inkMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(top: AppDimensions.space8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.space12,
+            vertical: AppDimensions.space8,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.hairline),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.check_circle_outline_rounded, size: 16, color: AppColors.actionAccent),
+              SizedBox(width: AppDimensions.space8),
+              Expanded(
+                child: Text(
+                  'Jenis pengajuan ini tidak mengurangi kuota cuti tahunan.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.inkMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

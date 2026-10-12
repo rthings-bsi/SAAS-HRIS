@@ -475,6 +475,39 @@ void main() {
       expect(find.text('Rincian Penerimaan'), findsOneWidget);
       expect(find.text('Rincian Potongan'), findsOneWidget);
     });
+
+    testWidgets('Toggles salary privacy visibility correctly', (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final mockRepo = MockPayrollRepository();
+      mockRepo.slipsData = [sampleSlip1, sampleSlip2];
+
+      await tester.pumpWidget(createHistoryScreen(repo: mockRepo));
+      await tester.pumpAndSettle();
+
+      // Initial state: salary is visible
+      expect(find.text(sampleSlip1.formattedNetSalary), findsWidgets);
+      expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+
+      // Tap toggle to hide salary
+      await tester.tap(find.byIcon(Icons.visibility_outlined));
+      await tester.pumpAndSettle();
+
+      // Salary masked
+      expect(find.text('Rp ••••••••'), findsWidgets);
+      expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
+
+      // Tap toggle to show salary again
+      await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+      await tester.pumpAndSettle();
+
+      // Salary visible again
+      expect(find.text(sampleSlip1.formattedNetSalary), findsWidgets);
+      expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+    });
   });
 
   group('PayrollSlipDetailScreen Widget Tests', () {

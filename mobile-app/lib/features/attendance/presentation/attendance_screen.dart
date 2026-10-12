@@ -121,15 +121,39 @@ class AttendanceScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                todayFormatted,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.inkMuted,
-                  fontWeight: FontWeight.w500,
+              Container(
+                margin: const EdgeInsets.only(bottom: AppDimensions.space12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.space12,
+                  vertical: AppDimensions.space8,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceMuted,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
+                  border: Border.all(
+                    color: AppColors.hairline,
+                    width: AppDimensions.borderWidth,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 15,
+                      color: AppColors.actionAccent,
+                    ),
+                    const SizedBox(width: AppDimensions.space8),
+                    Text(
+                      todayFormatted,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.inkPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppDimensions.space12),
 
               // Today's Shift Card & Status
               todayAsync.when(
@@ -175,12 +199,19 @@ class AttendanceScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(AppDimensions.space16),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceMuted,
-                          borderRadius: AppDimensions.cardBorderRadius,
+                          color: AppColors.canvasLight,
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: AppColors.borderNeutral,
-                            width: AppDimensions.borderWidth,
+                            color: const Color(0xFFE2E8F0),
+                            width: 1.0,
                           ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x06000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +229,7 @@ class AttendanceScreen extends ConsumerWidget {
                                     ),
                                   ),
                                   child: const Icon(
-                                    Icons.schedule_rounded,
+                                    Icons.access_time_filled_rounded,
                                     size: 18,
                                     color: AppColors.actionAccent,
                                   ),
@@ -229,48 +260,48 @@ class AttendanceScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: AppDimensions.space16),
+                            const SizedBox(height: AppDimensions.space12),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimensions.space12,
-                                vertical: AppDimensions.space8,
-                              ),
+                              padding: const EdgeInsets.all(AppDimensions.space12),
                               decoration: BoxDecoration(
-                                color: AppColors.canvasLight,
-                                borderRadius: AppDimensions.inputBorderRadius,
+                                color: AppColors.surfaceMuted,
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: AppColors.borderNeutral,
-                                  width: AppDimensions.borderWidth,
+                                  color: const Color(0xFFF1F5F9),
+                                  width: 1.0,
                                 ),
                               ),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: _ShiftDetailItem(
+                                      icon: Icons.login_rounded,
                                       label: 'Jam Masuk',
                                       value: data.startTime,
                                     ),
                                   ),
                                   Container(
                                     width: 1,
-                                    height: 28,
-                                    color: AppColors.borderNeutral,
+                                    height: 32,
+                                    color: const Color(0xFFE2E8F0),
                                   ),
                                   const SizedBox(width: AppDimensions.space8),
                                   Expanded(
                                     child: _ShiftDetailItem(
+                                      icon: Icons.logout_rounded,
                                       label: 'Jam Pulang',
                                       value: data.endTime,
                                     ),
                                   ),
                                   Container(
                                     width: 1,
-                                    height: 28,
-                                    color: AppColors.borderNeutral,
+                                    height: 32,
+                                    color: const Color(0xFFE2E8F0),
                                   ),
                                   const SizedBox(width: AppDimensions.space8),
                                   Expanded(
                                     child: _ShiftDetailItem(
+                                      icon: Icons.timelapse_rounded,
                                       label: 'Toleransi',
                                       value: '${data.lateToleranceMinutes} Menit',
                                     ),
@@ -290,13 +321,20 @@ class AttendanceScreen extends ConsumerWidget {
                           color: hasClockedIn && !hasClockedOut
                               ? AppColors.orangeTint
                               : AppColors.canvasLight,
-                          borderRadius: AppDimensions.cardBorderRadius,
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: hasClockedIn && !hasClockedOut
                                 ? AppColors.orangeBorder
-                                : AppColors.borderNeutral,
-                            width: AppDimensions.borderWidth,
+                                : const Color(0xFFE2E8F0),
+                            width: 1.0,
                           ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x06000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,13 +342,23 @@ class AttendanceScreen extends ConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Status Kehadiran',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.inkPrimary,
-                                  ),
+                                const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.fingerprint_rounded,
+                                      size: 18,
+                                      color: AppColors.actionAccent,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Status Kehadiran',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.inkPrimary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -340,58 +388,143 @@ class AttendanceScreen extends ConsumerWidget {
                             Row(
                               children: [
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Waktu Masuk',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.inkMuted,
-                                        ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppDimensions.space12,
+                                      vertical: AppDimensions.space8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: hasClockedIn
+                                          ? AppColors.orangeTint
+                                          : AppColors.surfaceMuted,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: hasClockedIn
+                                            ? AppColors.orangeBorder
+                                            : const Color(0xFFE2E8F0),
+                                        width: 1.0,
                                       ),
-                                      const SizedBox(height: AppDimensions.space4),
-                                      Text(
-                                        data.clockInTime ?? '--:--',
-                                        style: AppTextStyle.time(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.arrow_circle_down_rounded,
+                                              size: 14,
+                                              color: AppColors.successText,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Waktu Masuk',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.inkMuted,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: AppDimensions.space4),
+                                        Text(
+                                          data.clockInTime ?? '--:--',
+                                          style: AppTextStyle.time(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                                Container(
-                                  width: 1,
-                                  height: 36,
-                                  color: hasClockedIn && !hasClockedOut
-                                      ? AppColors.orangeBorder
-                                      : AppColors.borderNeutral,
-                                ),
-                                const SizedBox(width: AppDimensions.space16),
+                                const SizedBox(width: AppDimensions.space12),
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Waktu Pulang',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.inkMuted,
-                                        ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppDimensions.space12,
+                                      vertical: AppDimensions.space8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: hasClockedOut
+                                          ? AppColors.orangeTint
+                                          : AppColors.surfaceMuted,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: hasClockedOut
+                                            ? AppColors.orangeBorder
+                                            : const Color(0xFFE2E8F0),
+                                        width: 1.0,
                                       ),
-                                      const SizedBox(height: AppDimensions.space4),
-                                      Text(
-                                        data.clockOutTime ?? '--:--',
-                                        style: AppTextStyle.time(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.arrow_circle_up_rounded,
+                                              size: 14,
+                                              color: AppColors.actionAccent,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Waktu Pulang',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.inkMuted,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: AppDimensions.space4),
+                                        Text(
+                                          data.clockOutTime ?? '--:--',
+                                          style: AppTextStyle.time(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: AppDimensions.space12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppDimensions.space8,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceMuted,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFF1F5F9),
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.verified_user_rounded,
+                                    size: 14,
+                                    color: AppColors.successText,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Validasi radius kantor & foto swafoto aktif',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.inkMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -518,12 +651,19 @@ class AttendanceScreen extends ConsumerWidget {
                           vertical: AppDimensions.space12,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceMuted,
-                          borderRadius: AppDimensions.cardBorderRadius,
+                          color: AppColors.canvasLight,
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: AppColors.borderNeutral,
-                            width: AppDimensions.borderWidth,
+                            color: const Color(0xFFE2E8F0),
+                            width: 1.0,
                           ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x04000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -612,10 +752,12 @@ class AttendanceScreen extends ConsumerWidget {
 }
 
 class _ShiftDetailItem extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
 
   const _ShiftDetailItem({
+    required this.icon,
     required this.label,
     required this.value,
   });
@@ -625,14 +767,20 @@ class _ShiftDetailItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: AppColors.inkMuted,
-          ),
+        Row(
+          children: [
+            Icon(icon, size: 12, color: AppColors.inkMuted),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.inkMuted,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           value,
           style: AppTextStyle.time(

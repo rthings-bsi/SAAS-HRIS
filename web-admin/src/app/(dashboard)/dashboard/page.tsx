@@ -13,19 +13,19 @@ import {
   ChevronDown,
   Users,
   Clock,
-  RotateCcw,
   CheckCircle2,
   CalendarCheck,
   ChevronRight,
   X,
   CreditCard,
   FileSpreadsheet,
+  Award,
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TableSkeleton } from "@/components/ui/LoadingSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { SuperAdminDashboardView } from "@/components/superadmin/SuperAdminDashboardView";
+import { EmployeeDashboardView } from "@/components/dashboard/EmployeeDashboardView";
 import apiClient from "@/lib/axios";
 import { cn, formatRupiah } from "@/lib/utils";
 import type { ApiResponse, Attendance, Employee, LeaveRequest, User } from "@/types";
@@ -256,6 +256,35 @@ export function TenantDashboard() {
           <span>{exportNotice}</span>
         </div>
       )}
+
+      {/* SPK SMART Highlight Card */}
+      <div className="rounded-2xl border border-sky-200/80 bg-gradient-to-r from-sky-50/80 via-blue-50/50 to-indigo-50/40 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-sm flex-shrink-0">
+            <Award className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-slate-900">
+                Sistem Penunjang Keputusan (SPK) Penilaian Kinerja SMART
+              </h3>
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-sky-100 text-sky-700 border border-sky-200">
+                Metode SMART
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Evaluasi kinerja multi-kriteria: Pencapaian KPI, Kehadiran Presensi, Sikap Kerja, dan Rekomendasi Promosi/Reward.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/performance"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-semibold rounded-xl bg-sky-600 hover:bg-sky-700 text-white shadow-xs active:scale-[0.97] transition-all flex-shrink-0"
+        >
+          <span>Kelola Penilaian Kinerja</span>
+          <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
 
       {/* Row 1: 4 Key HRIS Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -772,14 +801,6 @@ export function TenantDashboard() {
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Catatan Presensi Hari Ini ({todayDate})
               </span>
-              <button
-                type="button"
-                onClick={() => refetchAttendance()}
-                className="inline-flex items-center gap-1 text-xs text-orange-600 hover:underline cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Segarkan Data</span>
-              </button>
             </div>
 
             {isAttendanceLoading ? (
@@ -1000,23 +1021,21 @@ export function TenantDashboard() {
 }
 
 export default function DashboardPage() {
-  const [currentUser] = useState<User | null>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("hris_user");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return null;
-        }
-      }
-    }
-    return null;
-  });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("hris_user");
+      if (stored) {
+        try {
+          setCurrentUser(JSON.parse(stored) as User);
+        } catch {
+          setCurrentUser(null);
+        }
+      }
+    }
   }, []);
 
   if (!isClient) {
@@ -1033,11 +1052,8 @@ export default function DashboardPage() {
     );
   }
 
-  if (
-    currentUser?.role === "superadmin" ||
-    currentUser?.role === "super_admin"
-  ) {
-    return <SuperAdminDashboardView />;
+  if (currentUser?.role === "employee") {
+    return <EmployeeDashboardView user={currentUser} />;
   }
 
   return <TenantDashboard />;

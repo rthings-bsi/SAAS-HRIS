@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   Users,
   Clock,
+  Clock4,
   CalendarCheck,
   CreditCard,
   Building2,
@@ -15,6 +16,7 @@ import {
   MapPin,
   Briefcase,
   ShieldCheck,
+  Award,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,8 +38,8 @@ interface NavGroup {
   items: NavItem[];
 }
 
-// Navigasi Terstruktur Berdasarkan Domain Fungsional (RHYTHM 2 & Anti-Slop)
-const tenantNavGroups: NavGroup[] = [
+// Navigasi Terstruktur Berdasarkan Domain Fungsional HRIS Internal (Non-SaaS)
+const navGroups: NavGroup[] = [
   {
     label: "Menu Utama",
     items: [
@@ -50,7 +52,9 @@ const tenantNavGroups: NavGroup[] = [
     items: [
       { name: "Presensi Kehadiran", href: "/attendance", icon: Clock },
       { name: "Pengajuan Cuti", href: "/leaves", icon: CalendarCheck },
+      { name: "Pengajuan Lembur", href: "/overtime", icon: Clock4 },
       { name: "Penggajian (Payroll)", href: "/payroll", icon: CreditCard },
+      { name: "Penilaian Kinerja (SMART)", href: "/performance", icon: Award },
     ],
   },
   {
@@ -65,17 +69,8 @@ const tenantNavGroups: NavGroup[] = [
   {
     label: "Pengaturan & Akses",
     items: [
+      { name: "Profil Perusahaan", href: "/company-profile", icon: Building2 },
       { name: "Hak Akses & Role", href: "/roles", icon: ShieldCheck },
-    ],
-  },
-];
-
-const superadminNavGroups: NavGroup[] = [
-  {
-    label: "Manajemen Platform",
-    items: [
-      { name: "Ringkasan Platform", href: "/dashboard", icon: LayoutGrid },
-      { name: "Kelola Pelanggan (Tenant)", href: "/companies", icon: Building2 },
     ],
   },
 ];
@@ -92,25 +87,34 @@ interface RoleStyle {
 
 const roleStyles: Record<string, RoleStyle> = {
   superadmin: {
-    label: "Superadmin",
-    avatarBg: "bg-purple-100",
-    avatarText: "text-purple-700",
-    avatarBorder: "border-purple-200",
-    badgeBg: "bg-purple-50",
-    badgeText: "text-purple-700",
-    badgeBorder: "border-purple-200",
+    label: "Pimpinan / Direktur",
+    avatarBg: "bg-amber-100",
+    avatarText: "text-amber-800",
+    avatarBorder: "border-amber-200",
+    badgeBg: "bg-amber-50",
+    badgeText: "text-amber-700",
+    badgeBorder: "border-amber-200",
   },
   super_admin: {
-    label: "Superadmin",
-    avatarBg: "bg-purple-100",
-    avatarText: "text-purple-700",
-    avatarBorder: "border-purple-200",
-    badgeBg: "bg-purple-50",
-    badgeText: "text-purple-700",
-    badgeBorder: "border-purple-200",
+    label: "Pimpinan / Direktur",
+    avatarBg: "bg-amber-100",
+    avatarText: "text-amber-800",
+    avatarBorder: "border-amber-200",
+    badgeBg: "bg-amber-50",
+    badgeText: "text-amber-700",
+    badgeBorder: "border-amber-200",
+  },
+  director: {
+    label: "Direktur",
+    avatarBg: "bg-amber-100",
+    avatarText: "text-amber-800",
+    avatarBorder: "border-amber-200",
+    badgeBg: "bg-amber-50",
+    badgeText: "text-amber-700",
+    badgeBorder: "border-amber-200",
   },
   owner: {
-    label: "Owner",
+    label: "Pimpinan",
     avatarBg: "bg-amber-100",
     avatarText: "text-amber-800",
     avatarBorder: "border-amber-200",
@@ -119,7 +123,7 @@ const roleStyles: Record<string, RoleStyle> = {
     badgeBorder: "border-amber-200",
   },
   hr: {
-    label: "HR Admin",
+    label: "Admin HRD",
     avatarBg: "bg-blue-100",
     avatarText: "text-blue-800",
     avatarBorder: "border-blue-200",
@@ -139,13 +143,31 @@ const roleStyles: Record<string, RoleStyle> = {
   employee: {
     label: "Karyawan",
     avatarBg: "bg-slate-100",
-    avatarText: "text-slate-700",
+    avatarText: "text-slate-800",
     avatarBorder: "border-slate-200",
-    badgeBg: "bg-slate-50",
-    badgeText: "text-slate-600",
+    badgeBg: "bg-slate-100",
+    badgeText: "text-slate-700",
     badgeBorder: "border-slate-200",
   },
 };
+
+const employeeNavGroups: NavGroup[] = [
+  {
+    label: "Menu Utama",
+    items: [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutGrid },
+    ],
+  },
+  {
+    label: "Layanan Mandiri",
+    items: [
+      { name: "Pengajuan Lembur", href: "/overtime", icon: Clock4 },
+      { name: "Pengajuan Cuti", href: "/leaves", icon: CalendarCheck },
+      { name: "Slip Gaji Saya", href: "/payroll", icon: CreditCard },
+      { name: "Penilaian Kinerja (SMART)", href: "/performance", icon: Award },
+    ],
+  },
+];
 
 export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
@@ -194,11 +216,11 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     }
   };
 
-  const isSuperAdmin =
-    currentUser?.role === "superadmin" || currentUser?.role === "super_admin";
-  const navGroups = isSuperAdmin ? superadminNavGroups : tenantNavGroups;
   const currentRoleStyle =
     (currentUser?.role && roleStyles[currentUser.role]) || roleStyles.hr;
+
+  const currentNavGroups =
+    currentUser?.role === "employee" ? employeeNavGroups : navGroups;
 
   const getInitials = (name?: string) => {
     if (!name) return "HR";
@@ -270,25 +292,14 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 <span className="text-[15px] font-bold tracking-tight text-slate-900 leading-tight">
                   HR Hub
                 </span>
-                <span
-                  className={cn(
-                    "px-1.5 py-0.5 text-[9px] font-bold tracking-wide rounded-full border uppercase leading-none",
-                    isSuperAdmin
-                      ? "bg-purple-50 text-purple-700 border-purple-200"
-                      : "bg-orange-50 text-orange-700 border-orange-200/70"
-                  )}
-                >
-                  {isSuperAdmin ? "SUPERADMIN" : "SAAS"}
+                <span className="px-1.5 py-0.5 text-[9px] font-bold tracking-wide rounded-full border uppercase leading-none bg-orange-50 text-orange-700 border-orange-200/70">
+                  ENTERPRISE
                 </span>
               </div>
               <div className="text-[11.5px] text-slate-500 font-normal leading-tight mt-1 truncate flex items-center gap-1">
-                {!isSuperAdmin && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-                )}
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
                 <span className="truncate font-medium">
-                  {isSuperAdmin
-                    ? "Platform Console"
-                    : currentUser?.company?.name || "PT Sumber Makmur"}
+                  {currentUser?.company?.name || "PT Sumber Makmur"}
                 </span>
               </div>
             </div>
@@ -312,7 +323,7 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           className="flex-1 px-3 py-3 space-y-3.5 overflow-y-auto"
           aria-label="Menu Utama"
         >
-          {navGroups.map((group, groupIdx) => (
+          {currentNavGroups.map((group, groupIdx) => (
             <div
               key={group.label || groupIdx}
               className={cn("space-y-1", groupIdx > 0 && "pt-3")}

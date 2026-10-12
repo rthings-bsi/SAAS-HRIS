@@ -25,7 +25,7 @@ class MobileLandingScreen extends StatelessWidget {
                 color: AppColors.canvasLight,
                 border: Border(
                   bottom: BorderSide(
-                    color: AppColors.borderNeutral,
+                    color: AppColors.hairline,
                     width: AppDimensions.borderWidth,
                   ),
                 ),
@@ -101,7 +101,7 @@ class MobileLandingScreen extends StatelessWidget {
                               ),
                               SizedBox(width: AppDimensions.space4),
                               Text(
-                                'SaaS HRIS Indonesia • Mobile Companion',
+                                'HRIS & SPK SMART • Mobile Portal',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -145,7 +145,7 @@ class MobileLandingScreen extends StatelessWidget {
                             color: AppColors.canvasLight,
                             borderRadius: AppDimensions.cardBorderRadius,
                             border: Border.all(
-                              color: AppColors.borderNeutral,
+                              color: AppColors.hairline,
                               width: AppDimensions.borderWidth,
                             ),
                           ),
@@ -199,7 +199,7 @@ class MobileLandingScreen extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: AppDimensions.space12),
-                              const Divider(height: 1, color: AppColors.surfaceMuted),
+                              const Divider(height: 1, color: AppColors.separator),
                               const SizedBox(height: AppDimensions.space12),
                               _buildTelemetryRow(
                                 icon: Icons.location_on_rounded,
@@ -288,7 +288,7 @@ class MobileLandingScreen extends StatelessWidget {
                             color: AppColors.canvasLight,
                             borderRadius: AppDimensions.cardBorderRadius,
                             border: Border.all(
-                              color: AppColors.borderNeutral,
+                              color: AppColors.hairline,
                               width: AppDimensions.borderWidth,
                             ),
                           ),
@@ -346,7 +346,7 @@ class MobileLandingScreen extends StatelessWidget {
                 color: AppColors.canvasLight,
                 border: Border(
                   top: BorderSide(
-                    color: AppColors.borderNeutral,
+                    color: AppColors.hairline,
                     width: AppDimensions.borderWidth,
                   ),
                 ),
@@ -427,7 +427,7 @@ class MobileLandingScreen extends StatelessWidget {
         color: AppColors.canvasLight,
         borderRadius: AppDimensions.cardBorderRadius,
         border: Border.all(
-          color: AppColors.borderNeutral,
+          color: AppColors.hairline,
           width: AppDimensions.borderWidth,
         ),
       ),
@@ -471,7 +471,7 @@ class MobileLandingScreen extends StatelessWidget {
                         color: AppColors.surfaceMuted,
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
-                          color: AppColors.borderNeutral,
+                          color: AppColors.hairline,
                           width: AppDimensions.borderWidth,
                         ),
                       ),

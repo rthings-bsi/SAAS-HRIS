@@ -12,8 +12,15 @@ import '../data/payroll_models.dart';
 import '../provider/payroll_provider.dart';
 import 'payroll_slip_detail_screen.dart';
 
-class PayrollHistoryScreen extends ConsumerWidget {
+class PayrollHistoryScreen extends ConsumerStatefulWidget {
   const PayrollHistoryScreen({super.key});
+
+  @override
+  ConsumerState<PayrollHistoryScreen> createState() => _PayrollHistoryScreenState();
+}
+
+class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
+  bool _isSalaryVisible = true;
 
   Widget _buildSummaryCard(PayrollSlipModel latestSlip) {
     return Container(
@@ -22,7 +29,7 @@ class PayrollHistoryScreen extends ConsumerWidget {
         color: AppColors.canvasLight,
         borderRadius: AppDimensions.cardBorderRadius,
         border: Border.all(
-          color: AppColors.borderNeutral,
+          color: AppColors.hairline,
           width: AppDimensions.borderWidth,
         ),
       ),
@@ -32,13 +39,43 @@ class PayrollHistoryScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Gaji Bersih Terakhir',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.inkMuted,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Gaji Bersih Terakhir',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.space4),
+                  IconButton(
+                    iconSize: 18,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: AppDimensions.minTouchTarget,
+                      minHeight: AppDimensions.minTouchTarget,
+                    ),
+                    icon: Icon(
+                      _isSalaryVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: AppColors.inkMuted,
+                      size: 18,
+                    ),
+                    tooltip: _isSalaryVisible
+                        ? 'Sembunyikan nominal gaji'
+                        : 'Tampilkan nominal gaji',
+                    onPressed: () {
+                      setState(() {
+                        _isSalaryVisible = !_isSalaryVisible;
+                      });
+                    },
+                  ),
+                ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
@@ -78,7 +115,9 @@ class PayrollHistoryScreen extends ConsumerWidget {
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
-              latestSlip.formattedNetSalary,
+              _isSalaryVisible
+                  ? latestSlip.formattedNetSalary
+                  : 'Rp ••••••••',
               style: AppTextStyle.currency(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -106,7 +145,7 @@ class PayrollHistoryScreen extends ConsumerWidget {
         color: AppColors.canvasLight,
         borderRadius: AppDimensions.cardBorderRadius,
         border: Border.all(
-          color: AppColors.borderNeutral,
+          color: AppColors.hairline,
           width: AppDimensions.borderWidth,
         ),
       ),
@@ -182,7 +221,9 @@ class PayrollHistoryScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: AppDimensions.space4),
                         Text(
-                          slip.formattedNetSalary,
+                          _isSalaryVisible
+                              ? slip.formattedNetSalary
+                              : 'Rp ••••••••',
                           style: AppTextStyle.currency(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -208,7 +249,7 @@ class PayrollHistoryScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final auth = ref.watch(authStateProvider);
     final isNonEmployee =
         auth.user != null && (auth.isAdministrator || !auth.hasEmployeeProfile);

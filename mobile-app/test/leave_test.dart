@@ -260,14 +260,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Cuti Tahunan'), findsWidgets);
-      expect(find.text('10 Hari'), findsOneWidget);
       expect(find.text('Menunggu'), findsNWidgets(2));
       expect(find.text('Disetujui'), findsNWidgets(2));
       expect(find.byType(FloatingActionButton), findsOneWidget);
       expect(find.byTooltip('Ajukan Cuti / Izin'), findsOneWidget);
     });
 
-    testWidgets('renders AppErrorState when balance or requests fail', (tester) async {
+    testWidgets('renders AppErrorState when requests fail', (tester) async {
       final mockRepo = MockLeaveRepository()
         ..shouldThrow = true
         ..errorMessage = 'Koneksi server terputus';
@@ -497,6 +496,66 @@ void main() {
 
       expect(find.text('Jenis cuti wajib dipilih.'), findsOneWidget);
       expect(find.text('Alasan cuti wajib diisi.'), findsOneWidget);
+    });
+
+    testWidgets('renders remaining quota card when leave type is selected in ApplyLeaveScreen', (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final mockRepo = MockLeaveRepository()
+        ..typesData = [
+          const LeaveTypeModel(
+            id_leave_types: 1,
+            name: 'Cuti Tahunan',
+            quota_days: 12,
+            is_paid: true,
+          ),
+          const LeaveTypeModel(
+            id_leave_types: 2,
+            name: 'Izin Sakit',
+            quota_days: 0,
+            is_paid: true,
+          ),
+        ]
+        ..balancesData = [
+          const LeaveBalanceModel(
+            id_leave_types: 1,
+            name: 'Cuti Tahunan',
+            total_quota: 12,
+            used_days: 2,
+            remaining_days: 10,
+          ),
+        ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            leaveRepositoryProvider.overrideWithValue(mockRepo),
+          ],
+          child: const MaterialApp(
+            home: ApplyLeaveScreen(),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Sisa cuti tahunan: 10 hari'), findsOneWidget);
+
+      final dropdownFinder = find.byType(DropdownButtonFormField<int>);
+      expect(dropdownFinder, findsOneWidget);
+      await tester.tap(dropdownFinder);
+      await tester.pumpAndSettle();
+
+      final dropdownItem = find.text('Cuti Tahunan (12 hari)').last;
+      await tester.tap(dropdownItem);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sisa Kuota: 10 Hari'), findsOneWidget);
+      expect(find.text('Terpakai: 2 hari'), findsOneWidget);
+      expect(find.text('Total Kuota: 12 hari'), findsOneWidget);
     });
   });
 }

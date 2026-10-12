@@ -16,8 +16,8 @@ trait BelongsToCompany
         });
 
         static::creating(function ($model) {
-            if (auth()->check() && auth()->user()->id_companies && empty($model->id_companies)) {
-                $model->id_companies = auth()->user()->id_companies;
+            if (empty($model->id_companies)) {
+                $model->id_companies = auth()->user()?->id_companies ?? 1;
             }
         });
     }

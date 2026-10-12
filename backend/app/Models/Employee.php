@@ -93,4 +93,9 @@ class Employee extends Model
     {
         return $this->hasMany(PayrollSlip::class, 'id_employees', 'id_employees');
     }
+
+    public function overtimeRequests(): HasMany
+    {
+        return $this->hasMany(OvertimeRequest::class, 'id_employees', 'id_employees');
+    }
 }

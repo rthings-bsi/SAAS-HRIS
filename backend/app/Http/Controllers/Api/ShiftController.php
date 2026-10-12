@@ -71,7 +71,8 @@ class ShiftController extends Controller
         $assigned = [];
         DB::transaction(function () use ($dates, $employeeId, $shiftId, &$assigned) {
             $companyId = auth()->user()?->id_companies
-                ?? Employee::withoutGlobalScopes()->find($employeeId)?->id_companies;
+                ?? Employee::withoutGlobalScopes()->find($employeeId)?->id_companies
+                ?? 1;
 
             foreach ($dates as $date) {
                 $assigned[] = EmployeeShift::updateOrCreate(

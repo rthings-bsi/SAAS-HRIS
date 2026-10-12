@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, Trash2, RotateCcw, Building2, Wallet, AlertCircle } from "lucide-react";
+import { Plus, Users, Trash2, Edit2, Building2, Wallet, AlertCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -19,13 +19,16 @@ export default function EmployeesPage() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [deletingEmployee, setDeletingEmployee] = useState<Employee | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   // Form Fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("Password123!");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<"employee" | "manager" | "hr">("employee");
   const [nik, setNik] = useState("");
   const [phone, setPhone] = useState("");
@@ -97,7 +100,7 @@ export default function EmployeesPage() {
     mutationFn: async (payload: {
       name: string;
       email: string;
-      password: string;
+      password?: string;
       role?: "employee" | "manager" | "hr";
       nik: string;
       phone: string;
@@ -116,6 +119,7 @@ export default function EmployeesPage() {
     onSuccess: (data) => {
       if (data.success) {
         setIsModalOpen(false);
+        setEditingEmployee(null);
         setFieldErrors({});
         setFormError(null);
         queryClient.invalidateQueries({ queryKey: ["employees"] });
@@ -137,16 +141,70 @@ export default function EmployeesPage() {
     },
   });
 
+  // Update Mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: number;
+      payload: {
+        name: string;
+        email: string;
+        password?: string;
+        role?: "employee" | "manager" | "hr";
+        nik: string;
+        phone: string;
+        gender: "male" | "female";
+        hire_date: string;
+        employment_status: "permanent" | "contract" | "probation";
+        basic_salary: number;
+        allowance_fixed: number;
+        id_branches: number;
+        id_departments: number | null;
+        id_job_positions: number | null;
+      };
+    }) => {
+      const response = await apiClient.put<ApiResponse<Employee>>(`/employees/${id}`, payload);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        setIsModalOpen(false);
+        setEditingEmployee(null);
+        setFieldErrors({});
+        setFormError(null);
+        queryClient.invalidateQueries({ queryKey: ["employees"] });
+      } else {
+        setFormError(data.message || "Gagal memperbarui data karyawan.");
+      }
+    },
+    onError: (err: unknown) => {
+      if (err instanceof ApiError) {
+        setFormError(err.message || "Validasi pembaruan data gagal.");
+        if (err.errors) {
+          setFieldErrors(err.errors);
+        }
+      } else if (err instanceof Error) {
+        setFormError(err.message || "Terjadi kendala pada server.");
+      } else {
+        setFormError("Terjadi kendala saat memperbarui data.");
+      }
+    },
+  });
+
   // Delete Mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       await apiClient.delete(`/employees/${id}`);
     },
     onSuccess: () => {
+      setDeletingEmployee(null);
+      setDeleteError(null);
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
     onError: (err: Error) => {
-      alert(err.message || "Gagal menghapus karyawan.");
+      setDeleteError(err.message || "Gagal menghapus karyawan.");
     },
   });
 
@@ -160,7 +218,8 @@ export default function EmployeesPage() {
     }
   };
 
-  const handleOpenModal = () => {
+  const handleOpenCreateModal = () => {
+    setEditingEmployee(null);
     setName("");
     setEmail("");
     setPassword("Password123!");
@@ -180,12 +239,32 @@ export default function EmployeesPage() {
     setIsModalOpen(true);
   };
 
-  const handleCreateEmployee = (e: React.FormEvent) => {
+  const handleOpenEditModal = (emp: Employee) => {
+    setEditingEmployee(emp);
+    setName(emp.user?.name || "");
+    setEmail(emp.user?.email || "");
+    setPassword(""); // Kosongkan bila tidak ingin mengubah kata sandi
+    setRole((emp.user?.role as "employee" | "manager" | "hr") || "employee");
+    setNik(emp.nik || "");
+    setPhone(emp.phone || "");
+    setGender((emp.gender as "male" | "female") || "male");
+    setHireDate(emp.hire_date ? emp.hire_date.slice(0, 10) : "2026-10-01");
+    setEmploymentStatus((emp.employment_status as "permanent" | "contract" | "probation") || "contract");
+    setBasicSalary(String(emp.basic_salary || 0));
+    setAllowanceFixed(String(emp.allowance_fixed || 0));
+    setIdBranch(emp.id_branches ? String(emp.id_branches) : branches[0] ? String(branches[0].id_branches) : "");
+    setIdDepartment(emp.id_departments ? String(emp.id_departments) : "");
+    setIdPosition(emp.id_job_positions ? String(emp.id_job_positions) : "");
+    setFormError(null);
+    setFieldErrors({});
+    setIsModalOpen(true);
+  };
+
+  const handleSaveEmployee = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     setFieldErrors({});
 
-    // Client-side validation
     const clientErrors: Record<string, string[]> = {};
     const trimmedName = name.trim();
     const trimmedNik = nik.trim();
@@ -203,8 +282,10 @@ export default function EmployeesPage() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       clientErrors.email = ["Format email tidak valid (contoh: staf@perusahaan.com)."];
     }
-    if (!password || password.length < 8) {
+    if (!editingEmployee && (!password || password.length < 8)) {
       clientErrors.password = ["Kata sandi akun minimal harus 8 karakter."];
+    } else if (editingEmployee && password && password.length < 8) {
+      clientErrors.password = ["Kata sandi baru minimal harus 8 karakter."];
     }
     if (trimmedPhone && !/^[0-9+()\s-]+$/.test(trimmedPhone)) {
       clientErrors.phone = ["Nomor telepon hanya boleh berisi angka dan simbol (+, -)."];
@@ -231,10 +312,24 @@ export default function EmployeesPage() {
       return;
     }
 
-    createMutation.mutate({
+    const payload: {
+      name: string;
+      email: string;
+      password?: string;
+      role: "employee" | "manager" | "hr";
+      nik: string;
+      phone: string;
+      gender: "male" | "female";
+      hire_date: string;
+      employment_status: "permanent" | "contract" | "probation";
+      basic_salary: number;
+      allowance_fixed: number;
+      id_branches: number;
+      id_departments: number | null;
+      id_job_positions: number | null;
+    } = {
       name: trimmedName,
       email: trimmedEmail,
-      password,
       role,
       nik: trimmedNik,
       phone: trimmedPhone,
@@ -246,12 +341,23 @@ export default function EmployeesPage() {
       id_branches: parseInt(resolvedBranchId, 10),
       id_departments: idDepartment ? parseInt(idDepartment, 10) : null,
       id_job_positions: idPosition ? parseInt(idPosition, 10) : null,
-    });
+    };
+
+    if (password && password.trim().length > 0) {
+      payload.password = password.trim();
+    }
+
+    if (editingEmployee) {
+      updateMutation.mutate({ id: editingEmployee.id_employees, payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
-  const handleDeleteEmployee = (id: number) => {
-    if (!window.confirm("Yakin ingin menghapus data karyawan ini? Akun login terkait juga akan dinonaktifkan.")) return;
-    deleteMutation.mutate(id);
+  const confirmDelete = () => {
+    if (deletingEmployee) {
+      deleteMutation.mutate(deletingEmployee.id_employees);
+    }
   };
 
   return (
@@ -266,20 +372,12 @@ export default function EmployeesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => refetch()}
-            leftIcon={<RotateCcw className="w-4 h-4 text-slate-500" />}
-          >
-            Segarkan
-          </Button>
+        <div className="hidden sm:flex items-center gap-2">
           <Button
             variant="primary"
             size="sm"
             leftIcon={<Plus className="w-4 h-4" aria-hidden="true" />}
-            onClick={handleOpenModal}
+            onClick={handleOpenCreateModal}
           >
             Tambah Karyawan
           </Button>
@@ -312,7 +410,7 @@ export default function EmployeesPage() {
               title="Belum ada data karyawan"
               description="Tambahkan data staf pertama untuk mengatur jadwal shift dan presensi."
               actionLabel="Tambah Karyawan Baru"
-              onAction={handleOpenModal}
+              onAction={handleOpenCreateModal}
               icon={<Users className="w-6 h-6" />}
             />
           </div>
@@ -376,14 +474,24 @@ export default function EmployeesPage() {
                       />
                     </td>
                     <td className="px-4 py-3.5 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteEmployee(emp.id_employees)}
-                        aria-label={`Hapus ${emp.user?.name || "karyawan"}`}
-                        className="inline-flex items-center justify-center p-2 rounded-xl text-rose-600 hover:text-rose-700 hover:bg-rose-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/30"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="inline-flex items-center gap-1.5 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(emp)}
+                          aria-label={`Ubah data ${emp.user?.name || "karyawan"}`}
+                          className="p-1.5 rounded-xl text-slate-500 hover:text-orange-600 hover:bg-orange-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingEmployee(emp)}
+                          aria-label={`Hapus ${emp.user?.name || "karyawan"}`}
+                          className="p-1.5 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -393,12 +501,16 @@ export default function EmployeesPage() {
         )}
       </Card>
 
-      {/* Modal Tambah Karyawan */}
+      {/* Modal Tambah / Edit Karyawan */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Formulir Karyawan Baru"
-        description="Lengkapi data profil dan akun login untuk staf baru."
+        title={editingEmployee ? "Ubah Data Karyawan" : "Formulir Karyawan Baru"}
+        description={
+          editingEmployee
+            ? "Perbarui informasi profil, penempatan kerja, dan kompensasi gaji staf."
+            : "Lengkapi data profil dan akun login untuk staf baru."
+        }
         maxWidth="2xl"
         footer={
           <div className="flex items-center justify-end gap-2.5 w-full">
@@ -411,20 +523,20 @@ export default function EmployeesPage() {
               Batal
             </Button>
             <Button
-              form="create-employee-form"
+              form="employee-form"
               type="submit"
               variant="primary"
               size="sm"
-              isLoading={createMutation.isPending}
+              isLoading={createMutation.isPending || updateMutation.isPending}
             >
-              Simpan Data Karyawan
+              {editingEmployee ? "Simpan Perubahan" : "Simpan Data Karyawan"}
             </Button>
           </div>
         }
       >
         <form
-          id="create-employee-form"
-          onSubmit={handleCreateEmployee}
+          id="employee-form"
+          onSubmit={handleSaveEmployee}
           noValidate
           className="space-y-6 text-sm"
         >
@@ -552,18 +664,18 @@ export default function EmployeesPage() {
 
               <div>
                 <label htmlFor="emp-password" className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Kata Sandi Akun <span className="text-rose-500">*</span>
+                  {editingEmployee ? "Kata Sandi Akun (Opsional)" : "Kata Sandi Akun"} {!editingEmployee && <span className="text-rose-500">*</span>}
                 </label>
                 <input
                   id="emp-password"
                   type="password"
-                  required
+                  required={!editingEmployee}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
                     clearFieldError("password");
                   }}
-                  placeholder="Minimal 8 karakter"
+                  placeholder={editingEmployee ? "Kosongkan jika tidak diubah" : "Minimal 8 karakter"}
                   aria-invalid={fieldErrors.password ? "true" : undefined}
                   aria-describedby={fieldErrors.password ? "emp-password-error" : undefined}
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border transition-all outline-none ${
@@ -617,7 +729,7 @@ export default function EmployeesPage() {
                   id="emp-gender"
                   value={gender}
                   onChange={(e) => setGender(e.target.value as "male" | "female")}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
                 >
                   <option value="male">Laki-laki</option>
                   <option value="female">Perempuan</option>
@@ -635,17 +747,17 @@ export default function EmployeesPage() {
                   className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
                 >
                   <option value="employee">Karyawan (Staf operasional - presensi GPS & ajukan cuti)</option>
-                  <option value="manager">Manager / Supervisor (Bisa menyetujui & menolak pengajuan cuti tim)</option>
-                  <option value="hr">HR Administrator (Kelola data karyawan, shift, payroll & cuti)</option>
+                  <option value="manager">Manager / Supervisor (Bisa mengevaluasi kinerja & menyetujui cuti)</option>
+                  <option value="hr">HR Administrator (Kelola data karyawan, shift, payroll & SPK)</option>
                 </select>
                 <p className="text-[11px] text-slate-500 mt-1 font-normal">
-                  Pilih Manager jika staf ini berhak menyetujui atau menolak cuti karyawan lainnya.
+                  Pilih Manager jika staf ini berhak mengevaluasi bawahan di modul SPK SMART.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Section 2: Penempatan & Struktur Organisasi */}
+          {/* Section 2: Penempatan & Hubungan Kerja */}
           <div className="space-y-3.5 pt-2">
             <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100">
               <div className="w-5 h-5 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
@@ -671,7 +783,7 @@ export default function EmployeesPage() {
                   }}
                   aria-invalid={fieldErrors.id_branches ? "true" : undefined}
                   aria-describedby={fieldErrors.id_branches ? "emp-branch-error" : undefined}
-                  className={`w-full px-3.5 py-2 text-sm rounded-xl border transition-all outline-none ${
+                  className={`w-full px-3.5 py-2 text-sm rounded-xl border transition-all outline-none cursor-pointer ${
                     fieldErrors.id_branches
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
                       : "border-slate-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
@@ -702,7 +814,7 @@ export default function EmployeesPage() {
                   id="emp-dept"
                   value={idDepartment}
                   onChange={(e) => setIdDepartment(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
                 >
                   <option value="">Pilih Departemen</option>
                   {departments.map((d) => (
@@ -721,7 +833,7 @@ export default function EmployeesPage() {
                   id="emp-pos"
                   value={idPosition}
                   onChange={(e) => setIdPosition(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
                 >
                   <option value="">Pilih Jabatan</option>
                   {positions.map((p) => (
@@ -742,7 +854,7 @@ export default function EmployeesPage() {
                   id="emp-status"
                   value={employmentStatus}
                   onChange={(e) => setEmploymentStatus(e.target.value as "permanent" | "contract" | "probation")}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
                 >
                   <option value="contract">Karyawan Kontrak</option>
                   <option value="permanent">Karyawan Tetap</option>
@@ -870,6 +982,72 @@ export default function EmployeesPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirmation Modal for Delete */}
+      <Modal
+        isOpen={!!deletingEmployee}
+        onClose={() => {
+          setDeletingEmployee(null);
+          setDeleteError(null);
+        }}
+        title="Konfirmasi Hapus Data Karyawan"
+        maxWidth="md"
+        footer={
+          <div className="flex items-center justify-end gap-2 w-full">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setDeletingEmployee(null);
+                setDeleteError(null);
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              isLoading={deleteMutation.isPending}
+              onClick={confirmDelete}
+            >
+              Hapus Karyawan
+            </Button>
+          </div>
+        }
+      >
+        {deleteError && (
+          <div role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+            {deleteError}
+          </div>
+        )}
+        <div className="flex items-start gap-3 py-2">
+          <div className="p-2 rounded-xl bg-rose-50 text-rose-600 flex-shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-slate-700">
+              Apakah Anda yakin ingin menghapus data staf{" "}
+              <strong className="text-slate-900">{deletingEmployee?.user?.name || "ini"}</strong> (
+              <span className="font-mono text-slate-600">{deletingEmployee?.nik}</span>)?
+            </p>
+            <p className="text-xs text-slate-500 mt-1.5">
+              Tindakan ini akan menghapus data profil kepegawaian dan akun autentikasi login terkait secara permanen.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Floating Action Button (FAB) + Mobile */}
+      <button
+        type="button"
+        onClick={handleOpenCreateModal}
+        aria-label="Tambah Karyawan Baru"
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 active:scale-90 text-white shadow-[0_8px_24px_rgba(234,88,12,0.45)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/30"
+      >
+        <Plus className="w-7 h-7 stroke-[2.5]" aria-hidden="true" />
+      </button>
     </div>
   );
 }

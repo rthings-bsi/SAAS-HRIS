@@ -12,6 +12,10 @@ class AppColors {
   static const Color actionAccent = Color(0xFFEA580C);
   static const Color actionHover = Color(0xFFC2410C);
 
+  // iOS HIG Hairline & Separator (DESIGN.md / iOS HIG Inset Grouped)
+  static const Color hairline = Color(0xFFE2E8F0);
+  static const Color separator = Color(0xFFF1F5F9);
+
   // Warm Accent Tonal Palette
   static const Color orangeTint = Color(0xFFFFF7ED);
   static const Color orangeBorder = Color(0xFFFED7AA);
@@ -44,4 +48,18 @@ class AppColors {
   static const Color clockOutText = Color(0xFF1D4ED8);
   static const Color clockOutBg = Color(0xFFEFF6FF);
   static const Color clockOutBorder = Color(0xFFBFDBFE);
+
+  // Enterprise Dashboard Theme (Reference Design)
+  static const Color enterpriseBlue = Color(0xFF1976D2);
+  static const Color shiftTeal = Color(0xFF20A366);
+  static const Color shiftRed = Color(0xFFC43C30);
+  static const Color pinRed = Color(0xFFD63D30);
+  static const Color menuCyanBg = Color(0xFFD2F2F4);
+  static const Color menuCyanIcon = Color(0xFF0097A7);
+  static const Color menuGreenBg = Color(0xFFD6F5E3);
+  static const Color menuGreenIcon = Color(0xFF1EAA61);
+  static const Color avatarBg = Color(0xFFDDE3EA);
+  static const Color avatarText = Color(0xFF7A869A);
+  static const Color navActive = Color(0xFFE85E12);
+  static const Color navInactive = Color(0xFF8C95A3);
 }

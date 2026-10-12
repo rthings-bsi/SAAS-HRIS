@@ -27,9 +27,17 @@ class HistoryScreen extends ConsumerWidget {
     final historyAsync = ref.watch(attendanceHistoryProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.canvasLight,
+      backgroundColor: AppColors.surfaceMuted,
       appBar: AppBar(
-        title: const Text('Riwayat Kehadiran'),
+        title: const Text(
+          'Riwayat Kehadiran',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.inkPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
         elevation: 0,
       ),
       body: RefreshIndicator(
@@ -85,20 +93,42 @@ class HistoryScreen extends ConsumerWidget {
                 final clockOutLabel = record.clockOut ?? '--:--';
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.space16,
-                    vertical: AppDimensions.space12,
-                  ),
+                  padding: const EdgeInsets.all(AppDimensions.space16),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted,
-                    borderRadius: AppDimensions.cardBorderRadius,
+                    color: AppColors.canvasLight,
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppColors.borderNeutral,
-                      width: AppDimensions.borderWidth,
+                      color: const Color(0xFFE2E8F0),
+                      width: 1.0,
                     ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x04000000),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.orangeTint,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.orangeBorder,
+                            width: AppDimensions.borderWidth,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.calendar_today_outlined,
+                          size: 18,
+                          color: AppColors.actionAccent,
+                        ),
+                      ),
+                      const SizedBox(width: AppDimensions.space12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

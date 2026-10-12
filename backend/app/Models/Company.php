@@ -15,21 +15,15 @@ class Company extends Model
 
     protected $fillable = [
         'name',
-        'slug',
+        'industry',
         'email',
+        'website',
         'phone',
         'address',
         'logo_url',
-        'subscription_status',
-        'trial_ends_at',
+        'director_name',
+        'hr_manager_name',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'trial_ends_at' => 'datetime',
-        ];
-    }
 
     public function branches(): HasMany
     {

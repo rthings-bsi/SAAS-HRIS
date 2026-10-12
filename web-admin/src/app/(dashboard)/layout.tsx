@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 
 export default function DashboardLayout({
   children,
@@ -39,7 +40,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
+    <div className="flex h-screen overflow-hidden bg-[#F2F2F7]">
       {/* Keyboard Accessibility Skip Link (R-32) */}
       <a
         href="#main-content"
@@ -48,7 +49,7 @@ export default function DashboardLayout({
         Lewati ke konten utama
       </a>
 
-      {/* Main Sidebar */}
+      {/* Main Sidebar (Desktop sidebar or mobile slide-out for Admin 'Menu') */}
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -56,6 +57,7 @@ export default function DashboardLayout({
 
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* Top Header on Mobile (< lg) */}
         <div className="lg:hidden">
           <Header onOpenSidebar={() => setSidebarOpen(true)} />
         </div>
@@ -63,10 +65,13 @@ export default function DashboardLayout({
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 outline-none bg-gradient-to-b from-white/70 via-[#F8FAFC] to-[#F8FAFC]"
+          className="flex-1 overflow-y-auto p-3.5 sm:p-6 lg:p-8 pb-24 sm:pb-8 lg:pb-8 outline-none bg-[#F2F2F7]"
         >
           {children}
         </main>
+
+        {/* Mobile Bottom Navigation Bar (< lg) */}
+        <MobileBottomNav onOpenMenu={() => setSidebarOpen(true)} />
       </div>
     </div>
   );

@@ -4,22 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Auth\RegisterCompanyRequest;
 use App\Models\User;
-use App\Services\Auth\RegisterCompanyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function registerCompany(RegisterCompanyRequest $request, RegisterCompanyService $service): JsonResponse
-    {
-        $result = $service->register($request->validated());
-
-        return $this->successResponse($result, 'Registrasi perusahaan berhasil.', 201);
-    }
-
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->email)->first();

@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HRIS Web Admin - Manajemen Presensi & Payroll UMKM",
+  title: "HRIS & SPK SMART - Sistem Manajemen SDM & Penilaian Kinerja Pegawai",
   description:
-    "Portal administrasi HRIS operasional untuk UMKM dan startup di Indonesia.",
+    "Sistem Informasi Manajemen SDM dan Penunjang Keputusan Penilaian Kinerja Pegawai Menggunakan Metode SMART.",
 };
 
 export default function RootLayout({

@@ -21,10 +21,10 @@ class AppDimensions {
   static const double radiusCard = 16.0;
   static const double radiusModal = 20.0;
 
-  static final BorderRadius inputBorderRadius = BorderRadius.circular(radiusInput);
-  static final BorderRadius buttonBorderRadius = BorderRadius.circular(radiusButton);
-  static final BorderRadius cardBorderRadius = BorderRadius.circular(radiusCard);
-  static final BorderRadius modalBorderRadius = BorderRadius.circular(radiusModal);
+  static const BorderRadius inputBorderRadius = BorderRadius.all(Radius.circular(radiusInput));
+  static const BorderRadius buttonBorderRadius = BorderRadius.all(Radius.circular(radiusButton));
+  static const BorderRadius cardBorderRadius = BorderRadius.all(Radius.circular(radiusCard));
+  static const BorderRadius modalBorderRadius = BorderRadius.all(Radius.circular(radiusModal));
 
   // Border Width
   static const double borderWidth = 1.0;

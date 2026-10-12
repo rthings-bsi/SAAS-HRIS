@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/auth_interceptor.dart';
 import '../../../core/network/network_provider.dart';
@@ -119,15 +120,14 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
-  final Ref _ref;
   static const String userKey = 'auth_user';
 
-  AuthNotifier(this._repository, this._ref) : super(const AuthState());
+  AuthNotifier(this._repository, [Ref? ref]) : super(const AuthState());
 
   Future<void> checkAuth() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final prefs = await _ref.read(sharedPreferencesProvider.future);
+      final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(AuthInterceptor.tokenKey);
       if (token == null || token.isEmpty) {
         state = state.copyWith(
@@ -188,7 +188,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final data = await _repository.login(email: email, password: password);
       final token = (data['access_token'] ?? data['token']) as String?;
 
-      final prefs = await _ref.read(sharedPreferencesProvider.future);
+      final prefs = await SharedPreferences.getInstance();
       if (token != null && token.isNotEmpty) {
         await prefs.setString(AuthInterceptor.tokenKey, token);
       }
@@ -229,7 +229,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> refreshProfile() async {
     try {
       final profile = await _repository.getProfile();
-      final prefs = await _ref.read(sharedPreferencesProvider.future);
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setString(userKey, jsonEncode(profile));
       state = state.copyWith(
         status: AuthStatus.authenticated,
@@ -242,7 +242,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.logout();
     } catch (_) {}
-    final prefs = await _ref.read(sharedPreferencesProvider.future);
+    final prefs = await SharedPreferences.getInstance();
     await prefs.remove(AuthInterceptor.tokenKey);
     await prefs.remove(userKey);
     state = const AuthState(status: AuthStatus.unauthenticated);
@@ -250,7 +250,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void resetAuth() {
     state = const AuthState(status: AuthStatus.unauthenticated);
-    _ref.read(sharedPreferencesProvider.future).then((prefs) {
+    SharedPreferences.getInstance().then((prefs) {
       prefs.remove(AuthInterceptor.tokenKey);
       prefs.remove(userKey);
     }).catchError((_) {});
@@ -262,7 +262,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final interceptor = ref.watch(authInterceptorProvider);
   final repo = ref.watch(authRepositoryProvider);
-  final notifier = AuthNotifier(repo, ref);
+  final notifier = AuthNotifier(repo);
   interceptor.onUnauthorized = notifier.resetAuth;
   return notifier;
 });

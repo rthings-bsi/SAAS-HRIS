@@ -25,7 +25,7 @@ class EmployeeController extends Controller
     public function store(StoreEmployeeRequest $request): JsonResponse
     {
         $employee = DB::transaction(function () use ($request) {
-            $companyId = auth()->user()?->id_companies;
+            $companyId = auth()->user()?->id_companies ?? 1;
 
             $user = User::create([
                 'id_companies' => $companyId,

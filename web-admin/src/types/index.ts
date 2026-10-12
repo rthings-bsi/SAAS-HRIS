@@ -1,5 +1,5 @@
 /**
- * TypeScript Interfaces & Models for SaaS HRIS Multi-Tenant
+ * TypeScript Interfaces & Models for Standalone HRIS & SPK SMART
  * Based on API_SPEC.md & ERD.md
  */
 
@@ -213,6 +213,13 @@ export interface Attendance {
   updated_at?: string;
 }
 
+export interface TodayAttendance {
+  employee?: Employee;
+  branch?: Branch;
+  shift?: Shift;
+  attendance?: Attendance | null;
+}
+
 // ==========================================
 // 6. Leave & Permission Entities
 // ==========================================
@@ -244,6 +251,42 @@ export interface LeaveRequest {
   rejected_reason?: string;
   employee?: Employee;
   leave_type?: LeaveType;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LeaveBalance {
+  id_leave_types: number;
+  name: string;
+  quota_days: number;
+  used_days: number;
+  pending_days: number;
+  remaining_days: number;
+  available_days: number;
+  is_paid: boolean;
+  year: number;
+}
+
+// ==========================================
+// 6b. Overtime Entities
+// ==========================================
+
+export type OvertimeRequestStatus = "pending" | "approved" | "rejected";
+
+export interface OvertimeRequest {
+  id_overtime_requests: number;
+  id_companies: number;
+  id_employees: number;
+  date: string;
+  start_time: string;
+  end_time: string;
+  duration_hours: number;
+  reason: string;
+  status: OvertimeRequestStatus;
+  approved_by?: number | null;
+  rejected_reason?: string | null;
+  employee?: Employee;
+  approver?: User;
   created_at?: string;
   updated_at?: string;
 }
@@ -283,6 +326,9 @@ export interface PayrollSlip {
   pdf_path?: string;
   pdf_url?: string;
   has_pdf?: boolean;
+  period_name?: string;
+  payment_date?: string;
+  status?: string;
   employee?: {
     id_employees?: number;
     name?: string;
@@ -294,3 +340,63 @@ export interface PayrollSlip {
   created_at?: string;
   updated_at?: string;
 }
+
+// ==========================================
+// 8. Performance Evaluation (SPK SMART)
+// ==========================================
+
+export type CriterionType = "benefit" | "cost";
+export type PerformancePeriodStatus = "draft" | "active" | "calculated" | "finalized";
+
+export interface PerformanceCriterion {
+  id_performance_criteria: number;
+  code: string;
+  name: string;
+  type: CriterionType;
+  weight: number;
+  c_min: number;
+  c_max: number;
+  source_type: "manual" | "attendance";
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PerformancePeriod {
+  id_performance_periods: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  status: PerformancePeriodStatus;
+  evaluations_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PerformanceEvaluationDetail {
+  id_performance_evaluation_details: number;
+  id_performance_evaluations: number;
+  id_performance_criteria: number;
+  raw_score: number;
+  normalized_weight: number;
+  utility_score: number;
+  weighted_score: number;
+  criterion?: PerformanceCriterion;
+}
+
+export interface PerformanceEvaluation {
+  id_performance_evaluations: number;
+  id_performance_periods: number;
+  id_employees: number;
+  final_score: number | null;
+  rank: number | null;
+  grade: string | null;
+  recommendation: string | null;
+  notes?: string | null;
+  evaluated_by?: number | null;
+  employee?: Employee;
+  details?: PerformanceEvaluationDetail[];
+  created_at?: string;
+  updated_at?: string;
+}
+

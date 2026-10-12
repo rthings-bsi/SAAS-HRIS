@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Briefcase, Trash2, Edit2, RotateCcw, AlertCircle } from "lucide-react";
+import { Plus, Briefcase, Trash2, Edit2, AlertCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -18,6 +18,8 @@ export default function JobPositionsPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPosition, setEditingPosition] = useState<JobPosition | null>(null);
+  const [deletingPosition, setDeletingPosition] = useState<JobPosition | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
@@ -108,10 +110,12 @@ export default function JobPositionsPage() {
       await apiClient.delete(`/job-positions/${id}`);
     },
     onSuccess: () => {
+      setDeletingPosition(null);
+      setDeleteError(null);
       queryClient.invalidateQueries({ queryKey: ["job-positions"] });
     },
     onError: (err: Error) => {
-      alert(err.message || "Gagal menghapus jabatan posisi.");
+      setDeleteError(err.message || "Gagal menghapus jabatan posisi.");
     },
   });
 
@@ -163,9 +167,10 @@ export default function JobPositionsPage() {
     }
   };
 
-  const handleDelete = (id: number, posName: string) => {
-    if (!window.confirm(`Yakin ingin menghapus jabatan posisi "${posName}"?`)) return;
-    deleteMutation.mutate(id);
+  const confirmDelete = () => {
+    if (deletingPosition) {
+      deleteMutation.mutate(deletingPosition.id_job_positions);
+    }
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -183,15 +188,7 @@ export default function JobPositionsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => refetch()}
-            leftIcon={<RotateCcw className="w-4 h-4 text-slate-500" />}
-          >
-            Segarkan
-          </Button>
+        <div className="hidden sm:flex items-center gap-2">
           <Button
             variant="primary"
             size="sm"
@@ -267,7 +264,7 @@ export default function JobPositionsPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(pos.id_job_positions, pos.name)}
+                          onClick={() => setDeletingPosition(pos)}
                           aria-label={`Hapus jabatan ${pos.name}`}
                           className="p-1.5 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 cursor-pointer"
                         >
@@ -367,6 +364,71 @@ export default function JobPositionsPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Confirmation Modal for Delete */}
+      <Modal
+        isOpen={!!deletingPosition}
+        onClose={() => {
+          setDeletingPosition(null);
+          setDeleteError(null);
+        }}
+        title="Konfirmasi Hapus Jabatan Posisi"
+        maxWidth="md"
+        footer={
+          <div className="flex items-center justify-end gap-2 w-full">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setDeletingPosition(null);
+                setDeleteError(null);
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              isLoading={deleteMutation.isPending}
+              onClick={confirmDelete}
+            >
+              Hapus Jabatan
+            </Button>
+          </div>
+        }
+      >
+        {deleteError && (
+          <div role="alert" className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+            {deleteError}
+          </div>
+        )}
+        <div className="flex items-start gap-3 py-2">
+          <div className="p-2 rounded-xl bg-rose-50 text-rose-600 flex-shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-sm text-slate-700">
+              Apakah Anda yakin ingin menghapus jabatan posisi{" "}
+              <strong className="text-slate-900">{deletingPosition?.name}</strong>?
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Tindakan ini tidak dapat dibatalkan. Karyawan dengan posisi ini perlu diperbarui peran jabatannya.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Floating Action Button (FAB) + Mobile */}
+      <button
+        type="button"
+        onClick={handleOpenCreateModal}
+        aria-label="Tambah Jabatan Baru"
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 active:scale-90 text-white shadow-[0_8px_24px_rgba(234,88,12,0.45)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/30"
+      >
+        <Plus className="w-7 h-7 stroke-[2.5]" aria-hidden="true" />
+      </button>
     </div>
   );
 }

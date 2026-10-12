@@ -7,11 +7,11 @@ import 'auth_interceptor.dart';
 class ApiClient {
   final Dio _dio;
 
-  ApiClient({Dio? dio, AuthInterceptor? interceptor})
+  ApiClient({Dio? dio, AuthInterceptor? interceptor, String? baseUrl})
       : _dio = dio ??
             Dio(
               BaseOptions(
-                baseUrl: ApiEndpoints.baseUrl,
+                baseUrl: baseUrl ?? ApiEndpoints.baseUrl,
                 connectTimeout: const Duration(seconds: 15),
                 receiveTimeout: const Duration(seconds: 15),
                 headers: {
@@ -24,6 +24,11 @@ class ApiClient {
 
   Dio get dio => _dio;
 
+  String get baseUrl => _dio.options.baseUrl;
+
+  void updateBaseUrl(String newBaseUrl) {
+    _dio.options.baseUrl = newBaseUrl.trim();
+  }
   Future<dynamic> get(
     String path, {
     Map<String, dynamic>? queryParameters,

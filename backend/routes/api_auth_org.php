@@ -2,14 +2,14 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\CompanyProfileController;
 use App\Http\Controllers\Organization\BranchController;
 use App\Http\Controllers\Organization\DepartmentController;
 use App\Http\Controllers\Organization\JobPositionController;
 use Illuminate\Support\Facades\Route;
 
-// Auth routes
+// Auth routes (Single Company Internal HRIS - Non-SaaS)
 Route::prefix('auth')->group(function () {
-    Route::post('/register-company', [AuthController::class, 'registerCompany']);
     Route::post('/login', [AuthController::class, 'login']);
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -20,6 +20,10 @@ Route::prefix('auth')->group(function () {
 
 // Organization routes
 Route::middleware('auth:sanctum')->group(function () {
+    // Company Profile
+    Route::get('/company-profile', [CompanyProfileController::class, 'show']);
+    Route::put('/company-profile', [CompanyProfileController::class, 'update']);
+
     // Branches
     Route::get('/branches', [BranchController::class, 'index']);
     Route::post('/branches', [BranchController::class, 'store']);

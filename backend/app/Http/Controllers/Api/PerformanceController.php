@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Performance\StorePerformancePeriodRequest;
 use App\Models\PerformanceEvaluation;
 use App\Models\PerformancePeriod;
 use App\Services\Performance\SmartCalculationService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -98,19 +100,47 @@ class PerformanceController extends Controller
         return $this->successResponse($periods, 'Daftar periode penilaian berhasil diambil.');
     }
 
-    public function storePeriod(Request $request): JsonResponse
+    public function storePeriod(StorePerformancePeriodRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ], [
-            'name.required' => 'Nama periode wajib diisi.',
-            'start_date.required' => 'Tanggal mulai wajib diisi.',
-            'end_date.required' => 'Tanggal akhir wajib diisi.',
-            'end_date.after_or_equal' => 'Tanggal akhir harus sama atau setelah tanggal mulai.',
-        ]);
+        $user = $request->user();
+        if (! in_array($user?->role, ['owner', 'hr', 'manager', 'superadmin', 'super_admin'])) {
+            return $this->errorResponse('Akses ditolak. Anda tidak memiliki izin untuk membuka periode penilaian.', null, 403);
+        }
 
+        $name = trim($request->validated('name'));
+        $startDate = $request->validated('start_date');
+        $endDate = $request->validated('end_date');
+
+        // Validasi 1: Cegah pembuatan periode dengan nama yang sama persis
+        $nameExists = PerformancePeriod::whereRaw('LOWER(name) = ?', [strtolower($name)])->exists();
+        if ($nameExists) {
+            return $this->errorResponse("Nama periode '{$name}' sudah digunakan. Silakan gunakan nama periode yang berbeda.", [
+                'name' => ["Nama periode '{$name}' sudah digunakan."],
+            ], 422);
+        }
+
+        // Validasi 2: Cegah pembuatan periode pada tanggal yang sama atau saling tumpang tindih (overlap)
+        $overlapPeriod = PerformancePeriod::where(function ($q) use ($startDate, $endDate) {
+            $q->where('start_date', '<=', $endDate)
+              ->where('end_date', '>=', $startDate);
+        })->first();
+
+        if ($overlapPeriod) {
+            $overlapStart = Carbon::parse($overlapPeriod->start_date)->translatedFormat('d F Y');
+            $overlapEnd = Carbon::parse($overlapPeriod->end_date)->translatedFormat('d F Y');
+
+            return $this->errorResponse(
+                "Rentang tanggal bertabrakan dengan periode '{$overlapPeriod->name}' ({$overlapStart} - {$overlapEnd}). Periode penilaian kinerja tidak boleh berada pada tanggal yang sama.",
+                [
+                    'start_date' => ["Rentang tanggal bertabrakan dengan periode '{$overlapPeriod->name}' ({$overlapStart} - {$overlapEnd})."],
+                    'end_date' => ["Rentang tanggal bertabrakan dengan periode '{$overlapPeriod->name}' ({$overlapStart} - {$overlapEnd})."],
+                ],
+                422
+            );
+        }
+
+        $validated = $request->validated();
+        $validated['name'] = $name;
         $validated['criteria_config'] = PerformancePeriod::defaultCriteria();
         $validated['status'] = 'draft';
 
@@ -120,6 +150,24 @@ class PerformanceController extends Controller
         $this->smartService->syncEmployeesForPeriod($period);
 
         return $this->successResponse($period, 'Periode penilaian berhasil dibuat dan pegawai telah disinkronkan.', 201);
+    }
+
+    public function destroyPeriod(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        if (! in_array($user?->role, ['owner', 'hr', 'manager', 'superadmin', 'super_admin'])) {
+            return $this->errorResponse('Akses ditolak. Anda tidak memiliki izin menghapus periode penilaian.', null, 403);
+        }
+
+        $period = PerformancePeriod::findOrFail($id);
+
+        if ($period->status === 'finalized') {
+            return $this->errorResponse('Periode yang telah disahkan (finalized) tidak dapat dihapus.', null, 422);
+        }
+
+        $period->delete();
+
+        return $this->successResponse(null, 'Periode penilaian kinerja berhasil dihapus.');
     }
 
     public function showPeriod(int $id): JsonResponse

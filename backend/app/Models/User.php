@@ -49,4 +49,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(LeaveRequest::class, 'approved_by', 'id_users');
     }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'id_users', 'id_users')->orderBy('created_at', 'desc');
+    }
 }

@@ -20,7 +20,7 @@ void main() {
     expect(find.byType(HrisApp), findsOneWidget);
   });
 
-  testWidgets('HomeScreen drawer logout closes drawer and triggers logout', (WidgetTester tester) async {
+  testWidgets('HomeScreen renders floating bottom navigation dock', (WidgetTester tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MaterialApp(
@@ -30,14 +30,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final scaffoldState = tester.firstState<ScaffoldState>(find.byType(Scaffold));
-    scaffoldState.openDrawer();
-    await tester.pumpAndSettle();
-
-    expect(find.text('Keluar dari Akun'), findsOneWidget);
-    await tester.tap(find.text('Keluar dari Akun'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Keluar dari Akun'), findsNothing);
+    expect(find.text('Beranda'), findsOneWidget);
+    expect(find.text('Lembur'), findsOneWidget);
+    expect(find.text('Cuti'), findsOneWidget);
+    expect(find.text('Gaji'), findsOneWidget);
+    expect(find.text('Profil'), findsOneWidget);
   });
 }

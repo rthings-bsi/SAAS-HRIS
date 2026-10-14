@@ -5,10 +5,13 @@ import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
+import '../../../core/widgets/hr_hub_logo.dart';
 import '../../attendance/data/attendance_models.dart';
 import '../../attendance/presentation/attendance_screen.dart';
 import '../../attendance/provider/attendance_provider.dart';
 import '../../auth/provider/auth_provider.dart';
+import '../../notification/presentation/notification_sheet.dart';
+import '../../notification/provider/notification_provider.dart';
 
 String getInitials(String name) {
   final parts = name.trim().split(RegExp(r'\s+'));
@@ -86,6 +89,7 @@ class HomeDashboardView extends ConsumerWidget {
     final hasClockedOut = todayData != null && todayData.hasClockedOut;
     final isCompleted = hasClockedIn && hasClockedOut;
     final isClockInAction = !hasClockedIn;
+    final unreadNotificationCount = ref.watch(unreadNotificationCountProvider).valueOrNull ?? 0;
 
     // Listen for attendance actions feedback (Clock In / Clock Out)
     ref.listen<AttendanceActionState>(attendanceActionProvider, (previous, next) {
@@ -128,106 +132,78 @@ class HomeDashboardView extends ConsumerWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                // 1. Header Bar: Company Name + Chevron + Search Icon
+                // 1. Header Bar: Brand Mark + HR Hub + SPINDO Badge + Search + Notifications
                 Container(
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppDimensions.space16,
-                    vertical: 10,
+                    vertical: 12,
                   ),
                   child: Row(
                     children: [
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(6),
-                          onTap: () {
-                            Scaffold.of(context).openDrawer();
-                          },
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  companyName,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.inkPrimary,
-                                    letterSpacing: -0.2,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.chevron_right_rounded,
-                                size: 20,
-                                color: Color(0xFF64748B),
-                              ),
-                            ],
+                      // Squircle Brand Mark
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFFE2E8F0),
+                            width: 1,
                           ),
                         ),
+                        alignment: Alignment.center,
+                        child: const HrHubLogo(size: 24),
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.search_rounded,
-                          color: Color(0xFF475569),
-                          size: 24,
-                        ),
-                        tooltip: 'Pencarian',
-                        onPressed: () => _showSearchDialog(context),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 2. Profile Bar: Initials Avatar + Name + Role + Notification Bell
-                Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimensions.space16,
-                    0,
-                    AppDimensions.space16,
-                    14,
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: AppColors.avatarBg,
-                        child: Text(
-                          initials,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.avatarText,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              userName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.inkPrimary,
-                                letterSpacing: -0.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Row(
+                              children: [
+                                const Text(
+                                  'HR Hub',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0B2545),
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFDCFCE7),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: const Color(0xFFBBF7D0),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'SPINDO',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF15803D),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              userRole,
+                              companyName,
                               style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
                                 color: Color(0xFF64748B),
                               ),
                               maxLines: 1,
@@ -238,12 +214,108 @@ class HomeDashboardView extends ConsumerWidget {
                       ),
                       IconButton(
                         icon: const Icon(
-                          Icons.notifications_none_rounded,
+                          Icons.search_rounded,
                           color: Color(0xFF475569),
-                          size: 24,
+                          size: 22,
+                        ),
+                        tooltip: 'Pencarian',
+                        onPressed: () => _showSearchDialog(context),
+                      ),
+                      IconButton(
+                        icon: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(
+                              Icons.notifications_none_rounded,
+                              color: Color(0xFF475569),
+                              size: 22,
+                            ),
+                            if (unreadNotificationCount > 0)
+                              Positioned(
+                                top: -2,
+                                right: -2,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFDC2626),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 10,
+                                    minHeight: 10,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         tooltip: 'Notifikasi',
-                        onPressed: () => _showNotificationSheet(context, shiftName),
+                        onPressed: () => NotificationSheet.show(context, onNavigateToTab: onNavigateToTab),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 2. Profile Welcome Row
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.space16,
+                    0,
+                    AppDimensions.space16,
+                    14,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFBFDBFE),
+                            width: 1,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          initials,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1D4ED8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              userName,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0B2545),
+                                letterSpacing: -0.2,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              userRole,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -337,16 +409,22 @@ class HomeDashboardView extends ConsumerWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 13,
-                                    backgroundColor: AppColors.avatarBg,
-                                    child: Text(
-                                      initials,
-                                      style: const TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.avatarText,
+                                  Container(
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.successBg,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: AppColors.successBorder,
+                                        width: 1,
                                       ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Icon(
+                                      Icons.login_rounded,
+                                      size: 16,
+                                      color: AppColors.successText,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -356,40 +434,54 @@ class HomeDashboardView extends ConsumerWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          'Start Time',
+                                          'Clock In',
                                           style: TextStyle(
                                             fontSize: 11,
-                                            fontWeight: FontWeight.w400,
+                                            fontWeight: FontWeight.w600,
                                             color: Color(0xFF64748B),
                                           ),
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          clockInTime,
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.shiftTeal,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        const Row(
+                                        const SizedBox(height: 1),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                                          textBaseline: TextBaseline.alphabetic,
                                           children: [
-                                            Icon(
-                                              Icons.location_on_rounded,
-                                              size: 13,
-                                              color: AppColors.pinRed,
-                                            ),
-                                            SizedBox(width: 2),
                                             Text(
-                                              'x',
+                                              clockInTime,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF0F172A),
+                                                fontFamily: 'monospace',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 2),
+                                            const Text(
+                                              'WIB',
                                               style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.pinRed,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w500,
+                                                color: Color(0xFF94A3B8),
                                               ),
                                             ),
                                           ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          hasClockedIn
+                                              ? (todayData.isLate == true
+                                                  ? '+${todayData.lateMinutes}m terlambat'
+                                                  : 'Tepat Waktu')
+                                              : 'Belum presensi',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: hasClockedIn
+                                                ? (todayData.isLate == true
+                                                    ? AppColors.warningText
+                                                    : AppColors.successText)
+                                                : const Color(0xFF94A3B8),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -407,17 +499,23 @@ class HomeDashboardView extends ConsumerWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  const SizedBox(width: 12),
-                                  CircleAvatar(
-                                    radius: 13,
-                                    backgroundColor: AppColors.avatarBg,
-                                    child: Text(
-                                      initials,
-                                      style: const TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.avatarText,
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFFBEB),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: const Color(0xFFFDE68A),
+                                        width: 1,
                                       ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Icon(
+                                      Icons.logout_rounded,
+                                      size: 16,
+                                      color: Color(0xFFD97706),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -427,40 +525,54 @@ class HomeDashboardView extends ConsumerWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          'End Time',
+                                          'Clock Out',
                                           style: TextStyle(
                                             fontSize: 11,
-                                            fontWeight: FontWeight.w400,
+                                            fontWeight: FontWeight.w600,
                                             color: Color(0xFF64748B),
                                           ),
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          clockOutTime,
-                                          style: const TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.shiftRed,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        const Row(
+                                        const SizedBox(height: 1),
+                                        Row(
+                                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                                          textBaseline: TextBaseline.alphabetic,
                                           children: [
-                                            Icon(
-                                              Icons.location_on_rounded,
-                                              size: 13,
-                                              color: AppColors.pinRed,
-                                            ),
-                                            SizedBox(width: 2),
                                             Text(
-                                              'x',
+                                              clockOutTime,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF0F172A),
+                                                fontFamily: 'monospace',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 2),
+                                            const Text(
+                                              'WIB',
                                               style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.pinRed,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w500,
+                                                color: Color(0xFF94A3B8),
                                               ),
                                             ),
                                           ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          hasClockedOut
+                                              ? 'Selesai Kerja'
+                                              : (hasClockedIn
+                                                  ? 'Sedang Bekerja'
+                                                  : 'Belum jam pulang'),
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: hasClockedOut
+                                                ? AppColors.successText
+                                                : (hasClockedIn
+                                                    ? AppColors.infoText
+                                                    : const Color(0xFF94A3B8)),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -708,7 +820,7 @@ class HomeDashboardView extends ConsumerWidget {
                           _FavoriteMenuItem(
                             label: 'Pengajuan\nLembur',
                             icon: Icons.more_time_rounded,
-                            bgColor: AppColors.orangeTint,
+                            bgColor: AppColors.emeraldTint,
                             iconColor: AppColors.actionAccent,
                             onTap: () => onNavigateToTab(1),
                           ),
@@ -831,7 +943,7 @@ class HomeDashboardView extends ConsumerWidget {
                                     width: 44,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: AppColors.orangeTint,
+                                      color: AppColors.emeraldTint,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: const Icon(
@@ -881,7 +993,7 @@ class HomeDashboardView extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 84),
                     ],
                   ),
                 ),
@@ -984,75 +1096,6 @@ class HomeDashboardView extends ConsumerWidget {
     );
   }
 
-  void _showNotificationSheet(BuildContext context, String shiftName) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Notifikasi Terkini',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.inkPrimary,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ],
-            ),
-            const Divider(),
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: AppColors.orangeTint,
-                child: Icon(Icons.info_outline_rounded, color: AppColors.actionAccent),
-              ),
-              title: const Text(
-                'Jadwal Shift Kerja Ditetapkan',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-              subtitle: Text(
-                'Shift $shiftName aktif untuk periode hari ini.',
-                style: const TextStyle(fontSize: 12),
-              ),
-            ),
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: AppColors.menuGreenBg,
-                child: Icon(Icons.check_circle_outline_rounded, color: AppColors.menuGreenIcon),
-              ),
-              title: const Text(
-                'Slip Gaji Periode Baru',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-              subtitle: const Text(
-                'Slip gaji bulan lalu telah diproses oleh bagian finance.',
-                style: TextStyle(fontSize: 12),
-              ),
-              onTap: () {
-                Navigator.pop(ctx);
-                onNavigateToTab(2);
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _showShiftScheduleDialog(
     BuildContext context,

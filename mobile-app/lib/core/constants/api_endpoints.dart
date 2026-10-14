@@ -1,14 +1,13 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
-  // Base URL (Override with --dart-define=BASE_URL=... if needed)
-  static const String baseUrl = String.fromEnvironment(
-    'BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api/v1',
-  );
+  // Base URL paten domain API Cloudflare
+  static const String baseUrl = 'https://api-hris.rickysatria.web.id/api/v1';
 
-  // Preset base URLs for quick switching during development/testing
-  static const String defaultLanUrl = 'http://192.168.1.178:8000/api/v1';
+  // Preset live domain URL
+  static const String defaultTunnelUrl = 'https://api-hris.rickysatria.web.id/api/v1';
+  static const String defaultLocalhostUrl = 'http://127.0.0.1:8000/api/v1';
+  static const String defaultLanUrl = 'http://192.168.5.9:8000/api/v1';
   static const String defaultUsbUrl = 'http://127.0.0.1:8000/api/v1';
   static const String defaultEmulatorUrl = 'http://10.0.2.2:8000/api/v1';
 
@@ -42,4 +41,11 @@ class ApiEndpoints {
   static const String payrollMySlips = '/payroll/my-slips';
   static String payrollDownloadSlip(int id) => '/payroll/my-slips/$id/download';
   static String payrollMySlipDownload(int id) => '/payroll/my-slips/$id/download';
+
+  // Notifications
+  static const String notifications = '/notifications';
+  static const String notificationUnreadCount = '/notifications/unread-count';
+  static String notificationMarkAsRead(int id) => '/notifications/$id/read';
+  static const String notificationMarkAllRead = '/notifications/read-all';
+  static String notificationDelete(int id) => '/notifications/$id';
 }

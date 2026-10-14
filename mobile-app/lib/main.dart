@@ -6,23 +6,21 @@ import 'core/constants/api_endpoints.dart';
 import 'core/constants/app_colors.dart';
 import 'core/network/network_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/provider/auth_provider.dart';
 import 'features/home/presentation/home_screen.dart';
-import 'features/landing/presentation/mobile_landing_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
 
   final prefs = await SharedPreferences.getInstance();
-  final savedBaseUrl =
-      prefs.getString(serverBaseUrlPrefKey) ?? ApiEndpoints.baseUrl;
 
   runApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWith((ref) => prefs),
-        initialBaseUrlProvider.overrideWithValue(savedBaseUrl),
+        initialBaseUrlProvider.overrideWithValue(ApiEndpoints.baseUrl),
       ],
       child: const HrisApp(),
     ),
@@ -88,7 +86,7 @@ class _AuthGateState extends ConsumerState<AuthGate> {
       case AuthStatus.authenticated:
         return const HomeScreen();
       case AuthStatus.unauthenticated:
-        return const MobileLandingScreen();
+        return const LoginScreen();
     }
   }
 }

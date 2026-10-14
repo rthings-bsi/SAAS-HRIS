@@ -16,6 +16,7 @@ import {
   CalendarDays,
   Sparkles,
   UserCheck,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -58,6 +59,10 @@ export default function PerformancePage() {
   const [endDate, setEndDate] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  // Modal konfirmasi hapus periode
+  const [deletingPeriod, setDeletingPeriod] = useState<PerformancePeriod | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const {
     data: periods = [],
@@ -110,11 +115,36 @@ export default function PerformancePage() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiClient.delete<ApiResponse<null>>(
+        `/performance/periods/${id}`
+      );
+      return res.data;
+    },
+    onSuccess: () => {
+      setDeletingPeriod(null);
+      setDeleteError(null);
+      queryClient.invalidateQueries({ queryKey: ["performance-periods"] });
+    },
+    onError: (err: {
+      response?: { data?: { message?: string } };
+      message?: string;
+    }) => {
+      setDeleteError(
+        err.response?.data?.message ||
+          err.message ||
+          "Gagal menghapus periode penilaian kinerja."
+      );
+    },
+  });
+
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError(null);
 
-    if (!periodName.trim() || !startDate || !endDate) {
+    const trimmedName = periodName.trim();
+    if (!trimmedName || !startDate || !endDate) {
       setCreateError("Semua field wajib diisi.");
       return;
     }
@@ -124,8 +154,49 @@ export default function PerformancePage() {
       return;
     }
 
+    // 1. Validasi duplikasi nama (case-insensitive)
+    const isDuplicateName = periods.some(
+      (p) => p.name.trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicateName) {
+      setCreateError(
+        `Nama periode '${trimmedName}' sudah digunakan. Silakan gunakan nama periode yang berbeda.`
+      );
+      return;
+    }
+
+    // 2. Validasi rentang tanggal saling bertabrakan / overlap
+    const overlapPeriod = periods.find((p) => {
+      const pStart = p.start_date.substring(0, 10);
+      const pEnd = p.end_date.substring(0, 10);
+      return pStart <= endDate && pEnd >= startDate;
+    });
+
+    if (overlapPeriod) {
+      const overlapStart = new Date(overlapPeriod.start_date).toLocaleDateString(
+        "id-ID",
+        {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }
+      );
+      const overlapEnd = new Date(overlapPeriod.end_date).toLocaleDateString(
+        "id-ID",
+        {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }
+      );
+      setCreateError(
+        `Rentang tanggal bertabrakan dengan periode '${overlapPeriod.name}' (${overlapStart} - ${overlapEnd}). Periode penilaian kinerja tidak boleh berada pada tanggal yang sama.`
+      );
+      return;
+    }
+
     createMutation.mutate({
-      name: periodName.trim(),
+      name: trimmedName,
       start_date: startDate,
       end_date: endDate,
     });
@@ -136,7 +207,7 @@ export default function PerformancePage() {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("hris_token") : null;
     const url = `${
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+      process.env.NEXT_PUBLIC_API_URL || "/api/v1"
     }/performance/periods/${id}/pdf`;
 
     fetch(url, {
@@ -171,10 +242,10 @@ export default function PerformancePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0B2545]">
               Penilaian Kinerja Pegawai
             </h1>
-            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-sky-50 text-sky-700 border border-sky-200/80">
+            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]">
               Metode SMART
             </span>
           </div>
@@ -193,7 +264,7 @@ export default function PerformancePage() {
                 setCreateError(null);
                 setIsCreateOpen(true);
               }}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-2xl bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-bold text-xs sm:text-sm shadow-[0_2px_8px_rgba(234,88,12,0.25)] transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] rounded-2xl bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.98] text-white font-bold text-xs sm:text-sm shadow-xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             >
               <Plus className="w-4 h-4" aria-hidden="true" />
               <span>Buka Periode Penilaian</span>
@@ -230,7 +301,7 @@ export default function PerformancePage() {
             <span className="text-[11px] sm:text-xs font-semibold text-slate-500">
               Total Periode
             </span>
-            <div className="w-7 h-7 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center">
+            <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
               <Calendar className="w-3.5 h-3.5" />
             </div>
           </div>
@@ -390,7 +461,7 @@ export default function PerformancePage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="flex items-center gap-2 pt-1">
                     {(item.status === "calculated" ||
                       item.status === "finalized") && (
                       <button
@@ -398,20 +469,29 @@ export default function PerformancePage() {
                         onClick={() =>
                           handleDownloadPdf(item.id_performance_periods)
                         }
-                        className="min-h-[40px] rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        className="min-h-[40px] px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>PDF</span>
                       </button>
                     )}
+                    {canManage && item.status !== "finalized" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setDeletingPeriod(item);
+                        }}
+                        className="min-h-[40px] px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        title="Hapus Periode"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hapus</span>
+                      </button>
+                    )}
                     <Link
                       href={`/performance/${item.id_performance_periods}`}
-                      className={cn(
-                        "min-h-[40px] rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all",
-                        item.status !== "calculated" &&
-                          item.status !== "finalized" &&
-                          "col-span-2"
-                      )}
+                      className="flex-1 min-h-[40px] rounded-xl bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all"
                     >
                       <span>{isEmployee ? "Lihat Nilai" : "Kelola Evaluasi"}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -489,10 +569,23 @@ export default function PerformancePage() {
                               <FileText className="h-3.5 w-3.5" />
                             </button>
                           )}
+                          {canManage && item.status !== "finalized" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteError(null);
+                                setDeletingPeriod(item);
+                              }}
+                              title="Hapus Periode"
+                              className="p-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <Link href={`/performance/${item.id_performance_periods}`}>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-bold text-xs shadow-2xs transition-all cursor-pointer min-h-[36px]"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.98] text-white font-bold text-xs shadow-2xs transition-all cursor-pointer min-h-[36px]"
                             >
                               <span>{isEmployee ? "Lihat Nilai" : "Kelola Evaluasi"}</span>
                               <ArrowRight className="h-3 w-3" />
@@ -541,7 +634,7 @@ export default function PerformancePage() {
                 size="md"
                 onClick={handleCreateSubmit}
                 isLoading={createMutation.isPending}
-                className="min-h-[44px] rounded-xl bg-orange-600 hover:bg-orange-700 font-bold"
+                className="min-h-[44px] rounded-xl bg-[#16A34A] hover:bg-[#15803D] font-bold"
               >
                 Buat & Sinkronkan Pegawai
               </Button>
@@ -572,7 +665,7 @@ export default function PerformancePage() {
                 placeholder="Contoh: Penilaian Kinerja Semester I - 2026"
                 value={periodName}
                 onChange={(e) => setPeriodName(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[46px]"
+                className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 min-h-[46px]"
               />
             </div>
 
@@ -590,7 +683,7 @@ export default function PerformancePage() {
                   required
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[46px]"
+                  className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 min-h-[46px]"
                 />
               </div>
 
@@ -607,11 +700,88 @@ export default function PerformancePage() {
                   required
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[46px]"
+                  className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 min-h-[46px]"
                 />
               </div>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* 6. Modal Konfirmasi Hapus Periode */}
+      {deletingPeriod && (
+        <Modal
+          isOpen={true}
+          onClose={() => {
+            if (!deleteMutation.isPending) {
+              setDeletingPeriod(null);
+              setDeleteError(null);
+            }
+          }}
+          title="Hapus Periode Penilaian Kinerja"
+          description="Konfirmasi penghapusan sesi evaluasi karyawan."
+          maxWidth="sm"
+          footer={
+            <div className="flex items-center justify-end gap-2 w-full">
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                disabled={deleteMutation.isPending}
+                onClick={() => {
+                  setDeletingPeriod(null);
+                  setDeleteError(null);
+                }}
+                className="min-h-[44px] rounded-xl"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                size="md"
+                isLoading={deleteMutation.isPending}
+                onClick={() => {
+                  if (deletingPeriod) {
+                    deleteMutation.mutate(
+                      deletingPeriod.id_performance_periods
+                    );
+                  }
+                }}
+                className="min-h-[44px] rounded-xl font-bold bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                Hapus Periode
+              </Button>
+            </div>
+          }
+        >
+          {deleteError && (
+            <div
+              role="alert"
+              className="mb-3 rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-700 font-medium"
+            >
+              {deleteError}
+            </div>
+          )}
+          <div className="flex items-start gap-3 py-2">
+            <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600 flex-shrink-0">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs sm:text-sm text-slate-800">
+                Apakah Anda yakin ingin menghapus periode{" "}
+                <strong className="text-slate-900 font-bold">
+                  {deletingPeriod.name}
+                </strong>
+                ?
+              </p>
+              <p className="text-xs text-slate-500">
+                Seluruh data penilaian pegawai yang tersinkronisasi dalam periode
+                ini akan dihapus permanen. Periode yang telah berstatus final
+                (dikunci) tidak dapat dihapus.
+              </p>
+            </div>
+          </div>
         </Modal>
       )}
 
@@ -624,7 +794,7 @@ export default function PerformancePage() {
             setIsCreateOpen(true);
           }}
           aria-label="Buka Periode Penilaian Baru"
-          className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 active:scale-90 text-white shadow-[0_8px_24px_rgba(234,88,12,0.45)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/30"
+          className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-[#16A34A] hover:bg-[#15803D] active:scale-90 text-white shadow-[0_8px_24px_rgba(22,163,74,0.35)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/30"
         >
           <Plus className="w-7 h-7 stroke-[2.5]" aria-hidden="true" />
         </button>

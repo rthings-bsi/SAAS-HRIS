@@ -88,6 +88,8 @@ class TodayAttendanceData {
 
   bool get hasClockedIn => clockInTime != null && clockInTime!.isNotEmpty;
   bool get hasClockedOut => clockOutTime != null && clockOutTime!.isNotEmpty;
+  bool get isLate => status == 'late' || lateDurationMinutes > 0;
+  int get lateMinutes => lateDurationMinutes;
 
   AttendanceBadgeStatus get badgeStatus {
     if (hasClockedOut) {

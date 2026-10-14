@@ -143,7 +143,7 @@ class AppTheme {
       ),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: AppColors.actionAccent,
-        selectionColor: AppColors.orangeBorder,
+        selectionColor: AppColors.emeraldBorder,
         selectionHandleColor: AppColors.actionAccent,
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
@@ -151,7 +151,7 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.canvasLight,
-        indicatorColor: AppColors.orangeTint,
+        indicatorColor: AppColors.emeraldTint,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const IconThemeData(color: AppColors.actionAccent);

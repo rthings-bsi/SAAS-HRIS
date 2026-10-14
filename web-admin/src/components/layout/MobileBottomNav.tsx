@@ -9,25 +9,18 @@ import {
   Clock4,
   CalendarCheck,
   CreditCard,
-  Award,
   Users,
-  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types";
-
-interface MobileBottomNavProps {
-  onOpenMenu?: () => void;
-}
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  isMenuTrigger?: boolean;
 }
 
-export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
+export function MobileBottomNav() {
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -46,22 +39,22 @@ export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
 
   const isEmployee = currentUser?.role === "employee";
 
-  // 5 Tab untuk Karyawan (Layanan Mandiri ESS)
+  // 5 Tab Cepat untuk Karyawan (ESS)
   const employeeNavItems: NavItem[] = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutGrid },
+    { name: "Beranda", href: "/dashboard", icon: LayoutGrid },
+    { name: "Presensi", href: "/attendance", icon: Clock },
     { name: "Lembur", href: "/overtime", icon: Clock4 },
     { name: "Cuti", href: "/leaves", icon: CalendarCheck },
-    { name: "Slip Gaji", href: "/payroll", icon: CreditCard },
-    { name: "Kinerja", href: "/performance", icon: Award },
+    { name: "Gaji", href: "/payroll", icon: CreditCard },
   ];
 
-  // 5 Tab untuk Admin / HR / Manager / Owner
+  // 5 Tab Cepat untuk Admin / HR / Manager / Owner
   const adminNavItems: NavItem[] = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutGrid },
+    { name: "Beranda", href: "/dashboard", icon: LayoutGrid },
     { name: "Karyawan", href: "/employees", icon: Users },
     { name: "Presensi", href: "/attendance", icon: Clock },
+    { name: "Cuti", href: "/leaves", icon: CalendarCheck },
     { name: "Payroll", href: "/payroll", icon: CreditCard },
-    { name: "Menu", href: "#menu", icon: Menu, isMenuTrigger: true },
   ];
 
   const items = isEmployee ? employeeNavItems : adminNavItems;
@@ -69,83 +62,59 @@ export function MobileBottomNav({ onOpenMenu }: MobileBottomNavProps) {
   return (
     <nav
       aria-label="Navigasi Bawah Mobile"
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/85 backdrop-blur-xl border-t border-slate-200/70 shadow-[0_-1px_10px_rgba(0,0,0,0.03)] px-2 pt-1 pb-safe"
-      style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+      className="fixed inset-x-3 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-md z-40 lg:hidden"
+      style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
     >
-      <div className="grid grid-cols-5 items-center gap-1 max-w-md mx-auto">
-        {items.map((item) => {
-          if (item.isMenuTrigger) {
+      <div className="relative px-2 py-1.5 rounded-[26px] bg-white/92 backdrop-blur-2xl border border-slate-200/80 shadow-[0_12px_36px_-6px_rgba(11,37,69,0.14),0_2px_10px_rgba(0,0,0,0.04)] ring-1 ring-slate-900/[0.04]">
+        <div className="grid grid-cols-5 items-center gap-1">
+          {items.map((item) => {
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard" || pathname === "/"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const Icon = item.icon;
+
             return (
-              <button
+              <Link
                 key={item.name}
-                type="button"
-                onClick={onOpenMenu}
-                className="flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-2xl text-slate-500 hover:text-slate-900 active:scale-90 transition-transform duration-150 select-none cursor-pointer"
-                aria-label="Buka Menu Lainnya"
+                href={item.href}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  "group relative flex flex-col items-center justify-center min-h-[50px] py-1 px-1 rounded-2xl select-none transition-all duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600",
+                  isActive ? "text-[#15803D]" : "text-slate-500 hover:text-slate-900"
+                )}
               >
-                <div className="w-8 h-7 flex items-center justify-center rounded-xl">
-                  <Menu className="w-5 h-5 text-slate-500 stroke-[1.8]" aria-hidden="true" />
+                {/* Elevated Active Squircle vs Soft Inactive Icon */}
+                <div
+                  className={cn(
+                    "w-10 h-7 flex items-center justify-center rounded-xl transition-all duration-200",
+                    isActive
+                      ? "bg-[#16A34A] text-white shadow-[0_3px_10px_rgba(22,163,74,0.32)] scale-105"
+                      : "text-slate-400 group-hover:text-slate-600 group-hover:bg-slate-100/60"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-4 h-4 transition-transform duration-200",
+                      isActive ? "stroke-[2.4] text-white" : "stroke-[1.8]"
+                    )}
+                    aria-hidden="true"
+                  />
                 </div>
-                <span className="text-[10px] font-medium leading-tight tracking-tight mt-0.5 text-slate-600">
+
+                {/* Tab Label */}
+                <span
+                  className={cn(
+                    "text-[10px] leading-tight tracking-tight mt-1 truncate max-w-full transition-colors",
+                    isActive ? "font-bold text-[#15803D]" : "font-medium text-slate-500"
+                  )}
+                >
                   {item.name}
                 </span>
-              </button>
+              </Link>
             );
-          }
-
-          const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard" || pathname === "/"
-              : pathname === item.href || pathname.startsWith(`${item.href}/`);
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "relative flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-2xl transition-all duration-150 select-none active:scale-90",
-                isActive
-                  ? "text-orange-600 font-semibold"
-                  : "text-slate-500 hover:text-slate-900 font-medium"
-              )}
-            >
-              <div
-                className={cn(
-                  "relative w-8 h-7 flex items-center justify-center rounded-xl transition-all duration-200",
-                  isActive
-                    ? "bg-orange-50 text-orange-600"
-                    : "text-slate-400 group-hover:text-slate-600"
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "w-5 h-5 transition-transform duration-200",
-                    isActive
-                      ? "stroke-[2.2] scale-105 text-orange-600"
-                      : "stroke-[1.75] text-slate-400"
-                  )}
-                  aria-hidden="true"
-                />
-              </div>
-              <span
-                className={cn(
-                  "text-[10.5px] leading-tight tracking-tight mt-0.5 truncate max-w-full transition-colors",
-                  isActive ? "text-orange-600 font-bold" : "text-slate-500"
-                )}
-              >
-                {item.name}
-              </span>
-              {isActive && (
-                <span
-                  className="absolute bottom-0.5 w-1 h-1 rounded-full bg-orange-600"
-                  aria-hidden="true"
-                />
-              )}
-            </Link>
-          );
-        })}
+          })}
+        </div>
       </div>
     </nav>
   );

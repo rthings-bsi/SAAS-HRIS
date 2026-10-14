@@ -333,12 +333,12 @@ class _ApplyOvertimeSheetState extends ConsumerState<ApplyOvertimeSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: _durationHours > 0
-                      ? AppColors.orangeTint
+                      ? AppColors.emeraldTint
                       : AppColors.dangerBg,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: _durationHours > 0
-                        ? AppColors.orangeBorder
+                        ? AppColors.emeraldBorder
                         : AppColors.dangerBorder,
                   ),
                 ),

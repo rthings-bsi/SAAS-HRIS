@@ -112,7 +112,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Tutup dialog"
-            className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-100/90 text-slate-500 hover:text-slate-800 hover:bg-slate-200/90 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 active:scale-95 cursor-pointer flex-shrink-0 -mr-1"
+            className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-100/90 text-slate-500 hover:text-slate-800 hover:bg-slate-200/90 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 active:scale-95 cursor-pointer flex-shrink-0 -mr-1"
           >
             <X className="w-4 h-4" aria-hidden="true" />
           </button>

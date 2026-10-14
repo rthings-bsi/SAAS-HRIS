@@ -221,10 +221,10 @@ class AttendanceScreen extends ConsumerWidget {
                                 Container(
                                   padding: const EdgeInsets.all(AppDimensions.space8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.orangeTint,
+                                    color: AppColors.emeraldTint,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color: AppColors.orangeBorder,
+                                      color: AppColors.emeraldBorder,
                                       width: AppDimensions.borderWidth,
                                     ),
                                   ),
@@ -319,12 +319,12 @@ class AttendanceScreen extends ConsumerWidget {
                         padding: const EdgeInsets.all(AppDimensions.space16),
                         decoration: BoxDecoration(
                           color: hasClockedIn && !hasClockedOut
-                              ? AppColors.orangeTint
+                              ? AppColors.emeraldTint
                               : AppColors.canvasLight,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: hasClockedIn && !hasClockedOut
-                                ? AppColors.orangeBorder
+                                ? AppColors.emeraldBorder
                                 : const Color(0xFFE2E8F0),
                             width: 1.0,
                           ),
@@ -395,12 +395,12 @@ class AttendanceScreen extends ConsumerWidget {
                                     ),
                                     decoration: BoxDecoration(
                                       color: hasClockedIn
-                                          ? AppColors.orangeTint
+                                          ? AppColors.emeraldTint
                                           : AppColors.surfaceMuted,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: hasClockedIn
-                                            ? AppColors.orangeBorder
+                                            ? AppColors.emeraldBorder
                                             : const Color(0xFFE2E8F0),
                                         width: 1.0,
                                       ),
@@ -447,12 +447,12 @@ class AttendanceScreen extends ConsumerWidget {
                                     ),
                                     decoration: BoxDecoration(
                                       color: hasClockedOut
-                                          ? AppColors.orangeTint
+                                          ? AppColors.emeraldTint
                                           : AppColors.surfaceMuted,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: hasClockedOut
-                                            ? AppColors.orangeBorder
+                                            ? AppColors.emeraldBorder
                                             : const Color(0xFFE2E8F0),
                                         width: 1.0,
                                       ),

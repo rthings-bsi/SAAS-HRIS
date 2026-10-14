@@ -213,11 +213,11 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    // Verify all 5 tabs exist
-    expect(find.text('Home'), findsOneWidget);
+    // Verify all 5 tabs exist in floating bottom nav
+    expect(find.text('Beranda'), findsOneWidget);
     expect(find.text('Lembur'), findsOneWidget);
     expect(find.text('Cuti'), findsOneWidget);
-    expect(find.text('Slip Gaji'), findsOneWidget);
+    expect(find.text('Gaji'), findsOneWidget);
     expect(find.text('Profil'), findsOneWidget);
 
     // Tap Profil tab

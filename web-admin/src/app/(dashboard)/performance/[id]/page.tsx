@@ -390,7 +390,7 @@ export default function PerformanceDetailPage() {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("hris_token") : null;
     const url = `${
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+      process.env.NEXT_PUBLIC_API_URL || "/api/v1"
     }/performance/periods/${periodId}/pdf`;
 
     fetch(url, {
@@ -450,7 +450,7 @@ export default function PerformanceDetailPage() {
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#0B2545]">
                 {period.name}
               </h1>
               <StatusBadge status={period.status} />
@@ -816,7 +816,7 @@ export default function PerformanceDetailPage() {
                             ? "border-amber-300 bg-gradient-to-br from-white to-amber-50/40"
                             : idx === 1
                             ? "border-slate-300 bg-gradient-to-br from-white to-slate-50/50"
-                            : "border-orange-200 bg-gradient-to-br from-white to-orange-50/30"
+                            : "border-amber-600/30 bg-gradient-to-br from-white to-amber-700/10"
                         )}
                       >
                         <div className="flex items-center justify-between">
@@ -827,7 +827,7 @@ export default function PerformanceDetailPage() {
                                 ? "bg-amber-500 text-white"
                                 : idx === 1
                                 ? "bg-slate-400 text-white"
-                                : "bg-orange-400 text-white"
+                                : "bg-amber-700 text-white"
                             )}
                           >
                             #{idx + 1}
@@ -1034,7 +1034,7 @@ export default function PerformanceDetailPage() {
                 type="button"
                 onClick={handleSaveAllScores}
                 disabled={saveScoresMutation.isPending || !isDirty}
-                className="shrink-0 px-4 py-2 min-h-[44px] rounded-xl bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-bold text-xs shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                className="shrink-0 px-4 py-2 min-h-[44px] rounded-xl bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.98] text-white font-bold text-xs shadow-2xs transition-all cursor-pointer disabled:opacity-50"
               >
                 {saveScoresMutation.isPending
                   ? "Menyimpan..."
@@ -1272,7 +1272,7 @@ export default function PerformanceDetailPage() {
                   })
                 }
                 isLoading={updateCriterionMutation.isPending}
-                className="min-h-[44px] rounded-xl bg-orange-600 hover:bg-orange-700 font-bold"
+                className="min-h-[44px] rounded-xl bg-[#16A34A] hover:bg-[#15803D] font-bold"
               >
                 Simpan Perubahan
               </Button>
@@ -1294,7 +1294,7 @@ export default function PerformanceDetailPage() {
                 max="100"
                 value={editWeight}
                 onChange={(e) => setEditWeight(Number(e.target.value))}
-                className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[46px]"
+                className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 min-h-[46px]"
               />
             </div>
 
@@ -1311,7 +1311,7 @@ export default function PerformanceDetailPage() {
                   type="number"
                   value={editCMin}
                   onChange={(e) => setEditCMin(Number(e.target.value))}
-                  className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[46px]"
+                  className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 min-h-[46px]"
                 />
               </div>
               <div>
@@ -1326,7 +1326,7 @@ export default function PerformanceDetailPage() {
                   type="number"
                   value={editCMax}
                   onChange={(e) => setEditCMax(Number(e.target.value))}
-                  className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[46px]"
+                  className="w-full rounded-2xl border border-slate-200/80 bg-white px-3.5 py-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 min-h-[46px]"
                 />
               </div>
             </div>

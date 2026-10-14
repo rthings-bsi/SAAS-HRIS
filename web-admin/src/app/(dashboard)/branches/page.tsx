@@ -18,10 +18,23 @@ import { Modal } from "@/components/ui/Modal";
 import { TableSkeleton } from "@/components/ui/LoadingSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import { apiClient, ApiError } from "@/lib/axios";
 import type { ApiResponse, Branch } from "@/types";
 
 export default function BranchesPage() {
+  return (
+    <RoleGuard
+      allowedRoles={["superadmin", "super_admin", "owner", "hr", "manager"]}
+      fallbackTitle="Akses Kantor Cabang Dibatasi"
+      fallbackMessage="Pengaturan struktur dan titik lokasi kantor cabang hanya dapat diakses oleh Administrator, HRD, dan Manager."
+    >
+      <BranchesContent />
+    </RoleGuard>
+  );
+}
+
+function BranchesContent() {
   const queryClient = useQueryClient();
 
   // Modal & Form State
@@ -296,7 +309,7 @@ export default function BranchesPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0B2545]">
             Kantor Cabang
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -360,7 +373,7 @@ export default function BranchesPage() {
                   <tr key={item.id_branches} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2 font-medium text-slate-900">
-                        <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                        <MapPin className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                         <span>{item.name}</span>
                       </div>
                     </td>
@@ -376,7 +389,7 @@ export default function BranchesPage() {
                           href={`https://www.google.com/maps?q=${item.latitude},${item.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center text-slate-400 hover:text-orange-600 transition-colors"
+                          className="inline-flex items-center text-slate-400 hover:text-emerald-600 transition-colors"
                           title="Buka di Google Maps"
                           aria-label={`Buka peta lokasi ${item.name}`}
                         >
@@ -395,7 +408,7 @@ export default function BranchesPage() {
                           type="button"
                           onClick={() => handleOpenEditModal(item)}
                           aria-label={`Ubah cabang ${item.name}`}
-                          className="inline-flex items-center justify-center p-2 rounded-xl text-slate-600 hover:text-orange-600 hover:bg-orange-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                          className="inline-flex items-center justify-center p-2 rounded-xl text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                           title="Ubah data cabang"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -439,9 +452,9 @@ export default function BranchesPage() {
           {locationNotice && (
             <div
               role="status"
-              className="flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50/80 p-3 text-xs text-orange-800"
+              className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-800"
             >
-              <Navigation className="w-4 h-4 flex-shrink-0 text-orange-600" />
+              <Navigation className="w-4 h-4 flex-shrink-0 text-emerald-600" />
               <span>{locationNotice}</span>
             </div>
           )}
@@ -460,7 +473,7 @@ export default function BranchesPage() {
                 clearFieldError("name");
               }}
               placeholder="Contoh: Kantor Operasional Surabaya"
-              className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm text-slate-900 shadow-2xs focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm text-slate-900 shadow-2xs focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
               aria-invalid={!!fieldErrors.name}
               aria-describedby={fieldErrors.name ? "branchName-error" : undefined}
             />
@@ -485,7 +498,7 @@ export default function BranchesPage() {
                 clearFieldError("address");
               }}
               placeholder="Jl. Raya No. 12, Kelurahan, Kecamatan"
-              className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm text-slate-900 shadow-2xs focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm text-slate-900 shadow-2xs focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
               aria-invalid={!!fieldErrors.address}
               aria-describedby={fieldErrors.address ? "branchAddress-error" : undefined}
             />
@@ -504,7 +517,7 @@ export default function BranchesPage() {
                   type="button"
                   onClick={handleGetCurrentLocation}
                   disabled={isGettingLocation}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700 disabled:opacity-50 transition-colors"
                 >
                   <Navigation className="w-3 h-3" />
                   <span>{isGettingLocation ? "Mendeteksi..." : "Gunakan Lokasi Saat Ini"}</span>
@@ -539,7 +552,7 @@ export default function BranchesPage() {
                     clearFieldError("latitude");
                   }}
                   placeholder="-6.208800"
-                  className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm font-mono text-slate-900 shadow-2xs focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                  className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm font-mono text-slate-900 shadow-2xs focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
                   aria-invalid={!!fieldErrors.latitude}
                   aria-describedby={fieldErrors.latitude ? "branchLat-error" : undefined}
                 />
@@ -563,7 +576,7 @@ export default function BranchesPage() {
                     clearFieldError("longitude");
                   }}
                   placeholder="106.845600"
-                  className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm font-mono text-slate-900 shadow-2xs focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                  className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm font-mono text-slate-900 shadow-2xs focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
                   aria-invalid={!!fieldErrors.longitude}
                   aria-describedby={fieldErrors.longitude ? "branchLng-error" : undefined}
                 />
@@ -591,7 +604,7 @@ export default function BranchesPage() {
                 setRadiusMeters(e.target.value);
                 clearFieldError("radius_meters");
               }}
-              className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm font-mono text-slate-900 shadow-2xs focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              className="w-full rounded-xl border border-slate-200/80 bg-white/95 px-3 py-2 text-sm font-mono text-slate-900 shadow-2xs focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20"
               aria-invalid={!!fieldErrors.radius_meters}
               aria-describedby={fieldErrors.radius_meters ? "branchRadius-error" : undefined}
             />
@@ -687,7 +700,7 @@ export default function BranchesPage() {
         type="button"
         onClick={handleOpenCreateModal}
         aria-label="Tambah Cabang Baru"
-        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 active:scale-90 text-white shadow-[0_8px_24px_rgba(234,88,12,0.45)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/30"
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-[#16A34A] hover:bg-[#15803D] active:scale-90 text-white shadow-[0_8px_24px_rgba(22,163,74,0.35)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/30"
       >
         <Plus className="w-7 h-7 stroke-[2.5]" aria-hidden="true" />
       </button>

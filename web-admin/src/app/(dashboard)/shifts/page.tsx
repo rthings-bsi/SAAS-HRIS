@@ -9,10 +9,23 @@ import { Modal } from "@/components/ui/Modal";
 import { TableSkeleton } from "@/components/ui/LoadingSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import apiClient from "@/lib/axios";
 import type { ApiResponse, Shift } from "@/types";
 
 export default function ShiftsPage() {
+  return (
+    <RoleGuard
+      allowedRoles={["superadmin", "super_admin", "owner", "hr", "manager"]}
+      fallbackTitle="Akses Jadwal Shift Dibatasi"
+      fallbackMessage="Pengaturan jadwal dan shift kerja hanya dapat dikelola oleh Administrator, HRD, dan Manager."
+    >
+      <ShiftsContent />
+    </RoleGuard>
+  );
+}
+
+function ShiftsContent() {
   const queryClient = useQueryClient();
 
   // Modal State
@@ -167,7 +180,7 @@ export default function ShiftsPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0B2545]">
             Master Shift Kerja
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -231,7 +244,7 @@ export default function ShiftsPage() {
                   <tr key={item.id_shifts} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5 font-medium text-slate-900">
-                        <div className="w-8 h-8 rounded-xl bg-orange-50/90 border border-orange-200/80 text-orange-600 flex items-center justify-center flex-shrink-0 shadow-2xs">
+                        <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] border border-[#BBF7D0] text-[#15803D] flex items-center justify-center flex-shrink-0 shadow-2xs">
                           <CalendarClock className="w-4 h-4" />
                         </div>
                         <span className="font-semibold text-slate-900">{item.name}</span>
@@ -258,7 +271,7 @@ export default function ShiftsPage() {
                           type="button"
                           onClick={() => handleOpenEditModal(item)}
                           aria-label={`Ubah shift ${item.name}`}
-                          className="p-1.5 rounded-xl text-slate-500 hover:text-orange-600 hover:bg-orange-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+                          className="p-1.5 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -304,7 +317,7 @@ export default function ShiftsPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Shift Reguler Kantor"
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200/80 bg-white/95 shadow-2xs transition-all outline-none placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200/80 bg-white/95 shadow-2xs transition-all outline-none placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
             />
           </div>
 
@@ -319,7 +332,7 @@ export default function ShiftsPage() {
                 required
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200/80 bg-white/95 shadow-2xs font-mono transition-all outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200/80 bg-white/95 shadow-2xs font-mono transition-all outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
               />
             </div>
             <div>
@@ -332,7 +345,7 @@ export default function ShiftsPage() {
                 required
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200/80 bg-white/95 shadow-2xs font-mono transition-all outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200/80 bg-white/95 shadow-2xs font-mono transition-all outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
               />
             </div>
           </div>
@@ -348,7 +361,7 @@ export default function ShiftsPage() {
               required
               value={lateTolerance}
               onChange={(e) => setLateTolerance(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200/80 bg-white/95 shadow-2xs font-mono transition-all outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200/80 bg-white/95 shadow-2xs font-mono transition-all outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
             />
             <p className="mt-1 text-[11px] text-slate-500">
               Clock-in melebihi jam masuk + toleransi ini akan tercatat status Terlambat.
@@ -436,7 +449,7 @@ export default function ShiftsPage() {
         type="button"
         onClick={handleOpenCreateModal}
         aria-label="Buat Shift Baru"
-        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 active:scale-90 text-white shadow-[0_8px_24px_rgba(234,88,12,0.45)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/30"
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-[#16A34A] hover:bg-[#15803D] active:scale-90 text-white shadow-[0_8px_24px_rgba(22,163,74,0.35)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/30"
       >
         <Plus className="w-7 h-7 stroke-[2.5]" aria-hidden="true" />
       </button>

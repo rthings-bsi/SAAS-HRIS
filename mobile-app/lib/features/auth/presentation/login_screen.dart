@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
-import '../../../core/network/network_provider.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/hr_hub_logo.dart';
-import '../../../core/widgets/server_config_dialog.dart';
 import '../../home/presentation/home_screen.dart';
 import '../provider/auth_provider.dart';
 class LoginScreen extends ConsumerStatefulWidget {
@@ -81,7 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.orangeTint,
+                      color: AppColors.emeraldTint,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -133,7 +131,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'hr@solusidigital.co.id',
+                            'adrilla@hris.com',
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -213,7 +211,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.orangeTint,
+                      color: AppColors.emeraldTint,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -315,66 +313,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildServerConfigButton() {
-    final activeUrl = ref.watch(serverBaseUrlProvider);
-    final isLan = activeUrl.contains('192.168.');
-    final isUsb =
-        activeUrl.contains('127.0.0.1') || activeUrl.contains('localhost');
-
-    String badgeText = 'Server';
-    if (isLan) {
-      badgeText = 'LAN';
-    } else if (isUsb) {
-      badgeText = 'USB';
-    }
-
-    return Semantics(
-      button: true,
-      label: 'Konfigurasi Alamat Server: $activeUrl',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => ServerConfigDialog.show(context),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.canvasLight,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.hairline, width: 1),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x0A0F172A),
-                  blurRadius: 4,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.dns_rounded,
-                  size: 14,
-                  color: AppColors.actionAccent,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  badgeText,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.inkPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLanguageSelector() {
     return Semantics(
       button: true,
@@ -452,29 +390,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.surfaceMuted,
-      appBar: Navigator.of(context).canPop()
-          ? AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              leading: IconButton(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        toolbarHeight: 44,
+        automaticallyImplyLeading: false,
+        leading: Navigator.of(context).canPop()
+            ? IconButton(
                 icon: const Icon(Icons.arrow_back_rounded, color: AppColors.inkPrimary),
                 onPressed: () => Navigator.of(context).pop(),
                 tooltip: 'Kembali',
-              ),
-              actions: [
-                _buildServerConfigButton(),
-                const SizedBox(width: 8),
-                Padding(
-                  padding: const EdgeInsets.only(right: AppDimensions.space16),
-                  child: Center(
-                    child: _buildLanguageSelector(),
-                  ),
-                ),
-              ],
-            )
-          : null,
+              )
+            : null,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: AppDimensions.space20),
+            child: Center(
+              child: _buildLanguageSelector(),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
+        top: false,
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
@@ -486,33 +425,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (!Navigator.of(context).canPop()) ...[
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildServerConfigButton(),
-                          const SizedBox(width: 8),
-                          _buildLanguageSelector(),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppDimensions.space8),
-                  ],
-                  // Brand Header (HR Hub Custom Two-Pill Logo & Identity)
+                  // Brand Header (HR Hub Corporate Navy Squircle & Identity)
                   const HrHubLogo(
-                    size: 38,
+                    size: 46,
                     showText: true,
-                    subtitle: 'Kelola administrasi dan kehadiran kerja lebih mudah',
+                    isSquircleCard: true,
+                    subtitle: 'HRIS & SPK SMART - PT SPINDO',
                   ),
-                  const SizedBox(height: AppDimensions.space12),
+                  const SizedBox(height: AppDimensions.space16),
 
                   // Main Login Card
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppDimensions.space20,
-                      vertical: AppDimensions.space16,
+                      vertical: AppDimensions.space20,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.canvasLight,
@@ -523,9 +449,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x080F172A),
-                          blurRadius: 16,
-                          offset: Offset(0, 4),
+                          color: Color(0x0C0B2545),
+                          blurRadius: 20,
+                          offset: Offset(0, 6),
                         ),
                       ],
                     ),
@@ -535,25 +461,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const Text(
-                            'Selamat Datang',
+                            'Halo',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.inkPrimary,
-                              letterSpacing: -0.3,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.corporateNavyDark,
+                              letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           const Text(
-                            'Masuk menggunakan kredensial perusahaan Anda',
+                            'Pakai akun HRIS kamu untuk masuk ke sistem',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.inkMuted,
                             ),
                           ),
-                          const SizedBox(height: AppDimensions.space12),
+                          const SizedBox(height: AppDimensions.space16),
 
                           if (authState.errorMessage != null &&
                               authState.errorMessage!.isNotEmpty) ...[
@@ -571,64 +497,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   width: AppDimensions.borderWidth,
                                 ),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Padding(
-                                        padding: EdgeInsets.only(top: 2),
-                                        child: Icon(
-                                          Icons.error_outline_rounded,
-                                          size: 18,
-                                          color: AppColors.dangerText,
-                                        ),
-                                      ),
-                                      const SizedBox(width: AppDimensions.space8),
-                                      Expanded(
-                                        child: Text(
-                                          authState.errorMessage!,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: AppColors.dangerText,
-                                            fontWeight: FontWeight.w500,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 2),
+                                    child: Icon(
+                                      Icons.error_outline_rounded,
+                                      size: 18,
+                                      color: AppColors.dangerText,
+                                    ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      style: TextButton.styleFrom(
-                                        visualDensity: VisualDensity.compact,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        minimumSize: const Size(0, 24),
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
+                                  const SizedBox(width: AppDimensions.space8),
+                                  Expanded(
+                                    child: Text(
+                                      authState.errorMessage!,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.dangerText,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.4,
                                       ),
-                                      icon: const Icon(
-                                        Icons.settings_ethernet_rounded,
-                                        size: 14,
-                                        color: AppColors.actionAccent,
-                                      ),
-                                      label: const Text(
-                                        'Atur Alamat Server',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.actionAccent,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                      ),
-                                      onPressed: () =>
-                                          ServerConfigDialog.show(context),
                                     ),
                                   ),
                                 ],

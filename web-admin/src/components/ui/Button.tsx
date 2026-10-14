@@ -32,11 +32,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium tracking-tight transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 select-none cursor-pointer active:scale-[0.97]";
+      "inline-flex items-center justify-center font-medium tracking-tight whitespace-nowrap transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 select-none cursor-pointer active:scale-[0.97]";
 
     const variantStyles: Record<ButtonVariant, string> = {
       primary:
-        "bg-orange-600 text-white shadow-xs hover:bg-orange-500 active:bg-orange-700 border border-orange-500/30",
+        "bg-[#16A34A] text-white shadow-xs hover:bg-[#15803D] active:bg-[#166534] border border-emerald-600/30",
       secondary:
         "bg-white/95 backdrop-blur-sm text-slate-800 border border-slate-200/90 shadow-2xs hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100",
       danger:
@@ -50,7 +50,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       md: "h-10 px-4 text-sm gap-2 min-h-[40px] rounded-xl",
       lg: "h-11 px-5 text-base gap-2.5 min-h-[44px] rounded-xl",
     };
-
 
     return (
       <button
@@ -66,7 +65,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ) : (
           leftIcon
         )}
-        <span>{children}</span>
+        <span className="inline-flex items-center justify-center gap-1.5">{children}</span>
         {!isLoading && rightIcon}
       </button>
     );

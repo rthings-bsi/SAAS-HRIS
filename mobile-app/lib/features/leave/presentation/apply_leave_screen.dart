@@ -784,7 +784,7 @@ class _ApplyLeaveScreenState extends ConsumerState<ApplyLeaveScreen> {
                             ? const Color(0xFFFEE2E2)
                             : isExceeded
                                 ? const Color(0xFFFEF3C7)
-                                : AppColors.orangeTint,
+                                : AppColors.emeraldTint,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: cardBorder,

@@ -5,11 +5,17 @@ namespace App\Services\Overtime;
 use App\Models\Employee;
 use App\Models\OvertimeRequest;
 use App\Models\User;
+use App\Services\Notification\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class OvertimeService
 {
+    public function __construct(
+        protected ?NotificationService $notificationService = null
+    ) {
+        $this->notificationService = $notificationService ?? app(NotificationService::class);
+    }
     /**
      * Menghitung total durasi lembur dalam satuan jam.
      */
@@ -64,7 +70,7 @@ class OvertimeService
 
         $duration = $this->calculateDurationHours($data['start_time'], $data['end_time']);
 
-        return OvertimeRequest::create([
+        $overtime = OvertimeRequest::create([
             'id_companies' => $employee->id_companies,
             'id_employees' => $employee->id_employees,
             'date' => $data['date'],
@@ -74,6 +80,26 @@ class OvertimeService
             'reason' => $data['reason'],
             'status' => 'pending',
         ]);
+
+        try {
+            $employeeName = $employee->user?->name ?? 'Karyawan';
+            $this->notificationService->notifyAdmins(
+                $employee->id_companies,
+                'overtime',
+                'Pengajuan Lembur Baru',
+                "{$employeeName} mengajukan permohonan lembur pada {$data['date']} ({$data['start_time']} - {$data['end_time']}, {$duration} jam).",
+                [
+                    'url' => '/overtime',
+                    'id_overtime_requests' => $overtime->id_overtime_requests,
+                    'status' => 'pending',
+                ],
+                $employee->id_users
+            );
+        } catch (\Throwable) {
+            // Abaikan kegagalan notifikasi agar transaksi lembur tidak terputus
+        }
+
+        return $overtime;
     }
 
     /**
@@ -101,6 +127,33 @@ class OvertimeService
             'rejected_reason' => $isApproved ? null : ($notes ?: 'Ditolak oleh atasan/HR'),
         ]);
 
-        return $request->fresh(['employee.user', 'approver']);
+        $fresh = $request->fresh(['employee.user', 'approver']);
+
+        try {
+            $empUserId = $fresh->employee?->id_users;
+            if ($empUserId) {
+                $statusText = $isApproved ? 'Disetujui' : 'Ditolak';
+                $message = $isApproved
+                    ? "Pengajuan lembur Anda pada tanggal {$fresh->date} ({$fresh->duration_hours} jam) telah disetujui."
+                    : "Pengajuan lembur Anda pada tanggal {$fresh->date} ditolak. Alasan: " . ($notes ?: 'Ditolak oleh atasan/HR.');
+
+                $this->notificationService->send(
+                    $fresh->id_companies,
+                    $empUserId,
+                    'overtime',
+                    "Pengajuan Lembur {$statusText}",
+                    $message,
+                    [
+                        'url' => '/overtime',
+                        'id_overtime_requests' => $fresh->id_overtime_requests,
+                        'status' => $fresh->status,
+                    ]
+                );
+            }
+        } catch (\Throwable) {
+            // Abaikan kendala pengiriman notifikasi agar alur persetujuan tetap sukses
+        }
+
+        return $fresh;
     }
 }

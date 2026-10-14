@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, Trash2, Edit2, Building2, Wallet, AlertCircle, AlertTriangle } from "lucide-react";
+import { Plus, Users, Trash2, Edit2, Building2, Wallet, AlertCircle, AlertTriangle, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -10,12 +11,32 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { TableSkeleton } from "@/components/ui/LoadingSkeleton";
 import { Modal } from "@/components/ui/Modal";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import { formatRupiah } from "@/lib/utils";
 import { apiClient, ApiError } from "@/lib/axios";
 import type { ApiResponse, Employee, Branch, Department, JobPosition } from "@/types";
 
 export default function EmployeesPage() {
+  return (
+    <RoleGuard
+      allowedRoles={["superadmin", "super_admin", "owner", "hr", "manager"]}
+      fallbackTitle="Akses Data Karyawan Dibatasi"
+      fallbackMessage="Halaman Manajemen Data Karyawan hanya dapat diakses oleh Administrator, HRD, dan Manager. Silakan gunakan Layanan Mandiri Karyawan di Dashboard."
+    >
+      <Suspense fallback={<TableSkeleton rows={5} columns={6} />}>
+        <EmployeesContent />
+      </Suspense>
+    </RoleGuard>
+  );
+}
+
+function EmployeesContent() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") || "";
+  const urlAction = searchParams.get("action") || "";
+
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -239,6 +260,42 @@ export default function EmployeesPage() {
     setIsModalOpen(true);
   };
 
+  useEffect(() => {
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+    }
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (urlAction === "add" && !isModalOpen) {
+      handleOpenCreateModal();
+    }
+  }, [urlAction]);
+
+  const filteredEmployees = useMemo(() => {
+    if (!searchQuery.trim()) return employees;
+    const q = searchQuery.trim().toLowerCase();
+    return employees.filter((emp) => {
+      const name = (emp.user?.name || emp.name || "").toLowerCase();
+      const nik = (emp.nik || "").toLowerCase();
+      const email = (emp.user?.email || "").toLowerCase();
+      const phone = (emp.phone || "").toLowerCase();
+      const dept = (emp.department?.name || "").toLowerCase();
+      const pos = (emp.job_position?.name || "").toLowerCase();
+      const branch = (emp.branch?.name || "").toLowerCase();
+
+      return (
+        name.includes(q) ||
+        nik.includes(q) ||
+        email.includes(q) ||
+        phone.includes(q) ||
+        dept.includes(q) ||
+        pos.includes(q) ||
+        branch.includes(q)
+      );
+    });
+  }, [employees, searchQuery]);
+
   const handleOpenEditModal = (emp: Employee) => {
     setEditingEmployee(emp);
     setName(emp.user?.name || "");
@@ -364,10 +421,10 @@ export default function EmployeesPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#0B2545]">
             Data Karyawan
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
             Daftar pegawai aktif, status kontrak kerja, dan penempatan cabang operasional.
           </p>
         </div>
@@ -385,12 +442,36 @@ export default function EmployeesPage() {
       </div>
 
       <Card>
-        <CardHeader className="p-5 border-b border-slate-100/80 flex flex-row items-center justify-between">
+        <CardHeader className="p-5 border-b border-slate-100/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <CardTitle>Daftar Staf Aktif</CardTitle>
             <p className="text-xs text-slate-500 mt-1">
-              Menampilkan {employees.length} staf terdaftar.
+              {searchQuery.trim()
+                ? `Menampilkan ${filteredEmployees.length} dari ${employees.length} staf terdaftar.`
+                : `Menampilkan ${employees.length} staf terdaftar.`}
             </p>
+          </div>
+
+          <div className="relative w-full sm:w-72">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari nama, NIK, jabatan..."
+              aria-label="Cari daftar karyawan"
+              className="w-full pl-9 pr-9 py-2 text-xs rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition-all placeholder:text-slate-400"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Hapus filter pencarian"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-lg active:scale-95 transition-all cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </CardHeader>
 
@@ -414,6 +495,16 @@ export default function EmployeesPage() {
               icon={<Users className="w-6 h-6" />}
             />
           </div>
+        ) : filteredEmployees.length === 0 ? (
+          <div className="p-6">
+            <EmptyState
+              title="Karyawan tidak ditemukan"
+              description={`Tidak ditemukan data staf yang cocok dengan kata kunci "${searchQuery}". Coba kata kunci lain atau reset filter.`}
+              actionLabel="Reset Filter Pencarian"
+              onAction={() => setSearchQuery("")}
+              icon={<Search className="w-6 h-6" />}
+            />
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -429,7 +520,7 @@ export default function EmployeesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {employees.map((emp) => (
+                {filteredEmployees.map((emp) => (
                   <tr key={emp.id_employees} className="hover:bg-slate-50/60 transition-colors">
                     <td className="px-5 py-3.5 text-xs font-mono tabular-nums text-slate-500">
                       {emp.nik}
@@ -479,7 +570,7 @@ export default function EmployeesPage() {
                           type="button"
                           onClick={() => handleOpenEditModal(emp)}
                           aria-label={`Ubah data ${emp.user?.name || "karyawan"}`}
-                          className="p-1.5 rounded-xl text-slate-500 hover:text-orange-600 hover:bg-orange-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 cursor-pointer"
+                          className="p-1.5 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -564,7 +655,7 @@ export default function EmployeesPage() {
           {/* Section 1: Data Akun & Pribadi */}
           <div className="space-y-3.5">
             <div className="flex items-center gap-2 pb-1.5 border-b border-slate-100">
-              <div className="w-5 h-5 rounded-md bg-orange-100 text-orange-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-5 h-5 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
                 <Users className="w-3.5 h-3.5" aria-hidden="true" />
               </div>
               <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
@@ -592,7 +683,7 @@ export default function EmployeesPage() {
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border transition-all outline-none ${
                     fieldErrors.name
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                   }`}
                 />
                 {fieldErrors.name && (
@@ -621,7 +712,7 @@ export default function EmployeesPage() {
                   className={`w-full px-3.5 py-2 text-sm font-mono tabular-nums rounded-xl border transition-all outline-none ${
                     fieldErrors.nik
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                   }`}
                 />
                 {fieldErrors.nik && (
@@ -652,7 +743,7 @@ export default function EmployeesPage() {
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border transition-all outline-none ${
                     fieldErrors.email
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                   }`}
                 />
                 {fieldErrors.email && (
@@ -681,7 +772,7 @@ export default function EmployeesPage() {
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border transition-all outline-none ${
                     fieldErrors.password
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                   }`}
                 />
                 {fieldErrors.password && (
@@ -711,7 +802,7 @@ export default function EmployeesPage() {
                   className={`w-full px-3.5 py-2 text-sm font-mono tabular-nums rounded-xl border transition-all outline-none ${
                     fieldErrors.phone
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      : "border-slate-200 bg-white placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                   }`}
                 />
                 {fieldErrors.phone && (
@@ -729,7 +820,7 @@ export default function EmployeesPage() {
                   id="emp-gender"
                   value={gender}
                   onChange={(e) => setGender(e.target.value as "male" | "female")}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all cursor-pointer"
                 >
                   <option value="male">Laki-laki</option>
                   <option value="female">Perempuan</option>
@@ -744,7 +835,7 @@ export default function EmployeesPage() {
                   id="emp-role"
                   value={role}
                   onChange={(e) => setRole(e.target.value as "employee" | "manager" | "hr")}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all cursor-pointer"
                 >
                   <option value="employee">Karyawan (Staf operasional - presensi GPS & ajukan cuti)</option>
                   <option value="manager">Manager / Supervisor (Bisa mengevaluasi kinerja & menyetujui cuti)</option>
@@ -786,7 +877,7 @@ export default function EmployeesPage() {
                   className={`w-full px-3.5 py-2 text-sm rounded-xl border transition-all outline-none cursor-pointer ${
                     fieldErrors.id_branches
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                      : "border-slate-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      : "border-slate-200 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                   }`}
                 >
                   {branches.length === 0 ? (
@@ -814,7 +905,7 @@ export default function EmployeesPage() {
                   id="emp-dept"
                   value={idDepartment}
                   onChange={(e) => setIdDepartment(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all cursor-pointer"
                 >
                   <option value="">Pilih Departemen</option>
                   {departments.map((d) => (
@@ -833,7 +924,7 @@ export default function EmployeesPage() {
                   id="emp-pos"
                   value={idPosition}
                   onChange={(e) => setIdPosition(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all cursor-pointer"
                 >
                   <option value="">Pilih Jabatan</option>
                   {positions.map((p) => (
@@ -854,7 +945,7 @@ export default function EmployeesPage() {
                   id="emp-status"
                   value={employmentStatus}
                   onChange={(e) => setEmploymentStatus(e.target.value as "permanent" | "contract" | "probation")}
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 bg-white focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-all cursor-pointer"
                 >
                   <option value="contract">Karyawan Kontrak</option>
                   <option value="permanent">Karyawan Tetap</option>
@@ -880,7 +971,7 @@ export default function EmployeesPage() {
                   className={`w-full px-3.5 py-2 text-sm font-mono tabular-nums rounded-xl border transition-all outline-none ${
                     fieldErrors.hire_date
                       ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                      : "border-slate-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                      : "border-slate-200 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                   }`}
                 />
                 {fieldErrors.hire_date && (
@@ -927,7 +1018,7 @@ export default function EmployeesPage() {
                     className={`w-full pl-10 pr-3.5 py-2 text-sm font-mono tabular-nums rounded-xl border transition-all outline-none ${
                       fieldErrors.basic_salary
                         ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                        : "border-slate-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        : "border-slate-200 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                     }`}
                   />
                 </div>
@@ -964,7 +1055,7 @@ export default function EmployeesPage() {
                     className={`w-full pl-10 pr-3.5 py-2 text-sm font-mono tabular-nums rounded-xl border transition-all outline-none ${
                       fieldErrors.allowance_fixed
                         ? "border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
-                        : "border-slate-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        : "border-slate-200 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
                     }`}
                   />
                 </div>
@@ -1044,7 +1135,7 @@ export default function EmployeesPage() {
         type="button"
         onClick={handleOpenCreateModal}
         aria-label="Tambah Karyawan Baru"
-        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-700 active:scale-90 text-white shadow-[0_8px_24px_rgba(234,88,12,0.45)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-orange-500/30"
+        className="sm:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-[#16A34A] hover:bg-[#15803D] active:scale-90 text-white shadow-[0_8px_24px_rgba(22,163,74,0.35)] flex items-center justify-center transition-transform cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/30"
       >
         <Plus className="w-7 h-7 stroke-[2.5]" aria-hidden="true" />
       </button>

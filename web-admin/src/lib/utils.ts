@@ -74,3 +74,46 @@ export function getLocalMonthIso(date: Date = new Date()): string {
   return `${year}-${month}`;
 }
 
+/**
+ * Formats date into relative Indonesian time string (e.g., "5 menit lalu", "2 jam lalu", "Kemarin, 14:30")
+ */
+export function formatRelativeTime(dateString: string | Date | null | undefined): string {
+  if (!dateString) return "-";
+  const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+  if (isNaN(date.getTime())) return "-";
+
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) {
+    return "Baru saja";
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} menit lalu`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} jam lalu`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays === 1) {
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `Kemarin, ${hours}:${minutes}`;
+  }
+
+  if (diffInDays < 7) {
+    return `${diffInDays} hari lalu`;
+  }
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  }).format(date);
+}
+

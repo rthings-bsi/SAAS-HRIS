@@ -15,29 +15,21 @@ final initialBaseUrlProvider = Provider<String>((ref) {
 });
 
 class ServerBaseUrlNotifier extends StateNotifier<String> {
-  ServerBaseUrlNotifier(super.initial);
+  ServerBaseUrlNotifier() : super(ApiEndpoints.baseUrl);
 
   Future<void> setBaseUrl(String newUrl) async {
-    final cleanUrl = newUrl.trim();
-    if (cleanUrl.isEmpty) return;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(serverBaseUrlPrefKey, cleanUrl);
-    } catch (_) {}
-    if (cleanUrl != state) {
-      state = cleanUrl;
-    }
+    // Server telah dipatenkan ke domain API resmi
+    state = ApiEndpoints.baseUrl;
   }
 
   Future<void> resetToDefault() async {
-    await setBaseUrl(ApiEndpoints.baseUrl);
+    state = ApiEndpoints.baseUrl;
   }
 }
 
 final serverBaseUrlProvider =
     StateNotifierProvider<ServerBaseUrlNotifier, String>((ref) {
-  final initial = ref.watch(initialBaseUrlProvider);
-  return ServerBaseUrlNotifier(initial);
+  return ServerBaseUrlNotifier();
 });
 
 final authInterceptorProvider = Provider<AuthInterceptor>((ref) {
@@ -48,10 +40,5 @@ final authInterceptorProvider = Provider<AuthInterceptor>((ref) {
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   final interceptor = ref.watch(authInterceptorProvider);
-  final initialBaseUrl = ref.watch(initialBaseUrlProvider);
-  final client = ApiClient(interceptor: interceptor, baseUrl: initialBaseUrl);
-  ref.listen<String>(serverBaseUrlProvider, (previous, next) {
-    client.updateBaseUrl(next);
-  });
-  return client;
+  return ApiClient(interceptor: interceptor, baseUrl: ApiEndpoints.baseUrl);
 });

@@ -6,12 +6,18 @@ use App\Exceptions\LeaveException;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\User;
+use App\Services\Notification\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class LeaveService
 {
+    public function __construct(
+        protected ?NotificationService $notificationService = null
+    ) {
+        $this->notificationService = $notificationService ?? app(NotificationService::class);
+    }
     public static function getStandardTypes(int $annualQuota = 12): array
     {
         return [
@@ -156,7 +162,7 @@ class LeaveService
             $attachmentUrl = Storage::url($attachmentPath);
         }
 
-        return LeaveRequest::create([
+        $leaveRequest = LeaveRequest::create([
             'id_companies' => $employee->id_companies,
             'id_employees' => $employee->id_employees,
             'leave_type' => $leaveTypeName,
@@ -168,6 +174,26 @@ class LeaveService
             'attachment_url' => $attachmentUrl,
             'status' => 'pending',
         ]);
+
+        try {
+            $employeeName = $employee->user?->name ?? 'Karyawan';
+            $this->notificationService->notifyAdmins(
+                $employee->id_companies,
+                'leave',
+                'Pengajuan Cuti Baru',
+                "{$employeeName} mengajukan {$leaveTypeName} selama {$totalDays} hari ({$startDate} s.d. {$endDate}).",
+                [
+                    'url' => '/leaves',
+                    'id_leave_requests' => $leaveRequest->id_leave_requests,
+                    'status' => 'pending',
+                ],
+                $employee->id_users
+            );
+        } catch (\Throwable) {
+            // Log/abaikan kegagalan notifikasi agar transaksi cuti tidak terputus
+        }
+
+        return $leaveRequest;
     }
 
     public function processApproval(LeaveRequest $leaveRequest, User $actor, string $action, ?string $notes = null): LeaveRequest
@@ -188,6 +214,33 @@ class LeaveService
             'rejected_reason' => $isApprove ? null : $notes,
         ]);
 
-        return $leaveRequest->fresh(['employee.user', 'approver']);
+        $fresh = $leaveRequest->fresh(['employee.user', 'approver']);
+
+        try {
+            $empUserId = $fresh->employee?->id_users;
+            if ($empUserId) {
+                $statusText = $isApprove ? 'Disetujui' : 'Ditolak';
+                $message = $isApprove
+                    ? "Pengajuan {$fresh->leave_type} Anda untuk tanggal {$fresh->start_date} telah disetujui."
+                    : "Pengajuan {$fresh->leave_type} Anda ditolak. Alasan: " . ($notes ?: 'Tidak memenuhi kriteria.');
+
+                $this->notificationService->send(
+                    $fresh->id_companies,
+                    $empUserId,
+                    'leave',
+                    "Pengajuan Cuti {$statusText}",
+                    $message,
+                    [
+                        'url' => '/leaves',
+                        'id_leave_requests' => $fresh->id_leave_requests,
+                        'status' => $fresh->status,
+                    ]
+                );
+            }
+        } catch (\Throwable) {
+            // Abaikan kendala pengiriman notifikasi agar alur persetujuan tetap berhasil
+        }
+
+        return $fresh;
     }
 }

@@ -2,7 +2,10 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
+  Mail,
+  Lock,
   Eye,
   EyeOff,
   ArrowRight,
@@ -11,7 +14,7 @@ import {
 import apiClient, { ApiError } from "@/lib/axios";
 import type { ApiResponse, AuthSession } from "@/types";
 
-export default function SplitGatewayLandingPage() {
+export default function CorporateLoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("admin@powerhrm.com");
@@ -65,120 +68,156 @@ export default function SplitGatewayLandingPage() {
     }
   };
 
-  const handleQuickFill = (fillEmail: string) => {
-    setEmail(fillEmail);
-    setPassword("password");
-    setErrorMessage(null);
-  };
-
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white font-sans selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-white font-sans selection:bg-[#094595] selection:text-white relative overflow-x-hidden">
       {/* ========================================================= */}
-      {/* KOLOM KIRI: Brand & Showcase Informasi Sistem (50% Lebar) */}
-      {/* Sesuai Tema Orange / Slate HR Hub (DESIGN.md & Mobile)    */}
+      {/* PANEL KIRI: Showcase PT SPINDO & Fitur Sistem (~56% Lebar) */}
+      {/* Sesuai Desain Visual Korporat Navy/Green PT SPINDO        */}
       {/* ========================================================= */}
-      <div className="w-full lg:w-1/2 bg-gradient-to-br from-orange-600 via-orange-700 to-slate-900 text-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden min-h-[460px] lg:min-h-screen">
-        {/* Subtle Decorative Ambient Shape */}
-        <div
-          className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-amber-400/15 blur-3xl pointer-events-none"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-orange-950/40 blur-3xl pointer-events-none"
-          aria-hidden="true"
-        />
-
+      <div
+        className="w-full lg:w-[56%] relative bg-[#EBF5FB] bg-cover bg-no-repeat bg-right flex flex-col justify-between p-8 sm:p-12 lg:p-16 min-h-[580px] lg:min-h-screen overflow-hidden"
+        style={{ backgroundImage: "url('/login-bg-spindo.jpg')" }}
+      >
         {/* 1. Header Brand & Logo */}
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center flex-shrink-0 shadow-inner">
-              <svg
-                viewBox="0 0 32 36"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-7"
-                aria-hidden="true"
-              >
-                <defs>
-                  <linearGradient id="lp_pill_left" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#FED7AA" />
-                    <stop offset="100%" stopColor="#FFFFFF" />
-                  </linearGradient>
-                  <linearGradient id="lp_pill_right" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#FFFFFF" />
-                    <stop offset="100%" stopColor="#FDBA74" />
-                  </linearGradient>
-                </defs>
-                <circle cx="8" cy="6" r="3.5" fill="url(#lp_pill_left)" />
-                <rect x="4.5" y="14" width="7" height="19" rx="3.5" fill="url(#lp_pill_left)" />
-                <rect x="17" y="6" width="7.5" height="27" rx="3.75" fill="url(#lp_pill_right)" />
-              </svg>
-            </div>
-            <div>
-              <span className="font-extrabold text-base tracking-wider block uppercase font-mono text-white">
-                HR HUB
-              </span>
-              <span className="text-[11px] text-orange-200 font-medium block">
-                HRIS & SPK SMART • Single Company
-              </span>
-            </div>
+        <div className="relative z-10 flex items-center gap-3.5">
+          {/* Logo Mark Squircle Navy */}
+          <div className="w-12 h-12 rounded-2xl bg-[#094595] flex items-center justify-center flex-shrink-0 shadow-sm">
+            <svg
+              viewBox="0 0 32 36"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-6 h-7"
+              aria-hidden="true"
+            >
+              <circle cx="8" cy="7" r="3.5" fill="#FFFFFF" />
+              <rect x="4.5" y="14" width="7" height="18" rx="3.5" fill="#FFFFFF" />
+              <rect x="17.5" y="7" width="7" height="25" rx="3.5" fill="#FFFFFF" />
+            </svg>
+          </div>
+          <div>
+            <span className="font-extrabold text-xl tracking-tight block text-[#0B3A6F] leading-tight">
+              HR HUB
+            </span>
+            <span className="text-xs text-slate-500 font-medium block">
+              HRIS & SPK SMART - Single Company
+            </span>
           </div>
         </div>
 
-        {/* 2. Middle Content: Tag, Title, Subtitle, Pills */}
-        <div className="relative z-10 my-auto py-10 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-orange-100 text-xs font-medium mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            Sistem Kepegawaian & Kinerja
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            Manajemen SDM & SPK SMART
+        {/* 2. Middle Content: Heading, Subtitle, 3 Feature Cards */}
+        <div className="relative z-10 my-auto py-8 sm:py-12 max-w-xl">
+          {/* Heading */}
+          <h1 className="text-4xl sm:text-5xl lg:text-[54px] font-extrabold text-[#0B3A6F] leading-[1.12] tracking-tight">
+            Manajemen
+            <br />
+            SDM & SPK{" "}
+            <span className="text-[#22A349]">SMART</span>
           </h1>
 
-          <p className="mt-4 text-sm sm:text-base text-orange-100/90 leading-relaxed max-w-lg">
-            Kelola absensi berbasis radius GPS, administrasi cuti, penggajian, dan evaluasi kinerja pegawai menggunakan metode SMART secara mandiri dan terintegrasi.
+          {/* Description */}
+          <p className="mt-5 text-sm sm:text-base text-slate-600 leading-relaxed max-w-lg">
+            Kelola absensi berbasis radius GPS, administrasi cuti, penggajian, dan
+            evaluasi kinerja pegawai menggunakan metode SMART secara mandiri dan
+            terintegrasi.
           </p>
 
-          {/* 3 Pills Informasi */}
-          <div className="mt-8 flex flex-wrap gap-2.5">
-            <div className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-xs text-white font-medium flex items-center gap-1.5">
-              <span className="font-semibold">Presensi GPS</span>
-              <span className="text-orange-200">Radius kantor</span>
+          {/* 3 Feature Cards */}
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl">
+            {/* Card 1: Presensi GPS */}
+            <div className="bg-[#F0FDF4]/90 backdrop-blur-sm border border-[#DCFCE7] rounded-2xl p-3 flex items-center gap-3 shadow-xs transition-transform hover:-translate-y-0.5">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-xs border border-emerald-100">
+                <svg className="w-5 h-5 text-[#22A349]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-[#0B3A6F] block leading-tight">
+                  Presensi GPS
+                </span>
+                <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">
+                  Radius kantor
+                </span>
+              </div>
             </div>
-            <div className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-xs text-white font-medium flex items-center gap-1.5">
-              <span className="font-semibold">Penggajian</span>
-              <span className="text-orange-200">Slip digital</span>
+
+            {/* Card 2: Penggajian */}
+            <div className="bg-[#F0FDF4]/90 backdrop-blur-sm border border-[#DCFCE7] rounded-2xl p-3 flex items-center gap-3 shadow-xs transition-transform hover:-translate-y-0.5">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-xs border border-emerald-100">
+                <svg className="w-5 h-5 text-[#22A349]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+                  <path d="M12 12v5" />
+                  <path d="m14.5 14.5-2.5 2.5-2.5-2.5" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-[#0B3A6F] block leading-tight">
+                  Penggajian
+                </span>
+                <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">
+                  Slip digital
+                </span>
+              </div>
             </div>
-            <div className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-xs text-white font-medium flex items-center gap-1.5">
-              <span className="font-semibold">SPK SMART</span>
-              <span className="text-orange-200">K1-K4 terbobot</span>
+
+            {/* Card 3: SPK SMART */}
+            <div className="bg-[#F0FDF4]/90 backdrop-blur-sm border border-[#DCFCE7] rounded-2xl p-3 flex items-center gap-3 shadow-xs transition-transform hover:-translate-y-0.5">
+              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center flex-shrink-0 shadow-xs border border-emerald-100">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="3" y="12" width="4.5" height="9" rx="1" fill="#0B3A6F" />
+                  <rect x="10" y="8" width="4.5" height="13" rx="1" fill="#0B3A6F" />
+                  <rect x="17" y="4" width="4.5" height="17" rx="1" fill="#0B3A6F" />
+                  <path d="M2 11l6.5-5 6 3.5 7.5-6.5" stroke="#22A349" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-xs font-bold text-[#0B3A6F] block leading-tight">
+                  SPK SMART
+                </span>
+                <span className="text-[11px] text-slate-500 block leading-tight mt-0.5">
+                  K1-K4 terbobot
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 3. Footer Kiri */}
-        <div className="relative z-10 text-xs text-orange-200/80 font-medium">
-          <p>© {new Date().getFullYear()} HR Hub • HRIS & SPK SMART</p>
-          <p className="text-[11px] text-orange-200/60 mt-0.5">Sistem Internal Perusahaan</p>
+        {/* 3. Footer di atas Polygon Navy Bawah-Kiri */}
+        <div className="relative z-10 pt-6">
+          <p className="text-xs text-white font-medium">
+            © 2026 HR Hub • HRIS & SPK SMART
+          </p>
+          <p className="text-[11px] text-white/80 mt-0.5">
+            Sistem HRIS Perusahaan
+          </p>
         </div>
       </div>
 
       {/* ========================================================= */}
-      {/* KOLOM KANAN: Login Form Bersih & Minimalis (50% Lebar)    */}
+      {/* PANEL KANAN: Formulir Login Minimalis & Bersih (~44% Lebar) */}
+      {/* Sesuai Mockup 11.webp Dengan Aksen Sudut Hijau/Navy        */}
       {/* ========================================================= */}
-      <div className="w-full lg:w-1/2 bg-white flex items-center justify-center p-6 sm:p-12 lg:p-16">
-        <div className="w-full max-w-md space-y-6">
-          {/* Badge & Title */}
+      <div className="w-full lg:w-[44%] bg-white flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 relative min-h-screen">
+        {/* Aksen Geometris Sudut Kanan Atas */}
+        <div className="absolute top-0 right-0 pointer-events-none select-none z-20 w-36 sm:w-44 h-auto">
+          <Image
+            src="/top-right-accent.png"
+            alt=""
+            width={176}
+            height={150}
+            priority
+            className="w-full h-auto"
+            aria-hidden="true"
+          />
+        </div>
+
+        {/* Form Container */}
+        <div className="w-full max-w-[420px] relative z-10 space-y-6">
+          {/* Title */}
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200/80 text-xs font-semibold mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-              Akses Terbatas
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B2545] tracking-tight">
               Halo
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 font-normal">
               Pakai akun HRIS kamu untuk masuk ke sistem
             </p>
           </div>
@@ -188,75 +227,92 @@ export default function SplitGatewayLandingPage() {
             {errorMessage && (
               <div
                 role="alert"
-                className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium"
+                className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium leading-relaxed"
               >
                 {errorMessage}
               </div>
             )}
 
+            {/* Input 1: Username / Email */}
             <div>
               <label
                 htmlFor="email"
-                className="block text-xs font-semibold text-slate-700 mb-1.5"
+                className="block text-xs font-bold text-[#0B2545] mb-2"
               >
                 Username / Email
               </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@perusahaan.com"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all placeholder:text-slate-400"
-              />
+              <div className="relative flex items-center">
+                <div className="absolute left-3.5 pointer-events-none text-slate-400">
+                  <Mail className="w-4 h-4" aria-hidden="true" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="rickysatria@hris.com"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white border border-slate-200 text-slate-800 text-sm focus:outline-none focus:border-[#094595] focus:ring-2 focus:ring-[#094595]/15 transition-all placeholder:text-slate-400 shadow-xs"
+                />
+              </div>
             </div>
 
+            {/* Input 2: Password */}
             <div>
               <label
                 htmlFor="password"
-                className="block text-xs font-semibold text-slate-700 mb-1.5"
+                className="block text-xs font-bold text-[#0B2545] mb-2"
               >
                 Password
               </label>
-              <div className="relative">
+              <div className="relative flex items-center">
+                <div className="absolute left-3.5 pointer-events-none text-slate-400">
+                  <Lock className="w-4 h-4" aria-hidden="true" />
+                </div>
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:bg-white transition-all pr-11 placeholder:text-slate-400"
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-11 py-3 rounded-2xl bg-white border border-slate-200 text-slate-800 text-sm focus:outline-none focus:border-[#094595] focus:ring-2 focus:ring-[#094595]/15 transition-all placeholder:text-slate-400 shadow-xs"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                  className="absolute right-3.5 text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#094595]"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            <div className="text-center pt-1">
-              <span className="text-xs text-slate-500">
-                Lupa password?{" "}
-                <button
-                  type="button"
-                  onClick={() => alert("Silakan hubungi administrator HR untuk reset password akun Anda.")}
-                  className="text-orange-600 hover:text-orange-700 font-semibold underline underline-offset-2 transition-colors"
-                >
-                  Hubungi Admin
-                </button>
-              </span>
+            {/* Link Lupa Password & Hubungi Admin */}
+            <div className="flex items-center justify-end text-xs text-slate-500 pt-1 pb-1">
+              <span>Lupa password?</span>
+              <span className="mx-1.5 text-slate-300">|</span>
+              <button
+                type="button"
+                onClick={() =>
+                  alert(
+                    "Silakan hubungi administrator HR atau tim IT internal untuk mereset kata sandi akun Anda."
+                  )
+                }
+                className="text-[#16A34A] hover:text-emerald-700 font-semibold cursor-pointer hover:underline transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 rounded"
+              >
+                Hubungi Admin
+              </button>
             </div>
 
+            {/* Primary Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+              className="w-full py-3.5 px-4 rounded-2xl bg-[#094595] hover:bg-[#07387B] active:scale-[0.99] text-white font-bold text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#094595] focus-visible:ring-offset-2"
             >
               {isLoading ? (
                 <>
@@ -271,43 +327,6 @@ export default function SplitGatewayLandingPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Login Helper Chips (Untuk Kemudahan Testing) */}
-          <div className="pt-4 border-t border-slate-100">
-            <span className="text-[11px] font-medium text-slate-400 block mb-2">
-              Akun Cepat (Testing):
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickFill("admin@powerhrm.com")}
-                className="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200/70 text-xs font-semibold transition-colors"
-              >
-                Admin Utama
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill("hr@solusidigital.co.id")}
-                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors"
-              >
-                HR Manager
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill("rickysatria442@gmail.com")}
-                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors"
-              >
-                Pimpinan
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill("ahmad.fauzi@solusidigital.co.id")}
-                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
-              >
-                Karyawan (Ahmad)
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

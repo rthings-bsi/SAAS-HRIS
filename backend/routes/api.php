@@ -10,4 +10,5 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/api_overtime.php';
     require __DIR__ . '/api_payroll.php';
     require __DIR__ . '/api_performance.php';
+    require __DIR__ . '/api_notification.php';
 });

@@ -36,6 +36,7 @@ class MobileLandingScreen extends StatelessWidget {
                   const HrHubLogo(
                     size: 32,
                     showText: true,
+                    isSquircleCard: true,
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -43,19 +44,19 @@ class MobileLandingScreen extends StatelessWidget {
                       vertical: AppDimensions.space4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.orangeTint,
+                      color: AppColors.corporateChipBg,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: AppColors.orangeBorder,
+                        color: AppColors.corporateChipBorder,
                         width: AppDimensions.borderWidth,
                       ),
                     ),
                     child: const Text(
-                      'Mobile App',
+                      'Portal Karyawan',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.actionAccent,
+                        color: AppColors.corporateNavy,
                         letterSpacing: 0.2,
                       ),
                     ),
@@ -84,10 +85,10 @@ class MobileLandingScreen extends StatelessWidget {
                             vertical: AppDimensions.space4,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.orangeTint,
+                            color: AppColors.emeraldTint,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.orangeBorder,
+                              color: AppColors.emeraldBorder,
                               width: AppDimensions.borderWidth,
                             ),
                           ),
@@ -240,7 +241,7 @@ class MobileLandingScreen extends StatelessWidget {
                         _buildFeatureCard(
                           icon: Icons.my_location_rounded,
                           iconColor: AppColors.actionAccent,
-                          iconBg: AppColors.orangeTint,
+                          iconBg: AppColors.emeraldTint,
                           badgeText: 'GPS & Swafoto',
                           title: 'Presensi Anti-Mock Ketat',
                           description:

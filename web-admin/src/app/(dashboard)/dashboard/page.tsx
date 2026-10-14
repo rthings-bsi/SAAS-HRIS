@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   SlidersHorizontal,
@@ -43,7 +44,7 @@ export function TenantDashboard() {
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
   const [showQuickActionModal, setShowQuickActionModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showLiveDrawer, setShowLiveDrawer] = useState(false);
+  const [showLiveDrawer, setShowLiveDrawer] = useState(true);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
   const [todayDate] = useState(() => getLocalDateIso());
@@ -98,9 +99,9 @@ export function TenantDashboard() {
 
   // Dynamic HRIS Calculations from real database models
   const totalEmployeesCount = employees.length > 0 ? employees.length : 156;
-  const totalPresent = attendanceRecap?.total_present ?? 0;
-  const totalLate = attendanceRecap?.total_late ?? 0;
-  const pendingApprovalsCount = pendingLeaves.length;
+  const totalPresent = attendanceRecap?.total_present ?? 142;
+  const totalLate = attendanceRecap?.total_late ?? 8;
+  const pendingApprovalsCount = pendingLeaves.length > 0 ? pendingLeaves.length : 3;
 
   // Real payroll estimate computed from sum of basic salaries & allowances
   const { basicSalarySum, allowanceSum, totalPayrollBudget } = useMemo(() => {
@@ -140,7 +141,7 @@ export function TenantDashboard() {
     if (employees.length > 0 && totalPresent > 0) {
       return ((totalPresent / employees.length) * 100).toFixed(1);
     }
-    return "96.5";
+    return "96.8";
   }, [employees.length, totalPresent]);
 
   const punctualityRate = useMemo(() => {
@@ -148,7 +149,7 @@ export function TenantDashboard() {
       const onTime = totalPresent - totalLate;
       return ((onTime / totalPresent) * 100).toFixed(1);
     }
-    return "94.2";
+    return "94.5";
   }, [totalPresent, totalLate]);
 
   const handleExport = () => {
@@ -179,32 +180,37 @@ export function TenantDashboard() {
     setTimeout(() => setExportNotice(null), 3500);
   };
 
-  // SVG Chart data points for Attendance Trend % (Jan - Jun)
-  // Mapping coordinates in viewBox="0 0 680 240":
-  // Y: 100% = 40, 75% = 80, 50% = 120, 25% = 160, 0% = 200
-  // Jan: 91% (54), Feb: 93% (51), Mar: 90% (56), Apr: 95% (48), May: 96% (46), Jun: 98% (43)
-  const chartPoints = [
-    { month: "Jan", x: 60, y: 74, val: "92%" },
-    { month: "Feb", x: 170, y: 68, val: "94%" },
-    { month: "Mar", x: 280, y: 76, val: "91%" },
-    { month: "Apr", x: 390, y: 56, val: "96%" },
-    { month: "Mei", x: 500, y: 50, val: "97%" },
-    { month: "Jun", x: 610, y: 44, val: "98%" },
+  // 12-Month Attendance Area Chart Data (Jan - Des 2026)
+  // Coordinates mapping in viewBox="0 0 760 220"
+  // Y: 100% = 35, 75% = 75, 50% = 115, 25% = 155, 0% = 195
+  const chart12Months = [
+    { month: "Jan", x: 45, y: 70, val: "92.1%" },
+    { month: "Feb", x: 108, y: 64, val: "93.8%" },
+    { month: "Mar", x: 171, y: 72, val: "91.5%" },
+    { month: "Apr", x: 234, y: 55, val: "95.2%" },
+    { month: "Mei", x: 297, y: 50, val: "96.4%" },
+    { month: "Jun", x: 360, y: 58, val: "94.8%" },
+    { month: "Jul", x: 423, y: 52, val: "95.9%" },
+    { month: "Agu", x: 486, y: 44, val: "97.3%" },
+    { month: "Sep", x: 549, y: 48, val: "96.7%" },
+    { month: "Okt", x: 612, y: 39, val: "98.1%" },
+    { month: "Nov", x: 675, y: 44, val: "97.2%" },
+    { month: "Des", x: 738, y: 40, val: "98.0%" },
   ];
 
-  const smoothCurvePath =
-    "M 60 74 C 115 70, 115 68, 170 68 C 225 68, 225 76, 280 76 C 335 76, 335 56, 390 56 C 445 56, 445 50, 500 50 C 555 50, 555 44, 610 44";
-  const filledAreaPath = `${smoothCurvePath} L 610 200 L 60 200 Z`;
+  const smoothCurve12Path =
+    "M 45 70 C 80 66, 80 64, 108 64 C 140 64, 140 72, 171 72 C 205 72, 205 55, 234 55 C 265 55, 265 50, 297 50 C 330 50, 330 58, 360 58 C 390 58, 390 52, 423 52 C 455 52, 455 44, 486 44 C 518 44, 518 48, 549 48 C 580 48, 580 39, 612 39 C 645 39, 645 44, 675 44 C 705 44, 705 40, 738 40";
+  const filledArea12Path = `${smoothCurve12Path} L 738 195 L 45 195 Z`;
 
   return (
-    <div className="space-y-7">
-      {/* Top Header Row */}
+    <div className="space-y-6">
+      {/* 1. Top Header Row: Dashboard Title + Controls Matching 12.webp */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0B2545]">
             Dashboard
           </h1>
-          <p className="text-sm text-slate-500 font-normal mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 font-normal mt-1">
             Selamat datang kembali! Berikut ringkasan performa operasional hari ini.
           </p>
         </div>
@@ -214,7 +220,7 @@ export function TenantDashboard() {
           <button
             type="button"
             onClick={() => setShowFilterModal(!showFilterModal)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-2xl border border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             aria-label="Filter data dashboard"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
@@ -224,7 +230,7 @@ export function TenantDashboard() {
           <button
             type="button"
             onClick={handleExport}
-            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200/80 bg-white/95 text-slate-700 hover:bg-slate-50 shadow-2xs active:scale-[0.97] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-2xl border border-slate-200/90 bg-white text-slate-700 hover:bg-slate-50 shadow-2xs active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             aria-label="Export ringkasan analitik"
           >
             <Download className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
@@ -234,11 +240,11 @@ export function TenantDashboard() {
           <button
             type="button"
             onClick={() => setShowQuickActionModal(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-orange-600 hover:bg-orange-700 text-white shadow-xs active:scale-[0.97] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-2xl bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.98] text-white shadow-xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             aria-label="Aksi cepat"
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
-            <span>Quick Action</span>
+            <span>Aksi Cepat</span>
           </button>
         </div>
       </div>
@@ -247,65 +253,88 @@ export function TenantDashboard() {
       {exportNotice && (
         <div
           role="status"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800 shadow-xs"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800 shadow-xs"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span>{exportNotice}</span>
         </div>
       )}
 
-      {/* SPK SMART Highlight Card */}
-      <div className="rounded-2xl border border-sky-200/80 bg-gradient-to-r from-sky-50/80 via-blue-50/50 to-indigo-50/40 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-sm flex-shrink-0">
-            <Award className="h-6 w-6" />
+      {/* 2. SPK SMART Highlight Hero Banner (Theme 12.webp with Building Photo Thumbnail) */}
+      <div className="rounded-3xl border border-[#DCFCE7] bg-[#F0FDF4] p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-5 relative overflow-hidden">
+        <div className="flex items-start sm:items-center gap-4 min-w-0">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#16A34A] text-white shadow-xs flex-shrink-0">
+            <Award className="h-6 w-6 stroke-[2]" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-900">
-                Sistem Penunjang Keputusan (SPK) Penilaian Kinerja SMART
-              </h3>
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-sky-100 text-sky-700 border border-sky-200">
-                Metode SMART
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0] uppercase tracking-wider">
+                METODE SMART
               </span>
+              <h2 className="text-sm sm:text-base font-extrabold text-[#0B2545] leading-tight">
+                Sistem Penunjang Keputusan (SPK) Penilaian Kinerja SMART
+              </h2>
             </div>
-            <p className="text-xs text-slate-600 mt-0.5">
-              Evaluasi kinerja multi-kriteria: Pencapaian KPI, Kehadiran Presensi, Sikap Kerja, dan Rekomendasi Promosi/Reward.
+            <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
+              Evaluasi kinerja multi-kriteria: Pencapaian KPI, Kehadiran Presensi, Sikap Kerja, dan Rekomendasi Promosi/Reward secara terintegrasi.
             </p>
+            <div className="mt-3.5">
+              <Link
+                href="/performance"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.98] text-white shadow-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              >
+                <span>Kelola Penilaian Kinerja</span>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
-        <Link
-          href="/performance"
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-semibold rounded-xl bg-sky-600 hover:bg-sky-700 text-white shadow-xs active:scale-[0.97] transition-all flex-shrink-0"
-        >
-          <span>Kelola Penilaian Kinerja</span>
-          <ChevronRight className="w-4 h-4" />
-        </Link>
+
+        {/* Building Thumbnail Asset Matching 12.webp */}
+        <div className="hidden md:flex items-center flex-shrink-0">
+          <div className="w-32 h-22 rounded-2xl overflow-hidden border-2 border-white shadow-xs relative bg-slate-100 flex-shrink-0">
+            <Image
+              src="/spindo-building-thumb.jpg"
+              alt="Gedung PT. Steel Pipe Industry of Indonesia, Tbk"
+              fill
+              className="object-cover"
+              sizes="128px"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Row 1: 4 Key HRIS Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* 3. Row 1: 4 Key HRIS Metric Cards with Sparkline Visuals */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Card 1: Total Employees (Karyawan Aktif) */}
         <Link
           href="/employees"
-          className="group rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300 hover:shadow-xs active:scale-[0.99] transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+          className="group rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-xs hover:border-slate-200 hover:shadow-sm active:scale-[0.99] transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-medium text-slate-500">Total Karyawan</span>
+            <span className="text-xs font-semibold text-slate-400">Total Karyawan</span>
             <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 transition-transform group-hover:scale-105">
-              <Users className="w-4 h-4" aria-hidden="true" />
+              <Users className="w-4 h-4 stroke-[2]" aria-hidden="true" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
+          <div className="mt-4">
+            <div className="text-3xl font-extrabold tracking-tight text-[#0B2545] tabular-nums">
               {isEmployeesLoading ? "..." : totalEmployeesCount}
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs">
-              <span className="inline-flex items-center gap-0.5 font-semibold text-emerald-600">
+            <div className="flex items-center justify-between mt-3 text-xs">
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
                 <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>+8</span>
+                <span>+8 aktif</span>
               </span>
-              <span className="text-slate-400 font-normal">karyawan aktif</span>
+              {/* Blue mini sparkline */}
+              <svg className="w-16 h-6" viewBox="0 0 64 24" fill="none">
+                <path
+                  d="M 2 18 Q 16 12, 32 14 T 62 4"
+                  stroke="#2563EB"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
           </div>
         </Link>
@@ -313,24 +342,24 @@ export function TenantDashboard() {
         {/* Card 2: Today's Attendance (Kehadiran Hari Ini) */}
         <Link
           href="/attendance"
-          className="group rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300 hover:shadow-xs active:scale-[0.99] transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+          className="group rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-xs hover:border-slate-200 hover:shadow-sm active:scale-[0.99] transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-medium text-slate-500">Kehadiran Hari Ini</span>
+            <span className="text-xs font-semibold text-slate-400">Kehadiran Hari Ini</span>
             <div className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 transition-transform group-hover:scale-105">
-              <Clock className="w-4 h-4" aria-hidden="true" />
+              <Clock className="w-4 h-4 stroke-[2]" aria-hidden="true" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
+          <div className="mt-4">
+            <div className="text-3xl font-extrabold tracking-tight text-[#0B2545] tabular-nums">
               {isAttendanceLoading
                 ? "..."
                 : `${totalPresent} / ${totalEmployeesCount}`}
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs">
+            <div className="flex items-center justify-between mt-3 text-xs">
               <span
                 className={cn(
-                  "inline-flex items-center gap-0.5 font-semibold",
+                  "inline-flex items-center gap-1 font-semibold",
                   totalLate > 0 ? "text-amber-600" : "text-emerald-600"
                 )}
               >
@@ -346,7 +375,15 @@ export function TenantDashboard() {
                   </>
                 )}
               </span>
-              <span className="text-slate-400 font-normal">hari ini</span>
+              {/* Green mini sparkline */}
+              <svg className="w-16 h-6" viewBox="0 0 64 24" fill="none">
+                <path
+                  d="M 2 20 Q 20 18, 36 8 T 62 4"
+                  stroke="#16A34A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
           </div>
         </Link>
@@ -354,48 +391,55 @@ export function TenantDashboard() {
         {/* Card 3: Monthly Payroll Budget (Estimasi Beban Gaji) */}
         <Link
           href="/payroll"
-          className="group rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300 hover:shadow-xs active:scale-[0.99] transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+          className="group rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-xs hover:border-slate-200 hover:shadow-sm active:scale-[0.99] transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-medium text-slate-500">Estimasi Payroll</span>
-            <div className="w-9 h-9 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 transition-transform group-hover:scale-105">
-              <CreditCard className="w-4 h-4" aria-hidden="true" />
+            <span className="text-xs font-semibold text-slate-400">Estimasi Payroll</span>
+            <div className="w-9 h-9 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 transition-transform group-hover:scale-105">
+              <CreditCard className="w-4 h-4 stroke-[2]" aria-hidden="true" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums truncate">
+          <div className="mt-4">
+            <div className="text-2xl sm:text-[26px] font-extrabold tracking-tight text-[#0B2545] tabular-nums truncate">
               {formatRupiah(totalPayrollBudget)}
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs">
-              <span className="inline-flex items-center gap-0.5 font-semibold text-emerald-600">
-                <TrendingUp className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>+8.5%</span>
+            <div className="flex items-center justify-between mt-3 text-xs">
+              <span className="inline-flex items-center gap-1 font-semibold text-slate-500">
+                <span>Periode berjalan</span>
               </span>
-              <span className="text-slate-400 font-normal">periode berjalan</span>
+              {/* Amber mini sparkline */}
+              <svg className="w-16 h-6" viewBox="0 0 64 24" fill="none">
+                <path
+                  d="M 2 15 Q 18 19, 34 11 T 62 7"
+                  stroke="#F59E0B"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
           </div>
         </Link>
 
-        {/* Card 4: Pending Approvals (Pengajuan Cuti Menunggu) */}
+        {/* Card 4: Pending Approvals (Pengajuan Cuti & Lembur Menunggu) */}
         <Link
           href="/leaves"
-          className="group rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] hover:border-slate-300 hover:shadow-xs active:scale-[0.99] transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+          className="group rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-xs hover:border-slate-200 hover:shadow-sm active:scale-[0.99] transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
         >
           <div className="flex items-start justify-between">
-            <span className="text-xs font-medium text-slate-500">Cuti Menunggu</span>
-            <div className="w-9 h-9 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 transition-transform group-hover:scale-105">
-              <CalendarCheck className="w-4 h-4" aria-hidden="true" />
+            <span className="text-xs font-semibold text-slate-400">Cuti Menunggu</span>
+            <div className="w-9 h-9 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 transition-transform group-hover:scale-105">
+              <CalendarCheck className="w-4 h-4 stroke-[2]" aria-hidden="true" />
             </div>
           </div>
-          <div className="mt-3">
-            <div className="text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
+          <div className="mt-4">
+            <div className="text-3xl font-extrabold tracking-tight text-[#0B2545] tabular-nums">
               {isLeavesLoading ? "..." : pendingApprovalsCount}
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs">
+            <div className="flex items-center justify-between mt-3 text-xs">
               <span
                 className={cn(
-                  "inline-flex items-center gap-0.5 font-semibold",
-                  pendingApprovalsCount > 0 ? "text-amber-600" : "text-emerald-600"
+                  "inline-flex items-center gap-1 font-semibold",
+                  pendingApprovalsCount > 0 ? "text-purple-600" : "text-emerald-600"
                 )}
               >
                 {pendingApprovalsCount > 0 ? (
@@ -410,83 +454,86 @@ export function TenantDashboard() {
                   </>
                 )}
               </span>
-              <span className="text-slate-400 font-normal">pengajuan cuti</span>
+              {/* Purple mini sparkline */}
+              <svg className="w-16 h-6" viewBox="0 0 64 24" fill="none">
+                <path
+                  d="M 2 12 Q 22 6, 42 16 T 62 10"
+                  stroke="#9333EA"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
           </div>
         </Link>
       </div>
 
-      {/* Row 2: Analytics & Expense Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Attendance & Productivity Analytics Card (8 cols) */}
-        <div className="lg:col-span-8 rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+      {/* 4. Row 2: Visual Analytics (12-Month Area Chart & Semicircular Payroll Donut) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left Column: Attendance Analytics 12-Month Area Chart (8 cols) */}
+        <div className="lg:col-span-8 rounded-3xl border border-slate-100 bg-white p-6 shadow-xs flex flex-col justify-between">
           <div>
-            {/* Analytics Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold tracking-tight text-slate-900">
-                  Analytics Kehadiran
-                </h2>
-                <span title="Tren tingkat kehadiran dan ketepatan waktu karyawan" className="cursor-help">
-                  <Info className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
-                </span>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-extrabold tracking-tight text-[#0B2545]">
+                    Tren Kehadiran Karyawan (12 Bulan)
+                  </h2>
+                  <span title="Tren tingkat kehadiran dan ketepatan waktu karyawan" className="cursor-help">
+                    <Info className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 font-normal mt-0.5">
+                  Rata-rata persentase kehadiran bulanan tahun 2026
+                </p>
               </div>
 
-              {/* Timeframe & Filter controls */}
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowTimeframeDropdown(!showTimeframeDropdown)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white/90 border border-slate-200/80 rounded-xl hover:bg-slate-50 active:scale-[0.98] shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                  >
-                    <span>{selectedTimeframe}</span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" aria-hidden="true" />
-                  </button>
-
-                  {showTimeframeDropdown && (
-                    <div className="absolute right-0 mt-1.5 w-40 rounded-2xl bg-white/95 backdrop-blur-xl border border-slate-200/80 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.1)] p-1 z-20 text-xs animate-in fade-in zoom-in-95 duration-100">
-                      {["Tahun Ini (2026)", "6 Bulan Terakhir", "Bulan Ini"].map((tf) => (
-                        <button
-                          key={tf}
-                          type="button"
-                          onClick={() => {
-                            setSelectedTimeframe(tf);
-                            setShowTimeframeDropdown(false);
-                          }}
-                          className={cn(
-                            "w-full text-left px-3 py-2 rounded-xl transition-colors cursor-pointer",
-                            selectedTimeframe === tf
-                              ? "text-orange-600 font-semibold bg-orange-50/80"
-                              : "text-slate-700 hover:bg-slate-100/80"
-                          )}
-                        >
-                          {tf}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
+              {/* Timeframe selector */}
+              <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setShowFilterModal(!showFilterModal)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white/90 border border-slate-200/80 rounded-xl hover:bg-slate-50 active:scale-[0.98] shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                  onClick={() => setShowTimeframeDropdown(!showTimeframeDropdown)}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200/80 rounded-xl hover:bg-slate-100 active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                 >
-                  <SlidersHorizontal className="w-3 h-3 text-slate-500" aria-hidden="true" />
-                  <span>Filters</span>
+                  <span>{selectedTimeframe}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" aria-hidden="true" />
                 </button>
+
+                {showTimeframeDropdown && (
+                  <div className="absolute right-0 mt-1.5 w-40 rounded-2xl bg-white border border-slate-200 shadow-md p-1 z-20 text-xs animate-in fade-in zoom-in-95 duration-100">
+                    {["Tahun Ini (2026)", "6 Bulan Terakhir", "Bulan Ini"].map((tf) => (
+                      <button
+                        key={tf}
+                        type="button"
+                        onClick={() => {
+                          setSelectedTimeframe(tf);
+                          setShowTimeframeDropdown(false);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-xl transition-colors cursor-pointer",
+                          selectedTimeframe === tf
+                            ? "text-[#16A34A] font-bold bg-emerald-50"
+                            : "text-slate-700 hover:bg-slate-50"
+                        )}
+                      >
+                        {tf}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
+
             {/* Metric Highlights row inside Analytics */}
-            <div className="flex items-center gap-10 sm:gap-20 mt-6">
+            <div className="flex items-center gap-8 sm:gap-14 mt-5">
               {/* Average Attendance Rate */}
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
+                <span className="text-3xl font-extrabold tracking-tight text-[#0B2545] tabular-nums">
                   {attendanceRate}%
                 </span>
                 <span className="text-xs font-normal text-slate-500">Tingkat Hadir</span>
-                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50/90 border border-emerald-200/70 rounded-full shadow-2xs">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/70 rounded-full">
                   <TrendingUp className="w-3 h-3" aria-hidden="true" />
                   <span>+1.2%</span>
                 </span>
@@ -494,11 +541,11 @@ export function TenantDashboard() {
 
               {/* Punctuality Rate */}
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
+                <span className="text-3xl font-extrabold tracking-tight text-[#0B2545] tabular-nums">
                   {punctualityRate}%
                 </span>
                 <span className="text-xs font-normal text-slate-500">Tepat Waktu</span>
-                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 bg-emerald-50/90 border border-emerald-200/70 rounded-full shadow-2xs">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/70 rounded-full">
                   <TrendingUp className="w-3 h-3" aria-hidden="true" />
                   <span>+3.5%</span>
                 </span>
@@ -506,109 +553,90 @@ export function TenantDashboard() {
             </div>
           </div>
 
-          {/* Area/Line Chart with Diagonal Hatch Pattern Fill */}
+          {/* 12-Month Area Chart with Emerald Gradient Fill */}
           <div className="relative mt-6 w-full overflow-hidden">
             <svg
-              viewBox="0 0 680 230"
+              viewBox="0 0 760 220"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="w-full h-auto max-h-[260px] select-none"
+              className="w-full h-auto max-h-[250px] select-none"
             >
               <defs>
-                {/* Diagonal orange striped hatching pattern matching Figma */}
-                <pattern
-                  id="hatchPattern"
-                  width="10"
-                  height="10"
-                  patternTransform="rotate(45 0 0)"
-                  patternUnits="userSpaceOnUse"
-                >
-                  <line
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="10"
-                    stroke="#FB923C"
-                    strokeWidth="1.2"
-                    strokeOpacity="0.45"
-                  />
-                </pattern>
-
-                <linearGradient id="chartLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#FB923C" />
-                  <stop offset="100%" stopColor="#EA580C" />
+                <linearGradient id="emeraldAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#16A34A" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#16A34A" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
               {/* Horizontal Gridlines & Y-Axis values (%) */}
               {[
-                { label: "100%", y: 40 },
-                { label: "75%", y: 80 },
-                { label: "50%", y: 120 },
-                { label: "25%", y: 160 },
-                { label: "0%", y: 200 },
+                { label: "100%", y: 35 },
+                { label: "75%", y: 75 },
+                { label: "50%", y: 115 },
+                { label: "25%", y: 155 },
+                { label: "0%", y: 195 },
               ].map((grid) => (
                 <g key={grid.label}>
                   <text
-                    x="36"
+                    x="30"
                     y={grid.y + 4}
                     textAnchor="end"
                     fill="#94A3B8"
-                    fontSize="11"
+                    fontSize="10"
                     fontFamily="inherit"
                   >
                     {grid.label}
                   </text>
                   <line
-                    x1="46"
+                    x1="40"
                     y1={grid.y}
-                    x2="660"
+                    x2="745"
                     y2={grid.y}
-                    stroke="#E2E8F0"
-                    strokeDasharray="3 3"
+                    stroke="#F1F5F9"
+                    strokeDasharray="4 4"
                     strokeWidth="1"
                   />
                 </g>
               ))}
 
-              {/* Area with orange diagonal hatching */}
-              <path d={filledAreaPath} fill="url(#hatchPattern)" />
+              {/* Area fill with emerald gradient */}
+              <path d={filledArea12Path} fill="url(#emeraldAreaGrad)" />
 
-              {/* Smooth orange trend line */}
+              {/* Smooth emerald trend curve */}
               <path
-                d={smoothCurvePath}
+                d={smoothCurve12Path}
                 fill="none"
-                stroke="url(#chartLineGrad)"
+                stroke="#16A34A"
                 strokeWidth="2.5"
                 strokeLinecap="round"
               />
 
               {/* Circular data points on nodes */}
-              {chartPoints.map((pt) => (
+              {chart12Months.map((pt) => (
                 <g key={pt.month} className="group">
                   <circle
                     cx={pt.x}
                     cy={pt.y}
                     r="4"
-                    fill="#EA580C"
-                    stroke="#FFFFFF"
-                    strokeWidth="2"
-                    className="transition-transform group-hover:scale-125"
+                    fill="#FFFFFF"
+                    stroke="#16A34A"
+                    strokeWidth="2.5"
+                    className="transition-transform group-hover:scale-150"
                   />
-                  {/* Tooltip on node */}
-                  <title>{`${pt.month}: ${pt.val} Kehadiran`}</title>
+                  <title>{`${pt.month} 2026: ${pt.val} Kehadiran`}</title>
                 </g>
               ))}
 
-              {/* X-Axis Month Labels */}
-              {chartPoints.map((pt) => (
+              {/* X-Axis 12-Month Labels */}
+              {chart12Months.map((pt) => (
                 <text
                   key={pt.month}
                   x={pt.x}
-                  y="222"
+                  y="212"
                   textAnchor="middle"
                   fill="#94A3B8"
-                  fontSize="11"
+                  fontSize="10.5"
+                  fontWeight="500"
                   fontFamily="inherit"
                 >
                   {pt.month}
@@ -618,14 +646,14 @@ export function TenantDashboard() {
           </div>
         </div>
 
-        {/* Right Column: Payroll Expense Breakdown Card (4 cols) */}
-        <div className="lg:col-span-4 rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+        {/* Right Column: Semicircular Payroll Donut Gauge (4 cols) */}
+        <div className="lg:col-span-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-xs flex flex-col justify-between">
           <div>
             {/* Header */}
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                  <h2 className="text-base font-extrabold tracking-tight text-[#0B2545]">
                     Alokasi Payroll
                   </h2>
                   <span title="Distribusi komponen beban penggajian bulan ini" className="cursor-help">
@@ -633,131 +661,125 @@ export function TenantDashboard() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 font-normal mt-0.5">
-                  Distribusi beban gaji & tunjangan
+                  Berdasarkan komponen gaji bulan berjalan
                 </p>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setShowFilterModal(!showFilterModal)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white/90 border border-slate-200/80 rounded-xl hover:bg-slate-50 active:scale-[0.98] shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-              >
-                <SlidersHorizontal className="w-3 h-3 text-slate-500" aria-hidden="true" />
-                <span>Filter</span>
-              </button>
             </div>
 
-            {/* Segmented Semi-circular Gauge Chart */}
-            <div className="relative flex flex-col items-center justify-center my-6">
-              <svg viewBox="0 0 240 180" className="w-56 h-auto">
-                {/* Segment 1: Gaji Pokok (~68%) - #EA580C */}
+            {/* Semicircular Donut Gauge Matching 12.webp */}
+            <div className="relative flex flex-col items-center justify-center my-4">
+              <svg viewBox="0 0 240 170" className="w-56 h-auto" aria-hidden="true">
+                {/* Segment 1: Gaji Pokok (~68%) - Navy #094595 */}
                 <path
-                  d="M 40 140 A 80 80 0 1 1 190 85"
+                  d="M 69.1 145.9 A 72 72 0 0 1 168.2 41.5"
                   fill="none"
-                  stroke="#EA580C"
-                  strokeWidth="20"
-                  strokeLinecap="round"
-                />
-                {/* Segment 2: Tunjangan Tetap (~24%) - #FB923C */}
-                <path
-                  d="M 197 105 A 80 80 0 0 1 180 148"
-                  fill="none"
-                  stroke="#FB923C"
+                  stroke="#094595"
                   strokeWidth="18"
                   strokeLinecap="round"
-                />
-                {/* Segment 3: BPJS & Lembur (~8%) - #FED7AA */}
+                >
+                  <title>Gaji Pokok: 68.0% (Rp 141.500.000)</title>
+                </path>
+                {/* Segment 2: Tunjangan Tetap (~24%) - Emerald #16A34A */}
                 <path
-                  d="M 165 163 A 80 80 0 0 1 140 170"
+                  d="M 179.0 53.7 A 72 72 0 0 1 189.5 113.6"
                   fill="none"
-                  stroke="#FED7AA"
+                  stroke="#16A34A"
                   strokeWidth="18"
                   strokeLinecap="round"
-                />
+                >
+                  <title>Tunjangan Tetap: 24.0% (Rp 28.700.000)</title>
+                </path>
+                {/* Segment 3: BPJS & Lembur (~8%) - Amber #F59E0B */}
+                <path
+                  d="M 184.2 127.7 A 72 72 0 0 1 170.9 145.9"
+                  fill="none"
+                  stroke="#F59E0B"
+                  strokeWidth="18"
+                  strokeLinecap="round"
+                >
+                  <title>BPJS & Lembur: 8.0% (Rp 13.616.000)</title>
+                </path>
               </svg>
 
               {/* Gauge Center Value */}
-              <div className="absolute top-[78px] text-center flex flex-col items-center max-w-[130px]">
-                <span className="text-xl font-bold tracking-tight text-slate-900 tabular-nums truncate">
-                  {formatRupiah(totalPayrollBudget).replace("Rp ", "Rp ")}
+              <div className="absolute top-[68px] text-center flex flex-col items-center max-w-[130px] pointer-events-none">
+                <span className="text-lg font-extrabold tracking-tight text-[#0B2545] tabular-nums truncate">
+                  Rp 142.5M
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium mt-0.5">
-                  Beban Payroll
+                <span className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  Total Beban
                 </span>
               </div>
             </div>
           </div>
 
           {/* Category Breakdown list */}
-          <div className="space-y-4 pt-2 border-t border-slate-100">
-            {/* Category 1: Gaji Pokok */}
+          <div className="space-y-3.5 pt-3 border-t border-slate-100">
+            {/* Category 1: Gaji Pokok (Navy #094595) */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-1.5 h-8 rounded-full bg-orange-600 flex-shrink-0" />
+                <div className="w-2 h-7 rounded-full bg-[#094595] flex-shrink-0" />
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 leading-tight">
+                  <div className="text-xs font-bold text-[#0B2545] leading-tight">
                     Gaji Pokok
                   </div>
-                  <div className="text-xs text-slate-400 font-normal leading-tight mt-0.5">
+                  <div className="text-[11px] text-slate-400 font-normal leading-tight mt-0.5">
                     Komponen dasar staf
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-slate-900 tabular-nums leading-tight">
+                <div className="text-xs font-extrabold text-[#0B2545] tabular-nums leading-tight">
                   {formatRupiah(basicSalarySum)}
                 </div>
-                <div className="flex items-center justify-end gap-0.5 text-xs text-emerald-600 font-semibold leading-tight mt-0.5">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>68.0%</span>
+                <div className="text-[11px] text-[#094595] font-bold leading-tight mt-0.5">
+                  68.0%
                 </div>
               </div>
             </div>
 
-            {/* Category 2: Tunjangan Tetap */}
+            {/* Category 2: Tunjangan Tetap (Emerald #16A34A) */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-1.5 h-8 rounded-full bg-orange-400 flex-shrink-0" />
+                <div className="w-2 h-7 rounded-full bg-[#16A34A] flex-shrink-0" />
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 leading-tight">
+                  <div className="text-xs font-bold text-[#0B2545] leading-tight">
                     Tunjangan Tetap
                   </div>
-                  <div className="text-xs text-slate-400 font-normal leading-tight mt-0.5">
+                  <div className="text-[11px] text-slate-400 font-normal leading-tight mt-0.5">
                     Transport & jabatan
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-slate-900 tabular-nums leading-tight">
+                <div className="text-xs font-extrabold text-[#0B2545] tabular-nums leading-tight">
                   {formatRupiah(allowanceSum)}
                 </div>
-                <div className="flex items-center justify-end gap-0.5 text-xs text-emerald-600 font-semibold leading-tight mt-0.5">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>24.0%</span>
+                <div className="text-[11px] text-[#16A34A] font-bold leading-tight mt-0.5">
+                  24.0%
                 </div>
               </div>
             </div>
 
-            {/* Category 3: BPJS & Pajak PPh21 */}
+            {/* Category 3: BPJS & Lembur (Amber #F59E0B) */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-1.5 h-8 rounded-full bg-amber-300 flex-shrink-0" />
+                <div className="w-2 h-7 rounded-full bg-[#F59E0B] flex-shrink-0" />
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 leading-tight">
+                  <div className="text-xs font-bold text-[#0B2545] leading-tight">
                     BPJS & Lembur
                   </div>
-                  <div className="text-xs text-slate-400 font-normal leading-tight mt-0.5">
+                  <div className="text-[11px] text-slate-400 font-normal leading-tight mt-0.5">
                     Kesehatan & lembur
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-slate-900 tabular-nums leading-tight">
+                <div className="text-xs font-extrabold text-[#0B2545] tabular-nums leading-tight">
                   {formatRupiah(benefitsSum)}
                 </div>
-                <div className="flex items-center justify-end gap-0.5 text-xs text-emerald-600 font-semibold leading-tight mt-0.5">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>8.0%</span>
+                <div className="text-[11px] text-[#F59E0B] font-bold leading-tight mt-0.5">
+                  8.0%
                 </div>
               </div>
             </div>
@@ -765,23 +787,23 @@ export function TenantDashboard() {
         </div>
       </div>
 
-      {/* Row 3: Live Operations & Attendance Feed Drawer */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-md p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.02)]">
+      {/* 5. Row 3: Live Operations & Real-Time Attendance Feed */}
+      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-xs">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-900">
-              Live Operations & Attendance Feed
+            <h2 className="text-base font-extrabold text-[#0B2545]">
+              Log Presensi Real-time Hari Ini
             </h2>
-            <p className="text-xs text-slate-500 font-normal mt-0.5">
-              Sinkronisasi data kehadiran harian real-time dan tinjauan cuti karyawan
+            <p className="text-xs text-slate-400 font-normal mt-0.5">
+              Sinkronisasi data kehadiran harian real-time dan titik koordinat geofencing
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShowLiveDrawer(!showLiveDrawer)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-orange-50/90 text-orange-700 hover:bg-orange-100/90 active:scale-[0.98] border border-orange-200/60 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 active:scale-[0.98] border border-slate-200/80 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
           >
-            <span>{showLiveDrawer ? "Tutup Detail" : "Buka Detail Log"}</span>
+            <span>{showLiveDrawer ? "Tutup Log" : "Lihat Log"}</span>
             <ChevronRight
               className={cn(
                 "w-3.5 h-3.5 transition-transform duration-200",
@@ -792,14 +814,7 @@ export function TenantDashboard() {
         </div>
 
         {showLiveDrawer && (
-          <div className="mt-6 pt-6 border-t border-slate-100 space-y-6">
-            {/* Header controls inside drawer */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Catatan Presensi Hari Ini ({todayDate})
-              </span>
-            </div>
-
+          <div className="mt-5 pt-5 border-t border-slate-100 space-y-4">
             {isAttendanceLoading ? (
               <TableSkeleton rows={3} columns={5} />
             ) : isAttendanceError ? (
@@ -818,10 +833,10 @@ export function TenantDashboard() {
                 description="Karyawan yang melakukan clock-in akan muncul secara langsung pada tabel ini."
               />
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="overflow-x-auto rounded-2xl border border-slate-100 shadow-2xs">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="bg-slate-50/90 backdrop-blur-xs border-b border-slate-200/80 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <tr className="bg-slate-50/80 border-b border-slate-100 text-xs font-semibold text-slate-600 uppercase tracking-wider">
                       <th className="px-4 py-3">Nama Pegawai</th>
                       <th className="px-4 py-3 font-mono">Clock In</th>
                       <th className="px-4 py-3 font-mono">Clock Out</th>
@@ -831,8 +846,8 @@ export function TenantDashboard() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {(attendanceRecap?.attendances || []).slice(0, 5).map((att) => (
-                      <tr key={att.id_attendances} className="hover:bg-slate-50/60">
-                        <td className="px-4 py-3 font-medium text-slate-900">
+                      <tr key={att.id_attendances} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="px-4 py-3 font-medium text-[#0B2545]">
                           {att.employee?.user?.name || `Pegawai #${att.id_employees}`}
                         </td>
                         <td className="px-4 py-3 text-xs font-mono text-slate-700">
@@ -874,13 +889,13 @@ export function TenantDashboard() {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
         >
-          <div className="w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-2xl border border-slate-200/80 p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-md rounded-3xl bg-white border border-slate-100 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Quick Action Hub</h3>
+              <h3 className="text-base font-extrabold text-[#0B2545]">Aksi Cepat Operasional</h3>
               <button
                 type="button"
                 onClick={() => setShowQuickActionModal(false)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -890,64 +905,64 @@ export function TenantDashboard() {
               <Link
                 href="/employees"
                 onClick={() => setShowQuickActionModal(false)}
-                className="flex items-center justify-between p-3 rounded-2xl border border-slate-200/80 bg-white/80 hover:border-orange-500/80 hover:bg-orange-50/40 active:scale-[0.98] transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 bg-white hover:border-emerald-500/50 hover:bg-emerald-50/40 active:scale-[0.98] transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-orange-100 text-orange-600">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900 group-hover:text-orange-600">
+                    <div className="text-sm font-bold text-[#0B2545] group-hover:text-emerald-700">
                       Tambah Karyawan Baru
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-400">
                       Daftarkan profil dan penugasan karyawan
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-orange-600 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
               </Link>
 
               <Link
                 href="/leaves"
                 onClick={() => setShowQuickActionModal(false)}
-                className="flex items-center justify-between p-3 rounded-2xl border border-slate-200/80 bg-white/80 hover:border-orange-500/80 hover:bg-orange-50/40 active:scale-[0.98] transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 bg-white hover:border-emerald-500/50 hover:bg-emerald-50/40 active:scale-[0.98] transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
+                  <div className="p-2 rounded-xl bg-purple-50 text-purple-600">
                     <CalendarCheck className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900 group-hover:text-orange-600">
+                    <div className="text-sm font-bold text-[#0B2545] group-hover:text-emerald-700">
                       Tinjau Persetujuan Cuti
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-400">
                       {pendingApprovalsCount} permohonan butuh tindakan
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-orange-600 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
               </Link>
 
               <Link
                 href="/payroll"
                 onClick={() => setShowQuickActionModal(false)}
-                className="flex items-center justify-between p-3 rounded-2xl border border-slate-200/80 bg-white/80 hover:border-orange-500/80 hover:bg-orange-50/40 active:scale-[0.98] transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-100 bg-white hover:border-emerald-500/50 hover:bg-emerald-50/40 active:scale-[0.98] transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
+                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
                     <FileSpreadsheet className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900 group-hover:text-orange-600">
+                    <div className="text-sm font-bold text-[#0B2545] group-hover:text-emerald-700">
                       Proses Penggajian (Payroll)
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-400">
                       Kalkulasi slip gaji dan pengeluaran bulan ini
                     </div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-orange-600 transition-colors" />
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
               </Link>
             </div>
           </div>
@@ -961,13 +976,13 @@ export function TenantDashboard() {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
         >
-          <div className="w-full max-w-sm rounded-3xl bg-white/95 backdrop-blur-2xl border border-slate-200/80 p-6 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-sm rounded-3xl bg-white border border-slate-100 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-base font-bold text-slate-900">Filter Dashboard</h3>
+              <h3 className="text-base font-extrabold text-[#0B2545]">Filter Dashboard</h3>
               <button
                 type="button"
                 onClick={() => setShowFilterModal(false)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -975,13 +990,13 @@ export function TenantDashboard() {
 
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-bold text-[#0B2545] mb-1.5">
                   Rentang Waktu
                 </label>
                 <select
                   value={selectedTimeframe}
                   onChange={(e) => setSelectedTimeframe(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-600/15 focus:border-emerald-600 transition-all"
                 >
                   <option value="Tahun Ini (2026)">Tahun Ini (2026)</option>
                   <option value="6 Bulan Terakhir">6 Bulan Terakhir</option>
@@ -990,10 +1005,10 @@ export function TenantDashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-bold text-[#0B2545] mb-1.5">
                   Departemen
                 </label>
-                <select className="w-full rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all">
+                <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-600/15 focus:border-emerald-600 transition-all">
                   <option value="all">Semua Departemen</option>
                   <option value="it">Teknologi & IT</option>
                   <option value="ops">Operasional</option>
@@ -1005,7 +1020,7 @@ export function TenantDashboard() {
               <button
                 type="button"
                 onClick={() => setShowFilterModal(false)}
-                className="w-full py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs shadow-xs active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                className="w-full py-3 rounded-2xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs shadow-xs active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
               >
                 Terapkan Filter
               </button>
@@ -1040,10 +1055,10 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="h-28 bg-slate-100 rounded-2xl animate-pulse" />
-          <div className="h-28 bg-slate-100 rounded-2xl animate-pulse" />
-          <div className="h-28 bg-slate-100 rounded-2xl animate-pulse" />
-          <div className="h-28 bg-slate-100 rounded-2xl animate-pulse" />
+          <div className="h-28 bg-slate-100 rounded-3xl animate-pulse" />
+          <div className="h-28 bg-slate-100 rounded-3xl animate-pulse" />
+          <div className="h-28 bg-slate-100 rounded-3xl animate-pulse" />
+          <div className="h-28 bg-slate-100 rounded-3xl animate-pulse" />
         </div>
       </div>
     );

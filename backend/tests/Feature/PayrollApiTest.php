@@ -380,7 +380,7 @@ class PayrollApiTest extends TestCase
 
         $finalizedSlip = PayrollSlip::find($slip->id_payroll_slips);
         $this->assertNotEmpty($finalizedSlip->pdf_path);
-        Storage::disk('public')->assertExists($finalizedSlip->pdf_path);
+        $this->assertTrue(Storage::disk('public')->exists($finalizedSlip->pdf_path));
     }
 
     public function test_cannot_recalculate_already_finalized_payroll_period(): void
@@ -519,5 +519,39 @@ class PayrollApiTest extends TestCase
         $this->getJson("/api/v1/payroll/periods/{$slipB->id_payroll_slips}")->assertStatus(404);
         $this->postJson("/api/v1/payroll/periods/{$slipB->id_payroll_slips}/calculate")->assertStatus(404);
         $this->postJson("/api/v1/payroll/periods/{$slipB->id_payroll_slips}/finalize")->assertStatus(404);
+    }
+
+    public function test_cannot_create_payroll_period_with_duplicate_name_or_overlapping_dates(): void
+    {
+        Sanctum::actingAs($this->hrA);
+
+        // First creation succeeds
+        $res1 = $this->postJson('/api/v1/payroll/periods', [
+            'name' => 'Payroll Q1 2026',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-03-31',
+            'payment_date' => '2026-04-01',
+        ]);
+        $res1->assertStatus(201);
+
+        // Attempt duplicate name fails 422
+        $res2 = $this->postJson('/api/v1/payroll/periods', [
+            'name' => 'payroll q1 2026',
+            'start_date' => '2026-04-01',
+            'end_date' => '2026-06-30',
+            'payment_date' => '2026-07-01',
+        ]);
+        $res2->assertStatus(422)
+            ->assertJsonPath('success', false);
+
+        // Attempt overlapping dates fails 422
+        $res3 = $this->postJson('/api/v1/payroll/periods', [
+            'name' => 'Payroll Interm 2026',
+            'start_date' => '2026-02-01',
+            'end_date' => '2026-04-30',
+            'payment_date' => '2026-05-01',
+        ]);
+        $res3->assertStatus(422)
+            ->assertJsonPath('success', false);
     }
 }

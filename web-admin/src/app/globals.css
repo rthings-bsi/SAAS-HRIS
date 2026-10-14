@@ -7,8 +7,8 @@
   --color-ink-primary: #0f172a;
   --color-ink-muted: #475569;
   --color-border-neutral: #cbd5e1;
-  --color-action-accent: #ea580c;
-  --color-action-accent-hover: #c2410c;
+  --color-action-accent: #16a34a;
+  --color-action-accent-hover: #15803d;
 
   /* WCAG AA Compliant Semantics (Contrast >= 4.5:1 against light canvas) */
   --color-semantic-success: #15803d;
@@ -41,7 +41,7 @@ body {
 
 /* Accessible focus ring utility (R-32) */
 :focus-visible {
-  outline: 2px solid #ea580c;
+  outline: 2px solid #16a34a;
   outline-offset: 2px;
 }
 
@@ -270,4 +270,34 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.45);
+}
+
+/* Sleek custom scrollbar for sidebar (Anti-Slop Clean Windows/Mac) */
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(203, 213, 225, 0.45) transparent;
+}
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.45);
+  border-radius: 9999px;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+.sidebar-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Button icon alignment guard */
+button svg {
+  display: inline-block;
+  vertical-align: middle;
 }

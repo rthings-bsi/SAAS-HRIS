@@ -15,6 +15,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('periods', [PerformanceController::class, 'periods']);
         Route::post('periods', [PerformanceController::class, 'storePeriod']);
         Route::get('periods/{id}', [PerformanceController::class, 'showPeriod']);
+        Route::delete('periods/{id}', [PerformanceController::class, 'destroyPeriod']);
         Route::post('periods/{id}/sync-employees', [PerformanceController::class, 'syncEmployees']);
         Route::post('periods/{id}/scores', [PerformanceController::class, 'saveScores']);
         Route::post('periods/{id}/calculate', [PerformanceController::class, 'calculate']);

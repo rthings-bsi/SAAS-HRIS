@@ -267,10 +267,10 @@ class _FilterChipItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.orangeTint : const Color(0xFFF1F5F9),
+          color: isSelected ? AppColors.emeraldTint : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? AppColors.orangeBorder : Colors.transparent,
+            color: isSelected ? AppColors.emeraldBorder : Colors.transparent,
             width: 1.0,
           ),
         ),
@@ -375,9 +375,9 @@ class _OvertimeCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.orangeTint,
+                  color: AppColors.emeraldTint,
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: AppColors.orangeBorder, width: 0.8),
+                  border: Border.all(color: AppColors.emeraldBorder, width: 0.8),
                 ),
                 child: Text(
                   item.formattedDuration,

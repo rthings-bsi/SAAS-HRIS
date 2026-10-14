@@ -18,10 +18,23 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import apiClient from "@/lib/axios";
 import type { ApiResponse, Employee, Department, Branch } from "@/types";
 
 export default function CompanyProfilePage() {
+  return (
+    <RoleGuard
+      allowedRoles={["superadmin", "super_admin", "owner", "hr"]}
+      fallbackTitle="Akses Profil Perusahaan Dibatasi"
+      fallbackMessage="Halaman Profil Perusahaan hanya dapat diakses dan diubah oleh Super Admin, Owner, dan Tim HRD."
+    >
+      <CompanyProfileContent />
+    </RoleGuard>
+  );
+}
+
+function CompanyProfileContent() {
   const [isSaved, setIsSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -138,7 +151,7 @@ export default function CompanyProfilePage() {
       {/* Page Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0B2545]">
             Profil Perusahaan & Instansi
           </h1>
           <p className="text-sm text-slate-500">
@@ -197,7 +210,7 @@ export default function CompanyProfilePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Kantor Cabang</CardTitle>
-            <MapPin className="h-4 w-4 text-orange-600" />
+            <MapPin className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <div className="p-6 pt-0">
             <div className="text-2xl font-bold text-slate-900">
@@ -225,7 +238,7 @@ export default function CompanyProfilePage() {
           {/* Identitas Instansi */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-              <Building2 className="w-5 h-5 text-orange-600" />
+              <Building2 className="w-5 h-5 text-emerald-600" />
               <h2 className="text-base font-bold text-slate-900">Identitas Perusahaan</h2>
             </div>
 
@@ -238,7 +251,7 @@ export default function CompanyProfilePage() {
                 required
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all font-medium"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all font-medium"
               />
             </div>
 
@@ -250,7 +263,7 @@ export default function CompanyProfilePage() {
                 type="text"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all"
               />
             </div>
 
@@ -262,7 +275,7 @@ export default function CompanyProfilePage() {
                 rows={3}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all"
               />
             </div>
 
@@ -276,7 +289,7 @@ export default function CompanyProfilePage() {
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all"
                 />
               </div>
               <div>
@@ -288,7 +301,7 @@ export default function CompanyProfilePage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all"
                 />
               </div>
             </div>
@@ -302,7 +315,7 @@ export default function CompanyProfilePage() {
                 type="text"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition-all"
               />
             </div>
           </div>

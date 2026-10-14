@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
-import '../../../core/network/network_provider.dart';
 import '../../../core/widgets/hr_hub_logo.dart';
-import '../../../core/widgets/server_config_dialog.dart';
 import '../../auth/provider/auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -118,7 +116,6 @@ class ProfileScreen extends ConsumerWidget {
     final statusLabel = auth.employmentStatusLabel;
     final hireDateFormatted = _formatDate(auth.hireDate);
 
-    final serverBaseUrl = ref.watch(serverBaseUrlProvider);
     // Initial avatar letters
     final initials = userName.trim().isNotEmpty
         ? userName
@@ -179,21 +176,21 @@ class ProfileScreen extends ConsumerWidget {
               ),
               child: Column(
                 children: [
-                  // Gradient Avatar
+                  // Corporate Navy Avatar Matching Web-Admin
                   Container(
                     width: 76,
                     height: 76,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFB923C), AppColors.actionAccent],
+                        colors: [AppColors.corporateNavy, AppColors.corporateBlueMuted],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       shape: BoxShape.circle,
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x40EA580C),
-                          blurRadius: 12,
+                          color: Color(0x28094595),
+                          blurRadius: 14,
                           offset: Offset(0, 4),
                         ),
                       ],
@@ -443,11 +440,10 @@ class ProfileScreen extends ConsumerWidget {
                   valueColor: AppColors.successText,
                 ),
                 _buildDivider(),
-                _buildActionTile(
+                _buildInfoTile(
                   icon: Icons.dns_outlined,
-                  label: 'Pengaturan Server API',
-                  value: serverBaseUrl,
-                  onTap: () => ServerConfigDialog.show(context),
+                  label: 'Server API Terhubung',
+                  value: 'api-hris.rickysatria.web.id',
                 ),
               ],
             ),
@@ -609,78 +605,6 @@ class ProfileScreen extends ConsumerWidget {
       color: Color(0xFFF1F5F9),
       indent: 16,
       endIndent: 16,
-    );
-  }
-
-  Widget _buildActionTile({
-    required IconData icon,
-    required String label,
-    required String value,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 46),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.space16,
-              vertical: AppDimensions.space12,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: AppColors.actionAccent,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 5,
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.inkPrimary,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 6,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          value,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.actionAccent,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        size: 18,
-                        color: AppColors.inkMuted,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

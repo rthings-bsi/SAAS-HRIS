@@ -33,7 +33,33 @@ export interface PaginatedResponse<T> {
 // 2. Auth & User Entities
 // ==========================================
 
-export type UserRole = "superadmin" | "super_admin" | "owner" | "hr" | "manager" | "employee";
+export type UserRole = "superadmin" | "super_admin" | "owner" | "hr" | "manager" | "employee" | (string & {});
+
+export interface RoleItem {
+  key: string;
+  label: string;
+  badgeClass: string;
+  description: string;
+  is_system?: boolean;
+  permissions: string[];
+  user_count?: number;
+}
+
+export interface PermissionItem {
+  key: string;
+  label: string;
+  description: string;
+}
+
+export interface PermissionCategory {
+  category: string;
+  permissions: PermissionItem[];
+}
+
+export interface RolesApiResponse {
+  roles: RoleItem[];
+  available_permissions: PermissionCategory[];
+}
 
 export interface User {
   id_users: number;
@@ -152,6 +178,8 @@ export interface Employee {
   branch?: Branch;
   department?: Department;
   job_position?: JobPosition;
+  department_name?: string;
+  job_position_name?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -398,5 +426,47 @@ export interface PerformanceEvaluation {
   details?: PerformanceEvaluationDetail[];
   created_at?: string;
   updated_at?: string;
+}
+
+// ==========================================
+// 9. Notification Entities
+// ==========================================
+
+export type NotificationType = "system" | "leave" | "overtime" | "payroll" | "attendance" | "performance" | (string & {});
+
+export interface NotificationItem {
+  id_notifications: number;
+  id_companies: number;
+  id_users: number;
+  type: NotificationType;
+  title: string;
+  message: string;
+  data: {
+    url?: string;
+    id_leave_requests?: number;
+    id_overtime_requests?: number;
+    id_payroll_periods?: number;
+    period_name?: string;
+    status?: string;
+    [key: string]: unknown;
+  } | null;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string | null;
+}
+
+export interface NotificationListResponse {
+  unread_count: number;
+  notifications: NotificationItem[];
+  pagination: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+export interface NotificationUnreadCountResponse {
+  unread_count: number;
 }
 

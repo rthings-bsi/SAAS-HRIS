@@ -115,10 +115,10 @@ class HistoryScreen extends ConsumerWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.orangeTint,
+                          color: AppColors.emeraldTint,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: AppColors.orangeBorder,
+                            color: AppColors.emeraldBorder,
                             width: AppDimensions.borderWidth,
                           ),
                         ),

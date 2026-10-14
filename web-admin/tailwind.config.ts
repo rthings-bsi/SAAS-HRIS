@@ -15,8 +15,8 @@ const config: Config = {
         "ink-primary": "#0F172A",
         "ink-muted": "#475569",
         "border-neutral": "#CBD5E1",
-        "action-accent": "#EA580C",
-        "action-accent-hover": "#C2410C",
+        "action-accent": "#16A34A",
+        "action-accent-hover": "#15803D",
         orange: {
           50: "#FFF7ED",
           100: "#FFEDD5",

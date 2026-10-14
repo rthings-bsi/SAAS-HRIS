@@ -3,22 +3,32 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Core Palettes (DESIGN.md - Dials: ENERGY 1 / RHYTHM 2 / MOTION 1)
+  // Core Palettes (Matching web-admin: action-accent #16A34A, hover #15803D)
   static const Color canvasLight = Color(0xFFFFFFFF);
   static const Color surfaceMuted = Color(0xFFF8FAFC);
   static const Color inkPrimary = Color(0xFF0F172A);
   static const Color inkMuted = Color(0xFF475569);
   static const Color borderNeutral = Color(0xFFCBD5E1);
-  static const Color actionAccent = Color(0xFFEA580C);
-  static const Color actionHover = Color(0xFFC2410C);
+  static const Color actionAccent = Color(0xFF16A34A);
+  static const Color actionHover = Color(0xFF15803D);
+
+  // Corporate Brand Colors (Matching web-admin PT SPINDO corporate palette)
+  static const Color corporateNavy = Color(0xFF094595);
+  static const Color corporateNavyDark = Color(0xFF0B2545);
+  static const Color corporateBlueMuted = Color(0xFF0B3A6F);
+  static const Color corporateChipBg = Color(0xFFEBF4FA);
+  static const Color corporateChipBorder = Color(0xFFD5E6F5);
+  static const Color spindoOrange = Color(0xFFF97316);
 
   // iOS HIG Hairline & Separator (DESIGN.md / iOS HIG Inset Grouped)
   static const Color hairline = Color(0xFFE2E8F0);
   static const Color separator = Color(0xFFF1F5F9);
 
-  // Warm Accent Tonal Palette
-  static const Color orangeTint = Color(0xFFFFF7ED);
-  static const Color orangeBorder = Color(0xFFFED7AA);
+  // Emerald Tonal Palette (Synchronized with web-admin #F0FDF4 / #BBF7D0)
+  static const Color emeraldTint = Color(0xFFF0FDF4);
+  static const Color emeraldBorder = Color(0xFFBBF7D0);
+  static const Color orangeTint = Color(0xFFF0FDF4);
+  static const Color orangeBorder = Color(0xFFBBF7D0);
 
   // Semantic Status Colors (Success / Emerald)
   static const Color success = Color(0xFF10B981);
@@ -60,6 +70,6 @@ class AppColors {
   static const Color menuGreenIcon = Color(0xFF1EAA61);
   static const Color avatarBg = Color(0xFFDDE3EA);
   static const Color avatarText = Color(0xFF7A869A);
-  static const Color navActive = Color(0xFFE85E12);
+  static const Color navActive = Color(0xFF16A34A);
   static const Color navInactive = Color(0xFF8C95A3);
 }

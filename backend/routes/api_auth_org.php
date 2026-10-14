@@ -49,4 +49,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::put('/users/{id_users}/role', [UserController::class, 'updateRole']);
     Route::put('/users/{id_users}/status', [UserController::class, 'toggleStatus']);
+
+    // Role Configuration & Custom Roles
+    Route::get('/roles', [UserController::class, 'getRoles']);
+    Route::post('/roles', [UserController::class, 'storeRole']);
+    Route::put('/roles/{key}', [UserController::class, 'updateRoleConfig']);
+    Route::delete('/roles/{key}', [UserController::class, 'destroyRole']);
+    Route::post('/roles/reset', [UserController::class, 'resetRoles']);
 });

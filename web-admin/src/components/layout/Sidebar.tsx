@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -17,15 +17,11 @@ import {
   Briefcase,
   ShieldCheck,
   Award,
-  X,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User, Company } from "@/types";
-
-interface SidebarProps {
-  isOpen?: boolean;
-  onClose?: () => void;
-}
 
 interface NavItem {
   name: string;
@@ -34,21 +30,20 @@ interface NavItem {
 }
 
 interface NavGroup {
-  label?: string;
+  label: string;
   items: NavItem[];
 }
 
-// Navigasi Terstruktur Berdasarkan Domain Fungsional HRIS Internal (Non-SaaS)
 const navGroups: NavGroup[] = [
   {
-    label: "Menu Utama",
+    label: "MENU UTAMA",
     items: [
       { name: "Dashboard", href: "/dashboard", icon: LayoutGrid },
       { name: "Data Karyawan", href: "/employees", icon: Users },
     ],
   },
   {
-    label: "Operasional HR",
+    label: "OPERASIONAL HR",
     items: [
       { name: "Presensi Kehadiran", href: "/attendance", icon: Clock },
       { name: "Pengajuan Cuti", href: "/leaves", icon: CalendarCheck },
@@ -58,7 +53,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Struktur Organisasi",
+    label: "STRUKTUR ORGANISASI",
     items: [
       { name: "Kantor Cabang", href: "/branches", icon: MapPin },
       { name: "Departemen", href: "/departments", icon: Building2 },
@@ -67,7 +62,7 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Pengaturan & Akses",
+    label: "PENGATURAN & AKSES",
     items: [
       { name: "Profil Perusahaan", href: "/company-profile", icon: Building2 },
       { name: "Hak Akses & Role", href: "/roles", icon: ShieldCheck },
@@ -75,92 +70,17 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-interface RoleStyle {
-  label: string;
-  avatarBg: string;
-  avatarText: string;
-  avatarBorder: string;
-  badgeBg: string;
-  badgeText: string;
-  badgeBorder: string;
-}
-
-const roleStyles: Record<string, RoleStyle> = {
-  superadmin: {
-    label: "Pimpinan / Direktur",
-    avatarBg: "bg-amber-100",
-    avatarText: "text-amber-800",
-    avatarBorder: "border-amber-200",
-    badgeBg: "bg-amber-50",
-    badgeText: "text-amber-700",
-    badgeBorder: "border-amber-200",
-  },
-  super_admin: {
-    label: "Pimpinan / Direktur",
-    avatarBg: "bg-amber-100",
-    avatarText: "text-amber-800",
-    avatarBorder: "border-amber-200",
-    badgeBg: "bg-amber-50",
-    badgeText: "text-amber-700",
-    badgeBorder: "border-amber-200",
-  },
-  director: {
-    label: "Direktur",
-    avatarBg: "bg-amber-100",
-    avatarText: "text-amber-800",
-    avatarBorder: "border-amber-200",
-    badgeBg: "bg-amber-50",
-    badgeText: "text-amber-700",
-    badgeBorder: "border-amber-200",
-  },
-  owner: {
-    label: "Pimpinan",
-    avatarBg: "bg-amber-100",
-    avatarText: "text-amber-800",
-    avatarBorder: "border-amber-200",
-    badgeBg: "bg-amber-50",
-    badgeText: "text-amber-700",
-    badgeBorder: "border-amber-200",
-  },
-  hr: {
-    label: "Admin HRD",
-    avatarBg: "bg-blue-100",
-    avatarText: "text-blue-800",
-    avatarBorder: "border-blue-200",
-    badgeBg: "bg-blue-50",
-    badgeText: "text-blue-700",
-    badgeBorder: "border-blue-200",
-  },
-  manager: {
-    label: "Manager",
-    avatarBg: "bg-emerald-100",
-    avatarText: "text-emerald-800",
-    avatarBorder: "border-emerald-200",
-    badgeBg: "bg-emerald-50",
-    badgeText: "text-emerald-700",
-    badgeBorder: "border-emerald-200",
-  },
-  employee: {
-    label: "Karyawan",
-    avatarBg: "bg-slate-100",
-    avatarText: "text-slate-800",
-    avatarBorder: "border-slate-200",
-    badgeBg: "bg-slate-100",
-    badgeText: "text-slate-700",
-    badgeBorder: "border-slate-200",
-  },
-};
-
 const employeeNavGroups: NavGroup[] = [
   {
-    label: "Menu Utama",
+    label: "MENU UTAMA",
     items: [
       { name: "Dashboard", href: "/dashboard", icon: LayoutGrid },
     ],
   },
   {
-    label: "Layanan Mandiri",
+    label: "LAYANAN MANDIRI",
     items: [
+      { name: "Presensi Hari Ini", href: "/attendance", icon: Clock },
       { name: "Pengajuan Lembur", href: "/overtime", icon: Clock4 },
       { name: "Pengajuan Cuti", href: "/leaves", icon: CalendarCheck },
       { name: "Slip Gaji Saya", href: "/payroll", icon: CreditCard },
@@ -169,12 +89,14 @@ const employeeNavGroups: NavGroup[] = [
   },
 ];
 
-export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<(User & { company?: Company }) | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
+  // Load user data & saved sidebar collapse preference
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("hris_user");
@@ -185,45 +107,50 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
           setCurrentUser(null);
         }
       }
+
+      const savedCollapsed = localStorage.getItem("hris_sidebar_collapsed");
+      if (savedCollapsed === "true") {
+        setIsCollapsed(true);
+      }
     }
   }, []);
 
-  // Handle ESC key to close mobile drawer & prevent background scroll
-  useEffect(() => {
-    if (!isOpen) return;
+  const toggleCollapsed = useCallback(() => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("hris_sidebar_collapsed", String(next));
+      }
+      return next;
+    });
+  }, []);
 
+  // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar collapse
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && onClose) {
-        onClose();
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleCollapsed();
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [isOpen, onClose]);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toggleCollapsed]);
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("hris_token");
       localStorage.removeItem("hris_user");
+      localStorage.removeItem("token");
       router.push("/login");
     }
   };
-
-  const currentRoleStyle =
-    (currentUser?.role && roleStyles[currentUser.role]) || roleStyles.hr;
 
   const currentNavGroups =
     currentUser?.role === "employee" ? employeeNavGroups : navGroups;
 
   const getInitials = (name?: string) => {
-    if (!name) return "HR";
+    if (!name) return "SR";
     const parts = name.trim().split(" ");
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -231,187 +158,233 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
     return name.slice(0, 2).toUpperCase();
   };
 
+  const getRoleMeta = (role?: string) => {
+    switch (role) {
+      case "superadmin":
+      case "super_admin":
+      case "director":
+      case "owner":
+        return {
+          label: "Super Admin",
+          badgeStyle: "bg-purple-50 text-purple-700 border-purple-200/80",
+          avatarBg: "bg-purple-100 text-purple-700",
+        };
+      case "hr":
+        return {
+          label: "Admin HRD",
+          badgeStyle: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
+          avatarBg: "bg-indigo-100 text-indigo-700",
+        };
+      case "manager":
+        return {
+          label: "Manager",
+          badgeStyle: "bg-amber-50 text-amber-700 border-amber-200/80",
+          avatarBg: "bg-amber-100 text-amber-700",
+        };
+      case "employee":
+        return {
+          label: "Karyawan",
+          badgeStyle: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
+          avatarBg: "bg-emerald-100 text-emerald-700",
+        };
+      default:
+        return {
+          label: "Super Admin",
+          badgeStyle: "bg-purple-50 text-purple-700 border-purple-200/80",
+          avatarBg: "bg-purple-100 text-purple-700",
+        };
+    }
+  };
+
+  const userRoleMeta = getRoleMeta(currentUser?.role);
+
   return (
-    <>
-      {/* Mobile Backdrop with smooth fade transition */}
+    <aside
+      className={cn(
+        "hidden lg:flex flex-col bg-white border-r border-slate-200/80 select-none flex-shrink-0 transition-all duration-200 ease-in-out z-20",
+        isCollapsed ? "w-[68px]" : "w-[260px]"
+      )}
+      aria-label="Sidebar Navigasi"
+    >
+      {/* 1. Brand / Logo Header */}
       <div
-        role="presentation"
-        aria-hidden="true"
-        onClick={onClose}
         className={cn(
-          "fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ease-in-out lg:hidden",
-          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          "flex items-center border-b border-slate-100 h-16 transition-all duration-200",
+          isCollapsed ? "justify-center px-2" : "justify-between px-4"
         )}
-      />
-
-      {/* Main Sidebar Aside */}
-      <aside
-        className={cn(
-          "fixed top-0 bottom-0 left-0 z-50 flex flex-col w-[270px] bg-slate-50/90 lg:bg-slate-50/75 backdrop-blur-xl border-r border-slate-200/80 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0 lg:static lg:z-auto select-none",
-          isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:shadow-none"
-        )}
-        aria-label="Sidebar Navigasi"
       >
-        {/* Brand / Logo Header */}
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-200/70">
-          <Link
-            href="/dashboard"
-            onClick={onClose}
-            className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 rounded-xl p-1 -m-1 transition-colors hover:bg-slate-50/80 min-w-0"
+        <Link
+          href="/dashboard"
+          title="HR Hub Enterprise"
+          className={cn(
+            "flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded-xl p-1 -m-1 transition-colors min-w-0",
+            isCollapsed && "justify-center"
+          )}
+        >
+          {/* Logo Mark Matching 12.webp */}
+          <div
+            className="relative w-8 h-8 flex items-center justify-center flex-shrink-0"
+            aria-hidden="true"
           >
-            {/* Two Orange Pill Graphic */}
-            <div
-              className="relative w-8 h-9 flex items-center justify-center flex-shrink-0"
-              aria-hidden="true"
-            >
-              <svg
-                viewBox="0 0 32 36"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-8 h-9 transition-transform group-hover:scale-105 duration-200"
-              >
-                <defs>
-                  <linearGradient id="sb_pill_left" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#FB923C" />
-                    <stop offset="100%" stopColor="#EA580C" />
-                  </linearGradient>
-                  <linearGradient id="sb_pill_right" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#EA580C" />
-                    <stop offset="100%" stopColor="#C2410C" />
-                  </linearGradient>
-                </defs>
-                <circle cx="8" cy="6" r="3.5" fill="url(#sb_pill_left)" />
-                <rect x="4.5" y="14" width="7" height="19" rx="3.5" fill="url(#sb_pill_left)" />
-                <rect x="17" y="6" width="7.5" height="27" rx="3.75" fill="url(#sb_pill_right)" />
-              </svg>
-            </div>
+            <svg viewBox="0 0 32 36" fill="none" className="w-7 h-8 transition-transform group-hover:scale-105">
+              <rect x="2" y="10" width="7" height="22" rx="3.5" fill="#F97316" />
+              <rect x="13" y="4" width="7" height="28" rx="3.5" fill="#094595" />
+              <circle cx="5.5" cy="4.5" r="3.5" fill="#F97316" />
+            </svg>
+          </div>
 
-            {/* Brand Title & Workspace */}
+          {/* Brand Title & Enterprise Badge (Visible when expanded) */}
+          {!isCollapsed && (
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-[15px] font-bold tracking-tight text-slate-900 leading-tight">
+                <span className="text-base font-extrabold tracking-tight text-[#0B2545] leading-tight">
                   HR Hub
                 </span>
-                <span className="px-1.5 py-0.5 text-[9px] font-bold tracking-wide rounded-full border uppercase leading-none bg-orange-50 text-orange-700 border-orange-200/70">
+                <span className="px-1.5 py-0.5 text-[8.5px] font-extrabold tracking-wider rounded-md border uppercase leading-none bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0]">
                   ENTERPRISE
                 </span>
               </div>
-              <div className="text-[11.5px] text-slate-500 font-normal leading-tight mt-1 truncate flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
-                <span className="truncate font-medium">
-                  {currentUser?.company?.name || "PT Sumber Makmur"}
-                </span>
-              </div>
+              <span className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+                Portal Manajemen HRIS
+              </span>
             </div>
-          </Link>
-
-          {/* Close button for mobile */}
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 cursor-pointer transition-colors"
-              aria-label="Tutup navigasi sidebar"
-            >
-              <X className="w-5 h-5" aria-hidden="true" />
-            </button>
           )}
+        </Link>
+
+        {/* In-Rail Collapse/Expand Toggle Button (Anti-Slop R-32 & No Orphaned Header Buttons) */}
+        {!isCollapsed && (
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            title="Ciutkan Sidebar (Ctrl+B)"
+            aria-label="Ciutkan Sidebar"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer flex-shrink-0"
+          >
+            <PanelLeftClose className="w-4 h-4" aria-hidden="true" />
+          </button>
+        )}
+      </div>
+
+      {/* Tenant Company Context Card (Visible when expanded) */}
+      {!isCollapsed && (
+        <div className="px-3 pt-2.5 pb-1">
+          <div
+            title={currentUser?.company?.name || "PT. Steel Pipe Industry Of Indonesia, Tbk"}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-600"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" aria-hidden="true" />
+            <span className="text-[11px] font-semibold text-slate-700 truncate leading-none">
+              {currentUser?.company?.name || "PT. Steel Pipe Industry Of Indonesia, Tbk"}
+            </span>
+          </div>
         </div>
+      )}
 
-        {/* Navigation list */}
-        <nav
-          className="flex-1 px-3 py-3 space-y-3.5 overflow-y-auto"
-          aria-label="Menu Utama"
-        >
-          {currentNavGroups.map((group, groupIdx) => (
-            <div
-              key={group.label || groupIdx}
-              className={cn("space-y-1", groupIdx > 0 && "pt-3")}
-            >
-              {group.label && (
-                <div className="px-3 pb-1 text-[10.5px] font-bold uppercase tracking-wider text-slate-400/90 select-none">
-                  {group.label}
-                </div>
-              )}
+      {/* Collapsed Rail Expand Action Button */}
+      {isCollapsed && (
+        <div className="flex justify-center py-2 border-b border-slate-100">
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            title="Bentangkan Sidebar (Ctrl+B)"
+            aria-label="Bentangkan Sidebar"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+          >
+            <PanelLeftOpen className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
-              {group.items.map((item) => {
-                const isActive =
-                  item.href === "/dashboard"
-                    ? pathname === "/dashboard" || pathname === "/"
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
-                const Icon = item.icon;
+      {/* 2. Navigation Menu List with Custom Sleek Scrollbar */}
+      <nav
+        className={cn(
+          "flex-1 py-2 overflow-y-auto sidebar-scrollbar space-y-3",
+          isCollapsed ? "px-2" : "px-3"
+        )}
+        aria-label="Menu Utama"
+      >
+        {currentNavGroups.map((group, groupIdx) => (
+          <div key={group.label} className="space-y-0.5">
+            {/* Section Header */}
+            {!isCollapsed ? (
+              <div className="px-2.5 pt-2.5 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 select-none">
+                {group.label}
+              </div>
+            ) : (
+              groupIdx > 0 && <div className="my-2 border-t border-slate-100" />
+            )}
 
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={onClose}
-                    aria-current={isActive ? "page" : undefined}
+            {/* Menu Links */}
+            {group.items.map((item) => {
+              const isActive =
+                item.href === "/dashboard"
+                  ? pathname === "/dashboard" || pathname === "/"
+                  : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  title={isCollapsed ? item.name : undefined}
+                  aria-label={item.name}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "group flex items-center rounded-xl transition-all duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
+                    isCollapsed
+                      ? "justify-center p-2.5 my-1"
+                      : "gap-2.5 px-3 py-2 text-[13px] my-0.5",
+                    isActive
+                      ? "bg-[#16A34A] text-white font-semibold shadow-xs"
+                      : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 font-medium"
+                  )}
+                >
+                  <Icon
                     className={cn(
-                      "group relative flex items-center gap-3 px-3 py-2 text-[13px] rounded-xl transition-all duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-orange-500 active:scale-[0.98]",
+                      "w-[18px] h-[18px] flex-shrink-0 transition-transform duration-150",
                       isActive
-                        ? "bg-white text-orange-600 font-semibold shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.03)] border border-slate-200/80"
-                        : "text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 font-medium hover:translate-x-0.5"
+                        ? "text-white stroke-[2.2]"
+                        : "text-slate-400 group-hover:text-slate-700 stroke-[1.8]"
                     )}
-                  >
-                    {/* Smooth left accent pill */}
-                    <span
-                      className={cn(
-                        "absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full transition-all duration-200",
-                        isActive
-                          ? "bg-orange-600 opacity-100 scale-y-100"
-                          : "bg-transparent opacity-0 scale-y-0"
-                      )}
-                      aria-hidden="true"
-                    />
-
-                    <Icon
-                      className={cn(
-                        "w-[18px] h-[18px] flex-shrink-0 transition-transform duration-200",
-                        isActive
-                          ? "text-orange-600 stroke-[2.2]"
-                          : "text-slate-400 group-hover:text-slate-700 group-hover:scale-105 stroke-[1.75]"
-                      )}
-                      aria-hidden="true"
-                    />
+                    aria-hidden="true"
+                  />
+                  {!isCollapsed && (
                     <span className="leading-tight truncate flex-1">{item.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
 
-        {/* Bottom Section: User Identity & Action */}
-        <div className="p-3 border-t border-slate-200/70 mt-auto bg-slate-100/40">
-          <div className="flex items-center justify-between p-2.5 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] gap-2 transition-all hover:border-slate-300/80">
+      {/* 3. Bottom Section: Elevated User Identity Card */}
+      <div className={cn("border-t border-slate-100 mt-auto bg-slate-50/50", isCollapsed ? "p-2" : "p-3")}>
+        {!isCollapsed ? (
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs gap-2 hover:border-slate-300 transition-colors">
             <div className="flex items-center gap-2.5 min-w-0">
+              {/* Squircle Avatar with Dynamic Role Colors */}
               <div
                 className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 border transition-transform duration-200 hover:scale-105",
-                  currentRoleStyle.avatarBg,
-                  currentRoleStyle.avatarText,
-                  currentRoleStyle.avatarBorder
+                  "w-8 h-8 rounded-lg font-extrabold text-xs flex items-center justify-center flex-shrink-0 shadow-2xs border border-black/5",
+                  userRoleMeta.avatarBg
                 )}
               >
                 {getInitials(currentUser?.name)}
               </div>
+
               <div className="flex flex-col min-w-0">
-                <span className="text-xs font-semibold text-slate-900 truncate leading-tight">
-                  {currentUser?.name || "Administrator"}
+                <span className="text-xs font-bold text-[#0B2545] truncate leading-tight">
+                  {currentUser?.name || "Ricky satria"}
                 </span>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span
-                    className={cn(
-                      "inline-flex items-center px-1.5 py-0.5 text-[9.5px] font-semibold rounded-full border leading-none tracking-tight",
-                      currentRoleStyle.badgeBg,
-                      currentRoleStyle.badgeText,
-                      currentRoleStyle.badgeBorder
-                    )}
-                  >
-                    {currentRoleStyle.label}
-                  </span>
-                </div>
+                <span
+                  className={cn(
+                    "text-[9.5px] font-bold px-1.5 py-0.2 rounded border leading-tight mt-0.5 w-fit",
+                    userRoleMeta.badgeStyle
+                  )}
+                >
+                  {userRoleMeta.label}
+                </span>
               </div>
             </div>
 
@@ -420,13 +393,34 @@ export function Sidebar({ isOpen = false, onClose }: SidebarProps) {
               onClick={handleLogout}
               title="Keluar dari akun"
               aria-label="Keluar dari akun"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50/80 active:scale-95 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 cursor-pointer flex-shrink-0"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer flex-shrink-0"
             >
               <LogOut className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
-        </div>
-      </aside>
-    </>
+        ) : (
+          <div className="flex flex-col items-center gap-2 py-1">
+            <div
+              title={`${currentUser?.name || "Ricky satria"} (${userRoleMeta.label})`}
+              className={cn(
+                "w-9 h-9 rounded-xl font-extrabold text-xs flex items-center justify-center flex-shrink-0 shadow-2xs border border-black/5 cursor-default",
+                userRoleMeta.avatarBg
+              )}
+            >
+              {getInitials(currentUser?.name)}
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Keluar dari akun"
+              aria-label="Keluar dari akun"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }

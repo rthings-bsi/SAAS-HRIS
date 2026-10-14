@@ -76,19 +76,25 @@ class AuthState {
       user?['employee'] as Map<String, dynamic>?;
   String? get employeeNik => employee?['nik'] as String?;
   String? get departmentName {
+    final raw = employee?['department_name'];
+    if (raw is String && raw.isNotEmpty) return raw;
     final dept = employee?['department'];
     if (dept is Map) return dept['name'] as String?;
     return null;
   }
   String? get jobPositionName {
+    final raw = employee?['job_position_name'];
+    if (raw is String && raw.isNotEmpty) return raw;
     final job = employee?['job_position'] ?? employee?['jobPosition'];
     if (job is Map) return job['name'] as String?;
     return null;
   }
   String? get branchName {
+    final raw = employee?['branch_name'];
+    if (raw is String && raw.isNotEmpty) return raw;
     final branch = employee?['branch'];
     if (branch is Map) return branch['name'] as String?;
-    return null;
+    return companyName;
   }
   String? get employeePhone => employee?['phone'] as String?;
   String? get employeeGender {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Payroll\StorePayrollPeriodRequest;
 use App\Models\Employee;
 use App\Models\PayrollSlip;
+use App\Services\Notification\NotificationService;
 use App\Services\Payroll\PayrollCalculationService;
 use App\Services\Payroll\PayrollPdfService;
 use Carbon\Carbon;
@@ -18,7 +19,8 @@ class PayrollController extends Controller
 {
     public function __construct(
         protected PayrollCalculationService $calculationService,
-        protected PayrollPdfService $pdfService
+        protected PayrollPdfService $pdfService,
+        protected NotificationService $notificationService
     ) {}
 
     /**
@@ -71,11 +73,45 @@ class PayrollController extends Controller
             return $this->errorResponse('Akses ditolak. Hanya HR atau Owner yang dapat membuat periode penggajian.', null, 403);
         }
 
-        $employees = Employee::where('id_companies', $user->id_companies)->get();
-        $name = $request->validated('name');
+        $name = trim($request->validated('name'));
         $startDate = $request->validated('start_date');
         $endDate = $request->validated('end_date');
         $paymentDate = $request->validated('payment_date');
+
+        // Validasi 1: Cegah pembuatan periode penggajian dengan nama yang sama pada perusahaan
+        $nameExists = PayrollSlip::where('id_companies', $user->id_companies)
+            ->whereRaw('LOWER(period_name) = ?', [strtolower($name)])
+            ->exists();
+
+        if ($nameExists) {
+            return $this->errorResponse("Nama periode penggajian '{$name}' sudah digunakan. Silakan gunakan nama periode yang berbeda.", [
+                'name' => ["Nama periode penggajian '{$name}' sudah digunakan."],
+            ], 422);
+        }
+
+        // Validasi 2: Cegah pembuatan periode penggajian pada rentang tanggal yang sama atau tumpang tindih
+        $overlapSlip = PayrollSlip::where('id_companies', $user->id_companies)
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->where('start_date', '<=', $endDate)
+                  ->where('end_date', '>=', $startDate);
+            })
+            ->first();
+
+        if ($overlapSlip) {
+            $slipStart = Carbon::parse($overlapSlip->start_date)->translatedFormat('d F Y');
+            $slipEnd = Carbon::parse($overlapSlip->end_date)->translatedFormat('d F Y');
+
+            return $this->errorResponse(
+                "Rentang tanggal bertabrakan dengan periode penggajian '{$overlapSlip->period_name}' ({$slipStart} - {$slipEnd}). Periode penggajian tidak boleh berada pada tanggal yang sama.",
+                [
+                    'start_date' => ["Rentang tanggal bertabrakan dengan periode '{$overlapSlip->period_name}' ({$slipStart} - {$slipEnd})."],
+                    'end_date' => ["Rentang tanggal bertabrakan dengan periode '{$overlapSlip->period_name}' ({$slipStart} - {$slipEnd})."],
+                ],
+                422
+            );
+        }
+
+        $employees = Employee::where('id_companies', $user->id_companies)->get();
 
         $firstSlip = null;
         foreach ($employees as $employee) {
@@ -264,6 +300,22 @@ class PayrollController extends Controller
         }
 
         $count = $this->pdfService->finalizePeriod($refSlip);
+
+        try {
+            $this->notificationService->notifyCompanyUsers(
+                $user->id_companies,
+                'payroll',
+                'Slip Gaji Tersedia',
+                "Slip gaji untuk periode {$refSlip->period_name} telah dirilis dan dapat diakses melalui portal atau aplikasi.",
+                [
+                    'url' => '/payroll',
+                    'period_name' => $refSlip->period_name,
+                    'status' => 'finalized',
+                ]
+            );
+        } catch (\Throwable) {
+            // Abaikan kegagalan notifikasi agar proses finalisasi gaji tetap berjalan lancar
+        }
 
         $periodData = [
             'id_payroll_periods' => $refSlip->id_payroll_slips,

@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Download,
   AlertCircle,
-  MapPin,
   Calendar,
   CheckCircle2,
   ArrowUpRight,
@@ -400,7 +399,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
     <div className="space-y-4 sm:space-y-5 max-w-7xl mx-auto">
       {/* 1. Header Minimalis (Apple iOS Large Title & Jabatan Saja) */}
       <div className="pb-1">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0B2545]">
           Halo, {employeeName}
         </h1>
         <p className="mt-1 text-sm font-medium text-slate-500">
@@ -475,7 +474,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
           <div className="flex items-center justify-between sm:justify-end gap-2 text-xs flex-wrap">
             {currentTime && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100/80 text-slate-700 text-[11px] font-mono tabular-nums border border-slate-200/60">
-                <Clock className="w-3 h-3 text-orange-600 flex-shrink-0" aria-hidden="true" />
+                <Clock className="w-3 h-3 text-[#16A34A] flex-shrink-0" aria-hidden="true" />
                 <span>{currentTime}</span>
               </span>
             )}
@@ -510,7 +509,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
           </div>
         ) : (
           <div className="pt-4 space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {/* Jam Masuk */}
               <div className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
@@ -546,7 +545,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
               <div className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Clock Out</span>
-                  <div className="w-5 h-5 rounded-md bg-orange-500/10 text-orange-600 flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center">
                     <Clock className="w-3 h-3" />
                   </div>
                 </div>
@@ -568,27 +567,6 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
                   )}
                 </div>
               </div>
-
-              {/* Jarak GPS (Full-width di mobile) */}
-              <div className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100 col-span-2 sm:col-span-1 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Radius GPS</span>
-                  <div className="w-5 h-5 rounded-md bg-blue-500/10 text-blue-600 flex items-center justify-center">
-                    <MapPin className="w-3 h-3" />
-                  </div>
-                </div>
-                <div className="mt-2 flex items-baseline gap-1">
-                  <span className="text-xl sm:text-2xl font-bold font-mono text-slate-900 tabular-nums">
-                    {currentAtt?.clock_in_distance_meters !== null &&
-                    currentAtt?.clock_in_distance_meters !== undefined
-                      ? `${currentAtt.clock_in_distance_meters}m`
-                      : "Dalam radius"}
-                  </span>
-                </div>
-                <div className="text-[11px] mt-1 text-slate-500 truncate font-medium">
-                  {branchName} (Maks 50m)
-                </div>
-              </div>
             </div>
 
             {/* iOS Primary Action Touch Targets (>= 48px) */}
@@ -596,7 +574,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
               {!currentAtt?.clock_in_time ? (
                 <Link
                   href="/attendance"
-                  className="w-full min-h-[48px] rounded-2xl bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(234,88,12,0.25)] transition-all"
+                  className="w-full min-h-[48px] rounded-2xl bg-[#16A34A] hover:bg-[#15803D] active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                 >
                   <span>Clock In Sekarang</span>
                   <ArrowUpRight className="w-4 h-4" />
@@ -604,7 +582,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
               ) : !currentAtt?.clock_out_time ? (
                 <Link
                   href="/attendance"
-                  className="w-full min-h-[48px] rounded-2xl bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(217,119,6,0.25)] transition-all"
+                  className="w-full min-h-[48px] rounded-2xl bg-amber-600 hover:bg-amber-700 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                 >
                   <span>Clock Out Sekarang</span>
                   <ArrowUpRight className="w-4 h-4" />
@@ -612,7 +590,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
               ) : (
                 <Link
                   href="/attendance"
-                  className="w-full min-h-[44px] rounded-2xl bg-slate-100 hover:bg-slate-200/80 active:scale-[0.99] text-slate-700 font-semibold text-sm flex items-center justify-center gap-2 border border-slate-200/80 transition-all"
+                  className="w-full min-h-[44px] rounded-2xl bg-slate-100 hover:bg-slate-200/80 active:scale-[0.99] text-slate-700 font-semibold text-sm flex items-center justify-center gap-2 border border-slate-200/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
                 >
                   <span>Buka Halaman Presensi</span>
                   <ArrowUpRight className="w-4 h-4 text-slate-500" />
@@ -623,12 +601,12 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
         )}
       </div>
 
-      {/* 3. Kartu Metrik Mandiri (iOS Health/Fitness Style Insets) */}
+      {/* 3. Kartu Metrik Mandiri */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Kehadiran Bulan Ini */}
         <Link
           href="/attendance"
-          className="group rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 hover:border-slate-300 transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.98]"
+          className="group rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 hover:border-slate-300 transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.98]"
         >
           <div className="flex items-start justify-between">
             <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Hadir Bulan Ini</span>
@@ -642,7 +620,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
             </div>
             <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
               <span>Hari Kerja</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 ml-auto transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 ml-auto transition-colors" />
             </div>
           </div>
         </Link>
@@ -650,7 +628,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
         {/* Card 2: Sisa Kuota Cuti */}
         <Link
           href="/leaves"
-          className="group rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 hover:border-slate-300 transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.98]"
+          className="group rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 hover:border-slate-300 transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.98]"
         >
           <div className="flex items-start justify-between">
             <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Sisa Cuti</span>
@@ -664,7 +642,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
             </div>
             <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
               <span>Hari Tersisa</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 ml-auto transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 ml-auto transition-colors" />
             </div>
           </div>
         </Link>
@@ -672,11 +650,11 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
         {/* Card 3: Slip Gaji Terakhir */}
         <Link
           href="/payroll"
-          className="group rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 hover:border-slate-300 transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.98]"
+          className="group rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 hover:border-slate-300 transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.98]"
         >
           <div className="flex items-start justify-between">
             <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Slip Terakhir</span>
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-orange-500/10 text-orange-600 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
               <CreditCard className="w-4 h-4" aria-hidden="true" />
             </div>
           </div>
@@ -692,7 +670,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
             </div>
             <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium truncate">
               <span className="truncate">{latestSlip?.period_name || "Belum terbit"}</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 ml-auto flex-shrink-0 transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 ml-auto flex-shrink-0 transition-colors" />
             </div>
           </div>
         </Link>
@@ -700,7 +678,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
         {/* Card 4: Skor SMART */}
         <Link
           href="/performance"
-          className="group rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 hover:border-slate-300 transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.98]"
+          className="group rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 hover:border-slate-300 transition-all flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-[0_1px_3px_rgba(0,0,0,0.02)] active:scale-[0.98]"
         >
           <div className="flex items-start justify-between">
             <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Nilai SMART</span>
@@ -725,7 +703,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
                   ? `Grade ${performanceEvaluation.evaluation.grade}`
                   : "Evaluasi SMART"}
               </span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-orange-600 ml-auto flex-shrink-0 transition-colors" />
+              <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600 ml-auto flex-shrink-0 transition-colors" />
             </div>
           </div>
         </Link>
@@ -744,7 +722,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
             </div>
             <Link
               href="/attendance"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-700 active:scale-95 transition-all"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 active:scale-95 transition-all"
             >
               <span>Lihat Semua</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -779,7 +757,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
                       className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/70 flex items-center justify-between transition-colors hover:bg-slate-50"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
                           <Clock className="w-4 h-4" />
                         </div>
                         <div>
@@ -864,7 +842,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
             </div>
             <Link
               href="/leaves"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-700 active:scale-95 transition-all"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 active:scale-95 transition-all"
             >
               <span>Kelola</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -1022,7 +1000,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
                 id="leaveTypeSelect"
                 value={leaveTypeId}
                 onChange={(e) => setLeaveTypeId(e.target.value)}
-                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[44px] transition-colors"
+                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-h-[44px] transition-colors"
                 required
               >
                 <option value="">-- Pilih Jenis Cuti --</option>
@@ -1047,7 +1025,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3.5 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[44px] transition-colors"
+                  className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3.5 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-h-[44px] transition-colors"
                   required
                 />
               </div>
@@ -1064,7 +1042,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3.5 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-h-[44px] transition-colors"
+                  className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3.5 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 min-h-[44px] transition-colors"
                   required
                 />
               </div>
@@ -1083,7 +1061,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
                 value={leaveReason}
                 onChange={(e) => setLeaveReason(e.target.value)}
                 placeholder="Tuliskan keterangan keperluan izin atau cuti Anda secara jelas..."
-                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-colors"
+                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                 required
               />
             </div>
@@ -1104,7 +1082,7 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
                     setLeaveAttachment(e.target.files[0]);
                   }
                 }}
-                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3 py-2 text-xs text-slate-600 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer min-h-[44px] transition-colors"
+                className="w-full rounded-xl border border-slate-200/90 bg-slate-50/60 focus:bg-white px-3 py-2 text-xs text-slate-600 file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer min-h-[44px] transition-colors"
               />
               <p className="text-[11px] text-slate-400 mt-1">
                 Format: PDF, JPG, PNG (maksimal 4MB). Surat dokter atau berkas pendukung.
@@ -1212,9 +1190,9 @@ export function EmployeeDashboardView({ user }: EmployeeDashboardViewProps) {
             </div>
 
             {/* Total Gaji Bersih */}
-            <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between bg-orange-50/70 p-3 rounded-lg border border-orange-200">
+            <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between bg-emerald-50/70 p-3 rounded-xl border border-emerald-200">
               <span className="text-xs font-bold text-slate-900">Gaji Bersih (THP):</span>
-              <span className="text-sm font-bold font-mono text-orange-700">
+              <span className="text-sm font-bold font-mono text-emerald-700">
                 {formatRupiah(Number(selectedSlip.net_salary))}
               </span>
             </div>

@@ -1,43 +1,80 @@
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 
 class HrHubLogo extends StatelessWidget {
   final double size;
   final bool showText;
   final String? subtitle;
+  final bool isSquircleCard;
 
   const HrHubLogo({
     super.key,
     this.size = 40.0,
     this.showText = false,
     this.subtitle,
+    this.isSquircleCard = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final logoWidget = SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _HrHubLogoPainter(),
-      ),
-    );
+    Widget mark;
+
+    if (isSquircleCard) {
+      mark = Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: AppColors.corporateNavy,
+          borderRadius: BorderRadius.circular(size * 0.33),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x18094595),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: size * 0.62,
+          height: size * 0.70,
+          child: CustomPaint(
+            painter: _SpindoLogoGeometryPainter(
+              leftColor: Colors.white,
+              rightColor: Colors.white,
+            ),
+          ),
+        ),
+      );
+    } else {
+      mark = SizedBox(
+        width: size,
+        height: size * 1.12,
+        child: CustomPaint(
+          painter: _SpindoLogoGeometryPainter(
+            leftColor: AppColors.spindoOrange,
+            rightColor: AppColors.corporateNavy,
+          ),
+        ),
+      );
+    }
 
     if (!showText) {
-      return logoWidget;
+      return mark;
     }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        logoWidget,
-        const SizedBox(height: 10),
+        mark,
+        const SizedBox(height: 12),
         const Text(
-          'HR Hub',
+          'HR HUB',
           style: TextStyle(
             fontSize: 22,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
-            color: Color(0xFF0F172A),
+            color: AppColors.corporateNavyDark,
           ),
         ),
         if (subtitle != null) ...[
@@ -46,9 +83,9 @@ class HrHubLogo extends StatelessWidget {
             subtitle!,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF64748B),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.inkMuted,
             ),
           ),
         ],
@@ -57,65 +94,71 @@ class HrHubLogo extends StatelessWidget {
   }
 }
 
-class _HrHubLogoPainter extends CustomPainter {
+/// Precise PT SPINDO Logo geometry matching web-admin SVG:
+/// ```xml
+/// <svg viewBox="0 0 32 36" fill="none">
+///   <circle cx="8" cy="7" r="3.5" />
+///   <rect x="4.5" y="14" width="7" height="18" rx="3.5" />
+///   <rect x="17.5" y="7" width="7" height="25" rx="3.5" />
+/// </svg>
+/// ```
+class _SpindoLogoGeometryPainter extends CustomPainter {
+  final Color leftColor;
+  final Color rightColor;
+
+  _SpindoLogoGeometryPainter({
+    required this.leftColor,
+    required this.rightColor,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
-    final scale = size.width / 56.0;
+    final scaleX = size.width / 32.0;
+    final scaleY = size.height / 36.0;
 
-    // Left gradient (light orange to orange)
     final paintLeft = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFFB923C), Color(0xFFEA580C)],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+      ..color = leftColor
+      ..style = PaintingStyle.fill;
 
-    // Right gradient (orange to deep burnt orange)
     final paintRight = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFEA580C), Color(0xFFC2410C)],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+      ..color = rightColor
+      ..style = PaintingStyle.fill;
 
-    // Translucent ribbon connector
-    final paintRibbon = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0xD9FED7AA),
-          Color(0x59FFEDD5),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    // 1. Left circle dot: cx: 8, cy: 7, r: 3.5
+    canvas.drawCircle(
+      Offset(8 * scaleX, 7 * scaleY),
+      3.5 * scaleX,
+      paintLeft,
+    );
 
-    // 1. Left Dot (cx: 18, cy: 11, r: 4)
-    final dotCenter = Offset(18 * scale, 11 * scale);
-    canvas.drawCircle(dotCenter, 4 * scale, paintLeft);
-
-    // 2. Left Capsule (x: 14, y: 19, w: 8, h: 23, rx: 4)
+    // 2. Left pillar rect: x: 4.5, y: 14, w: 7, h: 18, rx: 3.5
     final leftRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(14 * scale, 19 * scale, 8 * scale, 23 * scale),
-      Radius.circular(4 * scale),
+      Rect.fromLTWH(
+        4.5 * scaleX,
+        14 * scaleY,
+        7.0 * scaleX,
+        18.0 * scaleY,
+      ),
+      Radius.circular(3.5 * scaleX),
     );
     canvas.drawRRect(leftRect, paintLeft);
 
-    // 3. Translucent Ribbon Connector
-    final ribbonPath = Path()
-      ..moveTo(22 * scale, 26 * scale)
-      ..cubicTo(26 * scale, 22 * scale, 28 * scale, 18 * scale, 34 * scale, 14 * scale)
-      ..cubicTo(33 * scale, 22 * scale, 28 * scale, 30 * scale, 22 * scale, 34 * scale)
-      ..close();
-    canvas.drawPath(ribbonPath, paintRibbon);
-
-    // 4. Right Taller Capsule (x: 33, y: 9, w: 9, h: 35, rx: 4.5)
+    // 3. Right taller pillar rect: x: 17.5, y: 7, w: 7, h: 25, rx: 3.5
     final rightRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(33 * scale, 9 * scale, 9 * scale, 35 * scale),
-      Radius.circular(4.5 * scale),
+      Rect.fromLTWH(
+        17.5 * scaleX,
+        7 * scaleY,
+        7.0 * scaleX,
+        25.0 * scaleY,
+      ),
+      Radius.circular(3.5 * scaleX),
     );
     canvas.drawRRect(rightRect, paintRight);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _SpindoLogoGeometryPainter oldDelegate) {
+    return oldDelegate.leftColor != leftColor ||
+        oldDelegate.rightColor != rightColor;
+  }
 }

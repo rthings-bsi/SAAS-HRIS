@@ -168,7 +168,7 @@ export function Header() {
           type="button"
           onClick={() => setIsMobileSearchOpen(true)}
           aria-label="Buka pencarian"
-          className="md:hidden p-2 rounded-xl border border-slate-200/80 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 active:scale-95 transition-all shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+          className="md:hidden p-2 rounded-xl border border-slate-200/80 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 active:scale-95 transition-all shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
         >
           <Search className="w-4 h-4" aria-hidden="true" />
         </button>
@@ -184,7 +184,7 @@ export function Header() {
             aria-expanded={isProfileOpen}
             aria-haspopup="true"
             aria-label="Buka menu profil pengguna"
-            className="flex items-center gap-2 p-1 rounded-2xl hover:bg-slate-50 active:scale-95 transition-all border border-transparent hover:border-slate-200/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+            className="flex items-center gap-2 p-1 rounded-2xl hover:bg-slate-50 active:scale-95 transition-all border border-transparent hover:border-slate-200/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer min-h-[44px]"
           >
             {/* Squircle Avatar */}
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200/80 text-blue-700 font-extrabold text-xs flex items-center justify-center flex-shrink-0 shadow-2xs">
@@ -214,7 +214,7 @@ export function Header() {
             <div
               role="menu"
               aria-orientation="vertical"
-              className="absolute right-0 mt-2 w-72 rounded-2xl bg-white/98 backdrop-blur-2xl border border-slate-200/80 shadow-[0_12px_32px_-4px_rgba(11,37,69,0.15),0_2px_8px_rgba(0,0,0,0.04)] p-3 text-sm z-50 animate-fade-in-up"
+              className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white/98 backdrop-blur-2xl border border-slate-200/80 shadow-[0_12px_32px_-4px_rgba(11,37,69,0.15),0_2px_8px_rgba(0,0,0,0.04)] p-3 text-sm z-50 animate-fade-in-up"
             >
               {/* Profile Card Header */}
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-3">

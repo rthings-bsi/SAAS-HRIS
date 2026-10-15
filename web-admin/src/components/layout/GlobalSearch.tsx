@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -317,11 +318,37 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const desktopInputRef = useRef<HTMLInputElement>(null);
   const mobileInputRef = useRef<HTMLInputElement>(null);
   const resultsListRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Auto-focus mobile search input when mobile drawer is opened
+  useEffect(() => {
+    if (isMobileOpen) {
+      const timer = setTimeout(() => {
+        mobileInputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobileOpen]);
+
+  // Lock body scroll on mobile when search modal is open
+  useEffect(() => {
+    if (isMobileOpen && typeof window !== "undefined") {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isMobileOpen]);
 
   // User State & Role Detection
   const [internalUser, setInternalUser] = useState<(User & { company?: Company }) | null>(currentUser || null);
@@ -885,14 +912,14 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
       </div>
 
       {/* =========================================================================
-          2. MOBILE SEARCH FULLSCREEN OVERLAY (< md)
+          2. MOBILE SEARCH FULLSCREEN OVERLAY (< md) MOUNTED VIA PORTAL
          ========================================================================= */}
-      {isMobileOpen && (
+      {isMobileOpen && isMounted && typeof document !== "undefined" && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Pencarian sistem mobile"
-          className="fixed inset-0 z-50 bg-white flex flex-col md:hidden overflow-hidden animate-fade-in"
+          className="fixed inset-0 z-[100] bg-white flex flex-col md:hidden overflow-hidden animate-fade-in"
         >
           {/* Top Search Input Bar with Safe Area Support */}
           <div
@@ -960,7 +987,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                   router.push("/attendance");
                   onCloseMobile?.();
                 }}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer min-h-[36px]"
               >
                 Presensi
               </button>
@@ -971,7 +998,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                   router.push("/leaves");
                   onCloseMobile?.();
                 }}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer min-h-[36px]"
               >
                 Cuti
               </button>
@@ -982,7 +1009,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                   router.push("/overtime");
                   onCloseMobile?.();
                 }}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer min-h-[36px]"
               >
                 Lembur
               </button>
@@ -993,7 +1020,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                   router.push("/payroll");
                   onCloseMobile?.();
                 }}
-                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer min-h-[36px]"
               >
                 Slip Gaji
               </button>
@@ -1005,7 +1032,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                     router.push("/employees");
                     onCloseMobile?.();
                   }}
-                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer min-h-[36px]"
                 >
                   Karyawan
                 </button>
@@ -1020,7 +1047,8 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
           >
             {renderResultsList(true)}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

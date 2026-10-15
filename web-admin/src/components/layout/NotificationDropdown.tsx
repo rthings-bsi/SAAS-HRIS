@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   Bell,
@@ -35,9 +36,15 @@ export function NotificationDropdown() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const mobileSheetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Fetch unread count for badge (called on mount and periodically)
   const fetchUnreadCount = useCallback(async () => {
@@ -93,12 +100,14 @@ export function NotificationDropdown() {
     }
   }, [isOpen, fetchNotifications]);
 
-  // Handle click outside to close dropdown
+  // Handle click outside to close dropdown (safely handling portal-mounted mobile drawer)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !containerRef.current.contains(target) &&
+        (!mobileSheetRef.current || !mobileSheetRef.current.contains(target))
       ) {
         setIsOpen(false);
       }
@@ -461,7 +470,7 @@ export function NotificationDropdown() {
         aria-label={`Pemberitahuan notifikasi${
           unreadCount > 0 ? `, ${unreadCount} belum dibaca` : ""
         }`}
-        className="relative p-2 rounded-xl border border-slate-200/80 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 active:scale-95 transition-all shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+        className="relative p-2 rounded-xl border border-slate-200/80 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 active:scale-95 transition-all shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
       >
         <Bell className="w-4 h-4" aria-hidden="true" />
 
@@ -511,12 +520,12 @@ export function NotificationDropdown() {
         </div>
       )}
 
-      {/* 2. Mobile Bottom Sheet & Backdrop (< sm) */}
-      {isOpen && (
-        <div className="sm:hidden">
+      {/* 2. Mobile Bottom Sheet & Backdrop (< sm) MOUNTED VIA PORTAL */}
+      {isOpen && isMounted && typeof document !== "undefined" && createPortal(
+        <div className="sm:hidden fixed inset-0 z-[100] animate-fade-in" aria-modal="true" role="dialog">
           {/* Full Backdrop */}
           <div
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-fade-in"
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs transition-opacity"
             onClick={() => setIsOpen(false)}
             onTouchEnd={() => setIsOpen(false)}
             aria-hidden="true"
@@ -524,11 +533,11 @@ export function NotificationDropdown() {
 
           {/* Bottom Sheet Container */}
           <div
-            role="dialog"
-            aria-modal="true"
+            ref={mobileSheetRef}
+            role="document"
             aria-label="Pemberitahuan Notifikasi"
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] rounded-t-3xl bg-white border-t border-slate-200 shadow-[0_-12px_36px_rgba(11,37,69,0.18)] flex flex-col overflow-hidden animate-slide-up"
-            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] rounded-t-3xl bg-white border-t border-slate-200/90 shadow-[0_-16px_40px_-8px_rgba(11,37,69,0.25)] flex flex-col overflow-hidden animate-slide-up"
+            style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))" }}
           >
             {/* Top Drag Indicator */}
             <div className="w-full pt-3 pb-1 flex justify-center flex-shrink-0">
@@ -548,13 +557,13 @@ export function NotificationDropdown() {
                 )}
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
                   <button
                     type="button"
                     onClick={handleMarkAllAsRead}
                     disabled={isMarkingAll}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 disabled:opacity-50 transition-colors px-2.5 py-1.5 rounded-xl hover:bg-emerald-50 active:scale-95 cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800 disabled:opacity-50 transition-colors px-2.5 py-1.5 rounded-xl hover:bg-emerald-50 active:scale-95 cursor-pointer min-h-[36px]"
                   >
                     <CheckCheck className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Tandai Semua</span>
@@ -563,7 +572,7 @@ export function NotificationDropdown() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-all cursor-pointer"
+                  className="w-9 h-9 rounded-full bg-slate-200/70 hover:bg-slate-200 flex items-center justify-center text-slate-500 active:scale-90 transition-all cursor-pointer"
                   aria-label="Tutup notifikasi"
                 >
                   <X className="w-4 h-4" />
@@ -573,7 +582,8 @@ export function NotificationDropdown() {
 
             {renderNotificationBody(true)}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

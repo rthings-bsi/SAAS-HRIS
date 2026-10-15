@@ -607,6 +607,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                     key={`emp-${emp.id_employees}`}
                     type="button"
                     data-active={isSelected}
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleSelect(currentIndex)}
                     onMouseEnter={() => setSelectedIndex(currentIndex)}
                     className={`w-full text-left px-3.5 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer min-h-[50px] active:scale-[0.99] ${
@@ -668,6 +669,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                     key={action.id}
                     type="button"
                     data-active={isSelected}
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleSelect(currentIndex)}
                     onMouseEnter={() => setSelectedIndex(currentIndex)}
                     className={`w-full text-left px-3.5 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer min-h-[50px] active:scale-[0.99] ${
@@ -721,6 +723,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                     key={menu.id}
                     type="button"
                     data-active={isSelected}
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleSelect(currentIndex)}
                     onMouseEnter={() => setSelectedIndex(currentIndex)}
                     className={`w-full text-left px-3.5 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer min-h-[50px] active:scale-[0.99] ${
@@ -952,6 +955,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
               </span>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   router.push("/attendance");
                   onCloseMobile?.();
@@ -962,6 +966,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
               </button>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   router.push("/leaves");
                   onCloseMobile?.();
@@ -972,6 +977,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
               </button>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   router.push("/overtime");
                   onCloseMobile?.();
@@ -982,6 +988,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
               </button>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   router.push("/payroll");
                   onCloseMobile?.();
@@ -993,6 +1000,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
               {canSearchEmployees && (
                 <button
                   type="button"
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     router.push("/employees");
                     onCloseMobile?.();

@@ -353,6 +353,7 @@ export function NotificationDropdown() {
             return (
               <div
                 key={notif.id_notifications}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleNotificationClick(notif)}
                 role="button"
                 tabIndex={0}

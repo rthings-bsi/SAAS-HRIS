@@ -401,12 +401,17 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
     };
   }, [isOpen]);
 
-  // Focus mobile input when mobile modal opens
+  // Focus mobile input & lock body scroll when mobile modal opens
   useEffect(() => {
     if (isMobileOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
       setTimeout(() => {
         mobileInputRef.current?.focus();
       }, 50);
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
     }
   }, [isMobileOpen]);
 
@@ -550,7 +555,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
     return name.slice(0, 2).toUpperCase();
   };
 
-  const renderResultsList = () => {
+  const renderResultsList = (isMobile = false) => {
     const totalCount = allSelectableItems.length;
 
     if (totalCount === 0 && normalizedQuery) {
@@ -570,7 +575,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
           <button
             type="button"
             onClick={() => setQuery("")}
-            className="mt-4 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors cursor-pointer"
+            className="mt-4 px-3.5 py-2 text-xs font-semibold text-[#094595] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors cursor-pointer active:scale-95"
           >
             Bersihkan Pencarian
           </button>
@@ -580,12 +585,8 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
 
     let runningIndex = 0;
 
-    return (
-      <div
-        ref={resultsListRef}
-        className="max-h-[min(65vh,480px)] overflow-y-auto p-2 space-y-4 focus:outline-none"
-        tabIndex={-1}
-      >
+    const listContent = (
+      <>
         {/* 1. Matching Employees Section (Only for authorized non-employee roles) */}
         {filteredEmployees.length > 0 && (
           <div>
@@ -608,16 +609,16 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                     data-active={isSelected}
                     onClick={() => handleSelect(currentIndex)}
                     onMouseEnter={() => setSelectedIndex(currentIndex)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
+                    className={`w-full text-left px-3.5 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer min-h-[50px] active:scale-[0.99] ${
                       isSelected
-                        ? "bg-emerald-50/90 text-emerald-950 border border-emerald-200 shadow-2xs"
+                        ? "bg-blue-50/90 text-[#0B3A6F] border border-blue-200 shadow-2xs"
                         : "hover:bg-slate-50 text-slate-700 border border-transparent"
                     }`}
                   >
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-2xs border ${
                         isSelected
-                          ? "bg-emerald-600 text-white border-emerald-600"
+                          ? "bg-[#094595] text-white border-[#094595]"
                           : "bg-blue-50 text-blue-700 border-blue-200/80"
                       }`}
                     >
@@ -638,7 +639,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                         <span className="truncate">{deptName}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 flex-shrink-0">
+                    <div className="flex items-center gap-1 text-[11px] font-semibold text-[#094595] flex-shrink-0">
                       <span className="hidden sm:inline">Buka</span>
                       <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </div>
@@ -669,16 +670,16 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                     data-active={isSelected}
                     onClick={() => handleSelect(currentIndex)}
                     onMouseEnter={() => setSelectedIndex(currentIndex)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
+                    className={`w-full text-left px-3.5 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer min-h-[50px] active:scale-[0.99] ${
                       isSelected
-                        ? "bg-emerald-50/90 text-emerald-950 border border-emerald-200 shadow-2xs"
+                        ? "bg-amber-50/90 text-amber-950 border border-amber-200 shadow-2xs"
                         : "hover:bg-slate-50 text-slate-700 border border-transparent"
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border ${
                         isSelected
-                          ? "bg-emerald-600 text-white border-emerald-600"
+                          ? "bg-amber-600 text-white border-amber-600"
                           : "bg-amber-50 text-amber-700 border-amber-200/80"
                       }`}
                     >
@@ -693,7 +694,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                       </div>
                     </div>
                     {isSelected && (
-                      <CornerDownLeft className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <CornerDownLeft className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                     )}
                   </button>
                 );
@@ -722,16 +723,16 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                     data-active={isSelected}
                     onClick={() => handleSelect(currentIndex)}
                     onMouseEnter={() => setSelectedIndex(currentIndex)}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
+                    className={`w-full text-left px-3.5 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer min-h-[50px] active:scale-[0.99] ${
                       isSelected
-                        ? "bg-emerald-50/90 text-emerald-950 border border-emerald-200 shadow-2xs"
+                        ? "bg-blue-50/90 text-[#0B3A6F] border border-blue-200 shadow-2xs"
                         : "hover:bg-slate-50 text-slate-700 border border-transparent"
                     }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 border ${
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border ${
                         isSelected
-                          ? "bg-emerald-600 text-white border-emerald-600"
+                          ? "bg-[#094595] text-white border-[#094595]"
                           : "bg-slate-100 text-slate-600 border-slate-200/80"
                       }`}
                     >
@@ -755,7 +756,7 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
                       </div>
                     </div>
                     {isSelected && (
-                      <CornerDownLeft className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                      <CornerDownLeft className="w-3.5 h-3.5 text-[#094595] flex-shrink-0" />
                     )}
                   </button>
                 );
@@ -763,6 +764,24 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
             </div>
           </div>
         )}
+      </>
+    );
+
+    if (isMobile) {
+      return (
+        <div ref={resultsListRef} className="space-y-4 focus:outline-none">
+          {listContent}
+        </div>
+      );
+    }
+
+    return (
+      <div
+        ref={resultsListRef}
+        className="max-h-[min(65vh,480px)] overflow-y-auto p-2 space-y-4 focus:outline-none"
+        tabIndex={-1}
+      >
+        {listContent}
       </div>
     );
   };
@@ -863,63 +882,135 @@ export function GlobalSearch({ isMobileOpen = false, onCloseMobile, currentUser 
       </div>
 
       {/* =========================================================================
-          2. MOBILE SEARCH OVERLAY MODAL (< md)
+          2. MOBILE SEARCH FULLSCREEN OVERLAY (< md)
          ========================================================================= */}
       {isMobileOpen && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Pencarian sistem mobile"
-          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex flex-col p-3 sm:p-4 md:hidden animate-fade-in"
+          className="fixed inset-0 z-50 bg-white flex flex-col md:hidden overflow-hidden animate-fade-in"
         >
-          <div className="w-full bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden max-h-[85vh]">
-            {/* Top Search Input Bar */}
-            <div className="p-3 border-b border-slate-100 flex items-center gap-2">
-              <div className="relative flex-1 flex items-center">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" aria-hidden="true" />
-                <input
-                  ref={mobileInputRef}
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    canSearchEmployees
-                      ? "Cari staf, menu, atau fitur..."
-                      : "Cari menu, presensi, cuti, atau slip gaji..."
-                  }
-                  className="w-full pl-9 pr-9 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20"
-                />
-                {query.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuery("");
-                      mobileInputRef.current?.focus();
-                    }}
-                    className="absolute right-2.5 p-1 rounded-full text-slate-400 hover:text-slate-600"
-                    aria-label="Bersihkan input"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
+          {/* Top Search Input Bar with Safe Area Support */}
+          <div
+            className="border-b border-slate-200/80 bg-white flex items-center gap-2.5 px-3.5 py-2.5 flex-shrink-0 shadow-xs"
+            style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+          >
+            <div className="relative flex-1 flex items-center">
+              <Search
+                className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none"
+                aria-hidden="true"
+              />
+              <input
+                ref={mobileInputRef}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  canSearchEmployees
+                    ? "Cari staf, menu, atau fitur..."
+                    : "Cari menu, presensi, cuti, atau slip gaji..."
+                }
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                className="w-full h-11 pl-10 pr-10 rounded-xl bg-slate-100 border border-slate-200/80 text-[16px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-[#094595] focus:ring-2 focus:ring-[#094595]/15 transition-all shadow-2xs"
+              />
+              {query.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    mobileInputRef.current?.focus();
+                  }}
+                  className="absolute right-1 w-9 h-9 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-700 active:scale-90 cursor-pointer"
+                  aria-label="Bersihkan input"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (onCloseMobile) onCloseMobile();
+              }}
+              className="min-w-[48px] h-11 px-2.5 flex items-center justify-center text-sm font-bold text-[#094595] hover:text-[#07387B] active:scale-95 transition-all cursor-pointer select-none rounded-xl"
+              aria-label="Tutup pencarian"
+            >
+              Batal
+            </button>
+          </div>
+
+          {/* Quick Filter Shortcuts on Mobile (when query is empty) */}
+          {!normalizedQuery && (
+            <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none flex-shrink-0">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex-shrink-0 mr-1">
+                Pintasan:
+              </span>
               <button
                 type="button"
                 onClick={() => {
-                  if (onCloseMobile) onCloseMobile();
+                  router.push("/attendance");
+                  onCloseMobile?.();
                 }}
-                className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 active:scale-95 transition-all text-xs font-semibold cursor-pointer"
-                aria-label="Tutup pencarian"
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
               >
-                Batal
+                Presensi
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  router.push("/leaves");
+                  onCloseMobile?.();
+                }}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+              >
+                Cuti
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  router.push("/overtime");
+                  onCloseMobile?.();
+                }}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+              >
+                Lembur
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  router.push("/payroll");
+                  onCloseMobile?.();
+                }}
+                className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+              >
+                Slip Gaji
+              </button>
+              {canSearchEmployees && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push("/employees");
+                    onCloseMobile?.();
+                  }}
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 active:scale-95 flex-shrink-0 shadow-2xs hover:bg-slate-50 cursor-pointer"
+                >
+                  Karyawan
+                </button>
+              )}
             </div>
+          )}
 
-            {/* Results List */}
-            <div className="flex-1 overflow-y-auto">
-              {renderResultsList()}
-            </div>
+          {/* Results List */}
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-4 focus:outline-none"
+            style={{ paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))" }}
+          >
+            {renderResultsList(true)}
           </div>
         </div>
       )}

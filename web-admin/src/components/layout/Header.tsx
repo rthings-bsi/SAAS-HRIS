@@ -168,7 +168,7 @@ export function Header() {
           type="button"
           onClick={() => setIsMobileSearchOpen(true)}
           aria-label="Buka pencarian"
-          className="md:hidden p-2 rounded-xl border border-slate-200/80 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 active:scale-95 transition-all shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer"
+          className="md:hidden p-2 rounded-xl border border-slate-200/80 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 active:scale-95 transition-all shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
         >
           <Search className="w-4 h-4" aria-hidden="true" />
         </button>

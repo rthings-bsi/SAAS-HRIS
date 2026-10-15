@@ -39,7 +39,7 @@ interface AttendanceRecapResponse {
   attendances: Attendance[];
 }
 
-export function TenantDashboard() {
+function TenantDashboard() {
   const [selectedTimeframe, setSelectedTimeframe] = useState("Tahun Ini (2026)");
   const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
   const [showQuickActionModal, setShowQuickActionModal] = useState(false);

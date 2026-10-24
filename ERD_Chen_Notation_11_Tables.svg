@@ -1,0 +1,595 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4400 3200" width="4400" height="3200" style="background-color: #FFFFFF; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
+<g id="relationship-lines">
+<line x1="1600" y1="420" x2="1075" y2="420" stroke="#334155" stroke-width="2.0" />
+<line x1="1075" y1="420" x2="550" y2="420" stroke="#334155" stroke-width="2.0" />
+<rect x="1336" y="383" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1350" y="400" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="786" y="383" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="800" y="400" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<line x1="1600" y1="420" x2="2150" y2="420" stroke="#334155" stroke-width="2.0" />
+<line x1="2150" y1="420" x2="2700" y2="420" stroke="#334155" stroke-width="2.0" />
+<rect x="1836" y="383" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1850" y="400" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="2436" y="383" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="2450" y="400" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<line x1="2700" y1="420" x2="3225" y2="420" stroke="#334155" stroke-width="2.0" />
+<line x1="3225" y1="420" x2="3750" y2="420" stroke="#334155" stroke-width="2.0" />
+<rect x="2966" y="383" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="2980" y="400" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="3456" y="383" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="3470" y="400" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<line x1="1600" y1="420" x2="1600" y2="810" stroke="#334155" stroke-width="2.0" />
+<line x1="1600" y1="810" x2="1600" y2="1200" stroke="#334155" stroke-width="2.0" />
+<rect x="1616" y="568" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1630" y="585" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="1616" y="1028" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1630" y="1045" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<path d="M 550 420 L 550 650 L 1075 650 L 1530 650 L 1530 1200" fill="none" stroke="#334155" stroke-width="2.0" />
+<rect x="736" y="613" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="750" y="630" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="1491" y="1048" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1505" y="1065" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<path d="M 2700 420 L 2700 650 L 2150 650 L 1670 650 L 1670 1200" fill="none" stroke="#334155" stroke-width="2.0" />
+<rect x="2466" y="613" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="2480" y="630" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="1681" y="1048" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1695" y="1065" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<line x1="1600" y1="1200" x2="1075" y2="1200" stroke="#334155" stroke-width="2.0" />
+<line x1="1075" y1="1200" x2="550" y2="1200" stroke="#334155" stroke-width="2.0" />
+<rect x="1406" y="1163" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1420" y="1180" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="856" y="1163" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="870" y="1180" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<line x1="1600" y1="1200" x2="2125" y2="1200" stroke="#334155" stroke-width="2.0" />
+<line x1="2125" y1="1200" x2="2650" y2="1200" stroke="#334155" stroke-width="2.0" />
+<rect x="1766" y="1163" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1780" y="1180" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="2316" y="1163" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="2330" y="1180" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<path d="M 1530 1200 L 1530 1950 L 1075 1950 L 550 1950" fill="none" stroke="#334155" stroke-width="2.0" />
+<rect x="1491" y="1328" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1505" y="1345" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="816" y="1913" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="830" y="1930" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<path d="M 1670 1200 L 1670 1950 L 2125 1950 L 2650 1950" fill="none" stroke="#334155" stroke-width="2.0" />
+<rect x="1681" y="1328" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1695" y="1345" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="2356" y="1913" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="2370" y="1930" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<path d="M 1600 1200 L 1600 2300 L 1925 2300 L 2250 2300 L 2250 2650" fill="none" stroke="#334155" stroke-width="2.0" />
+<rect x="1616" y="1538" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1630" y="1555" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="2266" y="2468" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="2280" y="2485" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+<line x1="1050" y1="2650" x2="1650" y2="2650" stroke="#334155" stroke-width="2.0" />
+<line x1="1650" y1="2650" x2="2250" y2="2650" stroke="#334155" stroke-width="2.0" />
+<rect x="1336" y="2613" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1350" y="2630" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">1</text>
+<rect x="1936" y="2613" width="28" height="24" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.2" />
+<text x="1950" y="2630" font-size="13" font-weight="bold" fill="#0F172A" text-anchor="middle">N</text>
+</g>
+<g id="attributes">
+<line x1="550" y1="420" x2="290" y2="340" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(290,340)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_shifts</text>
+</g>
+<line x1="550" y1="420" x2="350" y2="240" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(350,240)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">name</text>
+</g>
+<line x1="550" y1="420" x2="530" y2="200" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(530,200)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">start_time</text>
+</g>
+<line x1="550" y1="420" x2="710" y2="240" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(710,240)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">end_time</text>
+</g>
+<line x1="550" y1="420" x2="310" y2="445" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(310,445)">
+<ellipse cx="0" cy="0" rx="110.80000000000001" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">late_tolerance_minutes</text>
+</g>
+<line x1="1600" y1="420" x2="1210" y2="290" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1210,290)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">name</text>
+</g>
+<line x1="1600" y1="420" x2="1340" y2="200" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1340,200)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">industry</text>
+</g>
+<line x1="1600" y1="420" x2="1505" y2="140" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1505,140)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">email</text>
+</g>
+<line x1="1600" y1="420" x2="1695" y2="140" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1695,140)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">phone</text>
+</g>
+<line x1="1600" y1="420" x2="1860" y2="200" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1860,200)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">address</text>
+</g>
+<line x1="1600" y1="420" x2="1990" y2="290" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1990,290)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">director_name</text>
+</g>
+<line x1="1600" y1="420" x2="1340" y2="500" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1340,500)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_companies</text>
+</g>
+<line x1="1600" y1="420" x2="1440" y2="580" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1440,580)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">latitude</text>
+</g>
+<line x1="1600" y1="420" x2="1760" y2="580" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1760,580)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">longitude</text>
+</g>
+<line x1="1600" y1="420" x2="1860" y2="500" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1860,500)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">radius_meters</text>
+</g>
+<line x1="2700" y1="420" x2="2410" y2="345" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2410,345)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_users</text>
+</g>
+<line x1="2700" y1="420" x2="2480" y2="250" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2480,250)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">name</text>
+</g>
+<line x1="2700" y1="420" x2="2605" y2="190" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2605,190)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">email</text>
+</g>
+<line x1="2700" y1="420" x2="2795" y2="190" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2795,190)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">password</text>
+</g>
+<line x1="2700" y1="420" x2="2920" y2="250" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2920,250)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">role</text>
+</g>
+<line x1="2700" y1="420" x2="2990" y2="345" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2990,345)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">is_active</text>
+</g>
+<line x1="3750" y1="420" x2="3990" y2="280" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(3990,280)">
+<ellipse cx="0" cy="0" rx="84.4" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_notifications</text>
+</g>
+<line x1="3750" y1="420" x2="4010" y2="370" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(4010,370)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">type</text>
+</g>
+<line x1="3750" y1="420" x2="4010" y2="465" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(4010,465)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">title</text>
+</g>
+<line x1="3750" y1="420" x2="3990" y2="560" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(3990,560)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">message</text>
+</g>
+<line x1="3750" y1="420" x2="3870" y2="630" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(3870,630)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">is_read</text>
+</g>
+<line x1="3750" y1="420" x2="3670" y2="630" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(3670,630)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">read_at</text>
+</g>
+<line x1="1600" y1="1200" x2="1260" y2="1040" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1260,1040)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_employees</text>
+</g>
+<line x1="1600" y1="1200" x2="1260" y2="1120" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1260,1120)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">nik</text>
+</g>
+<line x1="1600" y1="1200" x2="1260" y2="1280" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1260,1280)">
+<ellipse cx="0" cy="0" rx="80.0" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">department_name</text>
+</g>
+<line x1="1600" y1="1200" x2="1260" y2="1360" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1260,1360)">
+<ellipse cx="0" cy="0" rx="88.80000000000001" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">job_position_name</text>
+</g>
+<line x1="1600" y1="1200" x2="1260" y2="1440" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1260,1440)">
+<ellipse cx="0" cy="0" rx="80.0" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">allowance_fixed</text>
+</g>
+<line x1="1600" y1="1200" x2="1940" y2="1040" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1940,1040)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">gender</text>
+</g>
+<line x1="1600" y1="1200" x2="1940" y2="1120" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1940,1120)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">hire_date</text>
+</g>
+<line x1="1600" y1="1200" x2="1940" y2="1280" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1940,1280)">
+<ellipse cx="0" cy="0" rx="88.80000000000001" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">employment_status</text>
+</g>
+<line x1="1600" y1="1200" x2="1940" y2="1360" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1940,1360)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">basic_salary</text>
+</g>
+<line x1="1600" y1="1200" x2="1940" y2="1440" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1940,1440)">
+<ellipse cx="0" cy="0" rx="93.2" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">annual_leave_quota</text>
+</g>
+<line x1="550" y1="1200" x2="290" y2="1115" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(290,1115)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_attendances</text>
+</g>
+<line x1="550" y1="1200" x2="270" y2="1200" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(270,1200)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">date</text>
+</g>
+<line x1="550" y1="1200" x2="290" y2="1285" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(290,1285)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">clock_in_time</text>
+</g>
+<line x1="550" y1="1200" x2="360" y2="1365" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(360,1365)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">clock_out_time</text>
+</g>
+<line x1="550" y1="1200" x2="500" y2="1425" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(500,1425)">
+<ellipse cx="0" cy="0" rx="97.60000000000001" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">clock_in_photo_path</text>
+</g>
+<line x1="550" y1="1200" x2="720" y2="1375" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(720,1375)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">status</text>
+</g>
+<line x1="550" y1="1200" x2="310" y2="1030" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(310,1030)">
+<ellipse cx="0" cy="0" rx="106.4" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">late_duration_minutes</text>
+</g>
+<line x1="550" y1="1200" x2="550" y2="990" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(550,990)">
+<ellipse cx="0" cy="0" rx="119.60000000000001" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">clock_in_distance_meters</text>
+</g>
+<line x1="550" y1="1950" x2="290" y2="1875" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(290,1875)">
+<ellipse cx="0" cy="0" rx="84.4" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_payroll_slips</text>
+</g>
+<line x1="550" y1="1950" x2="270" y2="1955" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(270,1955)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">period_name</text>
+</g>
+<line x1="550" y1="1950" x2="290" y2="2035" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(290,2035)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">start_date</text>
+</g>
+<line x1="550" y1="1950" x2="360" y2="2115" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(360,2115)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">end_date</text>
+</g>
+<line x1="550" y1="1950" x2="500" y2="2175" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(500,2175)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">basic_salary</text>
+</g>
+<line x1="550" y1="1950" x2="720" y2="2125" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(720,2125)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">net_salary</text>
+</g>
+<line x1="550" y1="1950" x2="310" y2="1785" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(310,1785)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">pdf_path</text>
+</g>
+<line x1="550" y1="1950" x2="530" y2="1755" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(530,1755)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">status</text>
+</g>
+<line x1="2650" y1="1200" x2="2910" y2="1115" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2910,1115)">
+<ellipse cx="0" cy="0" rx="88.80000000000001" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_leave_requests</text>
+</g>
+<line x1="2650" y1="1200" x2="2930" y2="1200" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2930,1200)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">leave_type</text>
+</g>
+<line x1="2650" y1="1200" x2="2910" y2="1285" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2910,1285)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">is_paid</text>
+</g>
+<line x1="2650" y1="1200" x2="2840" y2="1365" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2840,1365)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">start_date</text>
+</g>
+<line x1="2650" y1="1200" x2="2700" y2="1425" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2700,1425)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">end_date</text>
+</g>
+<line x1="2650" y1="1200" x2="2480" y2="1375" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2480,1375)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">total_days</text>
+</g>
+<line x1="2650" y1="1200" x2="2890" y2="1030" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2890,1030)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">reason</text>
+</g>
+<line x1="2650" y1="1200" x2="2650" y2="990" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2650,990)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">status</text>
+</g>
+<line x1="2650" y1="1950" x2="2910" y2="1875" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2910,1875)">
+<ellipse cx="0" cy="0" rx="102.0" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_overtime_requests</text>
+</g>
+<line x1="2650" y1="1950" x2="2930" y2="1955" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2930,1955)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">date</text>
+</g>
+<line x1="2650" y1="1950" x2="2910" y2="2035" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2910,2035)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">start_time</text>
+</g>
+<line x1="2650" y1="1950" x2="2840" y2="2115" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2840,2115)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">end_time</text>
+</g>
+<line x1="2650" y1="1950" x2="2700" y2="2175" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2700,2175)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">duration_hours</text>
+</g>
+<line x1="2650" y1="1950" x2="2480" y2="2125" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2480,2125)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">reason</text>
+</g>
+<line x1="2650" y1="1950" x2="2880" y2="1775" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2880,1775)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">status</text>
+</g>
+<line x1="1050" y1="2650" x2="740" y2="2730" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(740,2730)">
+<ellipse cx="0" cy="0" rx="110.80000000000001" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_performance_periods</text>
+</g>
+<line x1="1050" y1="2650" x2="830" y2="2820" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(830,2820)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">name</text>
+</g>
+<line x1="1050" y1="2650" x2="955" y2="2885" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(955,2885)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">start_date</text>
+</g>
+<line x1="1050" y1="2650" x2="1145" y2="2885" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1145,2885)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">end_date</text>
+</g>
+<line x1="1050" y1="2650" x2="1270" y2="2820" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1270,2820)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">status</text>
+</g>
+<line x1="1050" y1="2650" x2="1360" y2="2730" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1360,2730)">
+<ellipse cx="0" cy="0" rx="80.0" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">criteria_config</text>
+</g>
+<line x1="2250" y1="2650" x2="1910" y2="2735" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(1910,2735)">
+<ellipse cx="0" cy="0" rx="128.4" ry="26" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.8" />
+<text x="0" y="5" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_performance_evaluations</text>
+</g>
+<line x1="2250" y1="2650" x2="2020" y2="2825" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2020,2825)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">final_score</text>
+</g>
+<line x1="2250" y1="2650" x2="2155" y2="2885" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2155,2885)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">rank</text>
+</g>
+<line x1="2250" y1="2650" x2="2345" y2="2885" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2345,2885)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">grade</text>
+</g>
+<line x1="2250" y1="2650" x2="2480" y2="2825" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2480,2825)">
+<ellipse cx="0" cy="0" rx="78" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">recommendation</text>
+</g>
+<line x1="2250" y1="2650" x2="2590" y2="2735" stroke="#334155" stroke-width="1.3" />
+<g transform="translate(2590,2735)">
+<ellipse cx="0" cy="0" rx="84.4" ry="26" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+<text x="0" y="4.5" font-size="11" font-weight="500" fill="#0F172A" text-anchor="middle">scores_breakdown</text>
+</g>
+</g>
+<g id="relationships">
+<g transform="translate(0,0)">
+<polygon points="1075,385.0 1160.0,420 1075,455.0 990.0,420" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="1075" y="425" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">menetapkan</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="2150,385.0 2235.0,420 2150,455.0 2065.0,420" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="2150" y="425" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">memiliki</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="3225,385.0 3310.0,420 3225,455.0 3140.0,420" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="3225" y="425" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">menerima</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="1600,775.0 1685.0,810 1600,845.0 1515.0,810" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="1600" y="815" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">mempekerjakan</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="1075,615.0 1160.0,650 1075,685.0 990.0,650" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="1075" y="655" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">jadwal_kerja</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="2150,615.0 2235.0,650 2150,685.0 2065.0,650" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="2150" y="655" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">akun_login</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="1075,1165.0 1160.0,1200 1075,1235.0 990.0,1200" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="1075" y="1205" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">mencatat</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="2125,1165.0 2210.0,1200 2125,1235.0 2040.0,1200" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="2125" y="1205" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">mengajukan</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="1075,1915.0 1160.0,1950 1075,1985.0 990.0,1950" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="1075" y="1955" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">menerima</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="2125,1915.0 2210.0,1950 2125,1985.0 2040.0,1950" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="2125" y="1955" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">mengajukan</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="1925,2265.0 2010.0,2300 1925,2335.0 1840.0,2300" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="1925" y="2305" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">dievaluasi</text>
+</g>
+<g transform="translate(0,0)">
+<polygon points="1650,2615.0 1735.0,2650 1650,2685.0 1565.0,2650" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.0" />
+<text x="1650" y="2655" font-size="12.5" font-weight="bold" fill="#0F172A" text-anchor="middle">menaungi</text>
+</g>
+</g>
+<g id="entities">
+<g transform="translate(0,0)">
+<rect x="450.0" y="382.0" width="200" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="550" y="426" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">shifts</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="1490.0" y="382.0" width="220" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="1600" y="426" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">companies</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="2605.0" y="382.0" width="190" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="2700" y="426" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">users</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="3640.0" y="382.0" width="220" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="3750" y="426" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">notifications</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="1470.0" y="1159.0" width="260" height="82" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="1600" y="1206" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">employees</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="440.0" y="1162.0" width="220" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="550" y="1206" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">attendances</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="435.0" y="1912.0" width="230" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="550" y="1956" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">payroll_slips</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="2530.0" y="1162.0" width="240" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="2650" y="1206" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">leave_requests</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="2525.0" y="1912.0" width="250" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="2650" y="1956" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">overtime_requests</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="915.0" y="2612.0" width="270" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="1050" y="2656" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">performance_periods</text>
+</g>
+<g transform="translate(0,0)">
+<rect x="2105.0" y="2612.0" width="290" height="76" rx="4" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" />
+<text x="2250" y="2656" font-size="16" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.3">performance_evaluations</text>
+</g>
+</g>
+
+<g id="legend" transform="translate(1650, 3005)">
+  <rect x="0" y="0" width="1100" height="75" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.4" />
+  <text x="550" y="22" font-size="11.5" font-weight="bold" fill="#0F172A" text-anchor="middle" letter-spacing="0.5">LEGENDA SIMBOL NOTASI PETER CHEN (STANDAR AKADEMIK - BASIS DATA SAAS HRIS)</text>
+
+  <!-- Entity sample -->
+  <rect x="40" y="34" width="105" height="28" rx="2" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.8" />
+  <text x="92" y="52" font-size="11" font-weight="bold" fill="#0F172A" text-anchor="middle">table_name</text>
+  <text x="160" y="52" font-size="11" fill="#334155">= Entitas (Tabel MySQL)</text>
+
+  <!-- Rel sample -->
+  <polygon points="415,34 455,48 415,62 375,48" fill="#FFFFFF" stroke="#0F172A" stroke-width="1.6" />
+  <text x="415" y="52" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">relasi</text>
+  <text x="470" y="52" font-size="11" fill="#334155">= Relasi (FK)</text>
+
+  <!-- Attr sample -->
+  <ellipse cx="620" cy="48" rx="46" ry="15" fill="#FFFFFF" stroke="#334155" stroke-width="1.2" />
+  <text x="620" y="52" font-size="10" fill="#0F172A" text-anchor="middle">column_name</text>
+  <text x="680" y="52" font-size="11" fill="#334155">= Atribut (Kolom)</text>
+
+  <!-- PK sample -->
+  <ellipse cx="865" cy="48" rx="52" ry="15" fill="#F8FAFC" stroke="#0F172A" stroke-width="1.6" />
+  <text x="865" y="52" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle" text-decoration="underline">id_table (PK)</text>
+  <text x="930" y="52" font-size="11" fill="#334155">= Primary Key</text>
+</g>
+
+</svg>

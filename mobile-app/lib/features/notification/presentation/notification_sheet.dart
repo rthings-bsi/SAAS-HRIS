@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_dimensions.dart';
 import '../data/notification_model.dart';
 import '../provider/notification_provider.dart';
 
@@ -165,9 +166,8 @@ class _NotificationSheetState extends ConsumerState<NotificationSheet> {
                     if (state.unreadCount > 0)
                       TextButton.icon(
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          minimumSize: const Size(0, AppDimensions.minTouchTarget),
                         ),
                         icon: const Icon(
                           Icons.done_all_rounded,
@@ -237,6 +237,7 @@ class _NotificationSheetState extends ConsumerState<NotificationSheet> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.actionAccent,
                               foregroundColor: Colors.white,
+                              minimumSize: const Size(0, AppDimensions.minTouchTarget),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -314,6 +315,9 @@ class _NotificationSheetState extends ConsumerState<NotificationSheet> {
                     return InkWell(
                       onTap: () => _handleItemTap(notif),
                       child: Container(
+                        constraints: const BoxConstraints(
+                          minHeight: AppDimensions.minTouchTarget,
+                        ),
                         color: notif.isRead ? Colors.white : const Color(0xFFF0FDF4),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: Row(

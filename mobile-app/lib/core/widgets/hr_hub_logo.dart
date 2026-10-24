@@ -162,3 +162,122 @@ class _SpindoLogoGeometryPainter extends CustomPainter {
         oldDelegate.rightColor != rightColor;
   }
 }
+
+/// HR Hub Two-People Collaboration Mark (Human Collaboration 'H' glyph)
+/// Distinctive modern mark: two people linked arm-in-arm forming the letter 'H'
+class HrTwoPeopleLogo extends StatelessWidget {
+  final double size;
+  final Color leftColor;
+  final Color rightColor;
+  final Color? bridgeColor;
+
+  const HrTwoPeopleLogo({
+    super.key,
+    this.size = 28.0,
+    this.leftColor = const Color(0xFF0284C7),
+    this.rightColor = const Color(0xFF00B4D8),
+    this.bridgeColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: HrTwoPeopleLogoPainter(
+          leftColor: leftColor,
+          rightColor: rightColor,
+          bridgeColor: bridgeColor ?? leftColor,
+        ),
+      ),
+    );
+  }
+}
+
+class HrTwoPeopleLogoPainter extends CustomPainter {
+  final Color leftColor;
+  final Color rightColor;
+  final Color bridgeColor;
+
+  const HrTwoPeopleLogoPainter({
+    required this.leftColor,
+    required this.rightColor,
+    required this.bridgeColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scaleX = size.width / 32.0;
+    final scaleY = size.height / 32.0;
+
+    final paintLeft = Paint()
+      ..color = leftColor
+      ..style = PaintingStyle.fill;
+
+    final paintRight = Paint()
+      ..color = rightColor
+      ..style = PaintingStyle.fill;
+
+    final paintBridge = Paint()
+      ..color = bridgeColor
+      ..style = PaintingStyle.fill;
+
+    // 1. Left head (circle)
+    canvas.drawCircle(
+      Offset(9.5 * scaleX, 6.5 * scaleY),
+      3.2 * scaleX,
+      paintLeft,
+    );
+
+    // 2. Right head (circle)
+    canvas.drawCircle(
+      Offset(22.5 * scaleX, 6.5 * scaleY),
+      3.2 * scaleX,
+      paintRight,
+    );
+
+    // 3. Left torso (rounded pillar)
+    final leftTorso = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        6.5 * scaleX,
+        12.0 * scaleY,
+        6.0 * scaleX,
+        14.0 * scaleY,
+      ),
+      Radius.circular(3.0 * scaleX),
+    );
+    canvas.drawRRect(leftTorso, paintLeft);
+
+    // 4. Right torso (rounded pillar)
+    final rightTorso = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        19.5 * scaleX,
+        12.0 * scaleY,
+        6.0 * scaleX,
+        14.0 * scaleY,
+      ),
+      Radius.circular(3.0 * scaleX),
+    );
+    canvas.drawRRect(rightTorso, paintRight);
+
+    // 5. Horizontal bridge bar connecting the two (H-bar)
+    final bridge = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        10.0 * scaleX,
+        16.5 * scaleY,
+        12.0 * scaleX,
+        4.5 * scaleY,
+      ),
+      Radius.circular(2.25 * scaleX),
+    );
+    canvas.drawRRect(bridge, paintBridge);
+  }
+
+  @override
+  bool shouldRepaint(covariant HrTwoPeopleLogoPainter oldDelegate) {
+    return oldDelegate.leftColor != leftColor ||
+        oldDelegate.rightColor != rightColor ||
+        oldDelegate.bridgeColor != bridgeColor;
+  }
+}

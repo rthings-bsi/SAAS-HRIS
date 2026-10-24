@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/app_button.dart';
 import '../provider/overtime_provider.dart';
 
@@ -207,6 +208,9 @@ class _ApplyOvertimeSheetState extends ConsumerState<ApplyOvertimeSheet> {
                 onTap: _pickDate,
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
+                  constraints: const BoxConstraints(
+                    minHeight: AppDimensions.minTouchTarget,
+                  ),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     border: Border.all(color: const Color(0xFFCBD5E1)),
@@ -252,6 +256,9 @@ class _ApplyOvertimeSheetState extends ConsumerState<ApplyOvertimeSheet> {
                           onTap: _pickStartTime,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
+                            constraints: const BoxConstraints(
+                              minHeight: AppDimensions.minTouchTarget,
+                            ),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 12),
                             decoration: BoxDecoration(
@@ -297,6 +304,9 @@ class _ApplyOvertimeSheetState extends ConsumerState<ApplyOvertimeSheet> {
                           onTap: _pickEndTime,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
+                            constraints: const BoxConstraints(
+                              minHeight: AppDimensions.minTouchTarget,
+                            ),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 12),
                             decoration: BoxDecoration(

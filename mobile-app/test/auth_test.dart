@@ -181,10 +181,10 @@ void main() {
 
       expect(find.text('Email Kerja'), findsOneWidget);
       expect(find.text('Kata Sandi'), findsOneWidget);
-      expect(find.text('Masuk ke Akun'), findsOneWidget);
+      expect(find.text('Masuk'), findsOneWidget);
 
       // Tap login without inputs
-      await tester.tap(find.text('Masuk ke Akun'));
+      await tester.tap(find.text('Masuk'));
       await tester.pumpAndSettle();
 
       expect(find.text('Email kerja wajib diisi'), findsOneWidget);
@@ -206,15 +206,15 @@ void main() {
       );
 
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email Kerja'),
+        find.byType(TextFormField).at(0),
         'wrong@example.com',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Kata Sandi'),
+        find.byType(TextFormField).at(1),
         'wrongpwd',
       );
 
-      await tester.tap(find.text('Masuk ke Akun'));
+      await tester.tap(find.text('Masuk'));
       await tester.pump();
       await tester.pumpAndSettle();
 

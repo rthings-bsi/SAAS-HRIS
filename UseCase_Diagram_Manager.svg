@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 960" width="1200" height="960" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+<defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 1 1 L 9 5 L 1 9" fill="none" stroke="#000000" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+      </marker>
+    </defs>
+<rect x="25" y="20" width="1150" height="920" fill="none" stroke="#000000" stroke-width="1.5" />
+<polygon points="25,20 420,20 406,48 25,48" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+<text x="42" y="39" font-size="13.5" font-weight="bold" fill="#000000">Use Case Sistem SAAS HRIS-Manager</text>
+<rect x="155" y="56" width="1000" height="869" fill="#FFFFFF" stroke="#000000" stroke-width="1.3" />
+<circle cx="75" cy="358.0" r="22" fill="#FFFFFF" stroke="#000000" stroke-width="1.8" />
+<line x1="75" y1="380.0" x2="75" y2="433.0" stroke="#000000" stroke-width="1.8" />
+<line x1="39" y1="405.0" x2="111" y2="405.0" stroke="#000000" stroke-width="1.8" />
+<line x1="75" y1="433.0" x2="45" y2="488.0" stroke="#000000" stroke-width="1.8" />
+<line x1="75" y1="433.0" x2="105" y2="488.0" stroke="#000000" stroke-width="1.8" />
+<text x="75" y="513.0" font-size="14.5" font-weight="bold" fill="#000000" text-anchor="middle">Manager</text>
+<line x1="111" y1="405.0" x2="680" y2="403.0" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<rect x="361.5" y="396.0" width="68" height="16" fill="#FFFFFF" />
+<text x="395.5" y="408.0" font-size="11.5" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+<line x1="111" y1="405.0" x2="242" y2="143.0" stroke="#000000" stroke-width="1.2" />
+<line x1="438" y1="143.0" x2="696.2013739707807" y2="381.012138431075" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<g transform="translate(567.1006869853903, 262.00606921553754) rotate(42.670115194665065)">
+<rect x="-34" y="-8" width="68" height="16" fill="#FFFFFF" />
+<text x="0" y="4" font-size="11" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+</g>
+<line x1="111" y1="405.0" x2="242" y2="247.0" stroke="#000000" stroke-width="1.2" />
+<line x1="438" y1="247.0" x2="686.2043414632537" y2="387.7400281922953" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<g transform="translate(562.1021707316269, 317.37001409614766) rotate(29.55466319499312)">
+<rect x="-34" y="-8" width="68" height="16" fill="#FFFFFF" />
+<text x="0" y="4" font-size="11" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+</g>
+<line x1="111" y1="405.0" x2="242" y2="351.0" stroke="#000000" stroke-width="1.2" />
+<line x1="438" y1="351.0" x2="679.04877935402" y2="397.4201173467776" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<g transform="translate(558.52438967701, 374.2100586733888) rotate(10.90032979189904)">
+<rect x="-34" y="-8" width="68" height="16" fill="#FFFFFF" />
+<text x="0" y="4" font-size="11" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+</g>
+<line x1="111" y1="405.0" x2="242" y2="455.0" stroke="#000000" stroke-width="1.2" />
+<line x1="438" y1="455.0" x2="679.04877935402" y2="408.5798826532224" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<g transform="translate(558.52438967701, 431.7899413266112) rotate(-10.90032979189904)">
+<rect x="-34" y="-8" width="68" height="16" fill="#FFFFFF" />
+<text x="0" y="4" font-size="11" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+</g>
+<line x1="111" y1="405.0" x2="242" y2="559.0" stroke="#000000" stroke-width="1.2" />
+<line x1="438" y1="559.0" x2="686.2043414632537" y2="418.2599718077047" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<g transform="translate(562.1021707316269, 488.62998590385234) rotate(-29.55466319499312)">
+<rect x="-34" y="-8" width="68" height="16" fill="#FFFFFF" />
+<text x="0" y="4" font-size="11" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+</g>
+<line x1="111" y1="405.0" x2="242" y2="663.0" stroke="#000000" stroke-width="1.2" />
+<line x1="438" y1="663.0" x2="696.2013739707807" y2="424.987861568925" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<g transform="translate(567.1006869853903, 543.9939307844625) rotate(-42.670115194665065)">
+<rect x="-34" y="-8" width="68" height="16" fill="#FFFFFF" />
+<text x="0" y="4" font-size="11" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+</g>
+<ellipse cx="340" cy="143.0" rx="100" ry="34" fill="#FFFFFF" stroke="#000000" stroke-width="1.4" />
+<text x="340" y="140.0" font-size="11.5" fill="#000000" text-anchor="middle">Menyetujui</text>
+<text x="340" y="155.0" font-size="11.5" fill="#000000" text-anchor="middle">pengajuan cuti</text>
+<ellipse cx="340" cy="247.0" rx="100" ry="34" fill="#FFFFFF" stroke="#000000" stroke-width="1.4" />
+<text x="340" y="244.0" font-size="11.5" fill="#000000" text-anchor="middle">Menyetujui</text>
+<text x="340" y="259.0" font-size="11.5" fill="#000000" text-anchor="middle">pengajuan lembur</text>
+<ellipse cx="340" cy="351.0" rx="100" ry="34" fill="#FFFFFF" stroke="#000000" stroke-width="1.4" />
+<text x="340" y="341.0" font-size="11" fill="#000000" text-anchor="middle">Memantau</text>
+<text x="340" y="355.0" font-size="11" fill="#000000" text-anchor="middle">monitoring</text>
+<text x="340" y="369.0" font-size="11" fill="#000000" text-anchor="middle">presensi tim</text>
+<ellipse cx="340" cy="455.0" rx="100" ry="34" fill="#FFFFFF" stroke="#000000" stroke-width="1.4" />
+<text x="340" y="445.0" font-size="11" fill="#000000" text-anchor="middle">Melakukan</text>
+<text x="340" y="459.0" font-size="11" fill="#000000" text-anchor="middle">penilaian kinerja</text>
+<text x="340" y="473.0" font-size="11" fill="#000000" text-anchor="middle">SPK</text>
+<ellipse cx="340" cy="559.0" rx="100" ry="34" fill="#FFFFFF" stroke="#000000" stroke-width="1.4" />
+<text x="340" y="556.0" font-size="11.5" fill="#000000" text-anchor="middle">Melihat rekap &</text>
+<text x="340" y="571.0" font-size="11.5" fill="#000000" text-anchor="middle">ranking kinerja</text>
+<ellipse cx="340" cy="663.0" rx="100" ry="34" fill="#FFFFFF" stroke="#000000" stroke-width="1.4" />
+<text x="340" y="660.0" font-size="11.5" fill="#000000" text-anchor="middle">Melihat</text>
+<text x="340" y="675.0" font-size="11.5" fill="#000000" text-anchor="middle">notifikasi sistem</text>
+<line x1="834.3747353553714" y1="388.261104274088" x2="960.183210838138" y2="286.4755618065481" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<g transform="translate(897.2789730967547, 337.368333040318) rotate(-24.904768808095188)">
+<rect x="-34" y="-8" width="68" height="16" fill="#FFFFFF" />
+<text x="0" y="4" font-size="11" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+</g>
+<line x1="834.3747353553714" y1="417.738895725912" x2="956.5551749671442" y2="519.5244381934518" stroke="#000000" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" />
+<g transform="translate(895.4649551612579, 468.6316669596819) rotate(24.904768808095188)">
+<rect x="-34" y="-8" width="68" height="16" fill="#FFFFFF" />
+<text x="0" y="4" font-size="11" fill="#000000" text-anchor="middle">&lt;&lt;include&gt;&gt;</text>
+</g>
+<ellipse cx="760" cy="403.0" rx="82" ry="35" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+<text x="760" y="408.0" font-size="13.5" font-weight="bold" fill="#000000" text-anchor="middle">Login</text>
+<ellipse cx="1040" cy="273.0" rx="88" ry="32" fill="#FFFFFF" stroke="#000000" stroke-width="1.4" />
+<text x="1040" y="277.5" font-size="12" fill="#000000" text-anchor="middle">Input email</text>
+<ellipse cx="1040" cy="533.0" rx="92" ry="32" fill="#FFFFFF" stroke="#000000" stroke-width="1.4" />
+<text x="1040" y="537.5" font-size="12" fill="#000000" text-anchor="middle">Input password</text>
+</svg>

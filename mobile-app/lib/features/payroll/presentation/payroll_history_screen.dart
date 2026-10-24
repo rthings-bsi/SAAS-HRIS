@@ -24,14 +24,22 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
 
   Widget _buildSummaryCard(PayrollSlipModel latestSlip) {
     return Container(
+      margin: const EdgeInsets.only(bottom: AppDimensions.space16),
       padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
-        color: AppColors.canvasLight,
-        borderRadius: AppDimensions.cardBorderRadius,
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.hairline,
-          width: AppDimensions.borderWidth,
+          color: AppColors.borderSubtle,
+          width: 1.0,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,12 +50,22 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  Container(
+                    width: 4,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   const Text(
                     'Gaji Bersih Terakhir',
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.inkMuted,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                      letterSpacing: -0.1,
                     ),
                   ),
                   const SizedBox(width: AppDimensions.space4),
@@ -63,7 +81,7 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
                       _isSalaryVisible
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
-                      color: AppColors.inkMuted,
+                      color: AppColors.textMuted,
                       size: 18,
                     ),
                     tooltip: _isSalaryVisible
@@ -80,34 +98,51 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
-                  vertical: AppDimensions.space4,
+                  vertical: 4,
                 ),
                 decoration: BoxDecoration(
                   color: latestSlip.status.backgroundColor,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
                     color: latestSlip.status.borderColor,
-                    width: AppDimensions.borderWidth,
+                    width: 1.0,
                   ),
                 ),
-                child: Text(
-                  latestSlip.status.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: latestSlip.status.textColor,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 6,
+                      height: 6,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: latestSlip.status.textColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      latestSlip.status.label,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: latestSlip.status.textColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.space4),
+          const SizedBox(height: 6),
           Text(
             latestSlip.period_name,
             style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.inkPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.2,
             ),
           ),
           const SizedBox(height: AppDimensions.space8),
@@ -119,18 +154,37 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
                   ? latestSlip.formattedNetSalary
                   : 'Rp ••••••••',
               style: AppTextStyle.currency(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppColors.actionAccent,
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
               ),
             ),
           ),
-          const SizedBox(height: AppDimensions.space4),
-          Text(
-            'Dibayar: ${latestSlip.formattedPaymentDate}',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.inkMuted,
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.account_balance_outlined,
+                  size: 14,
+                  color: AppColors.textMuted,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Dibayar: ${latestSlip.formattedPaymentDate}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textBody,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -142,17 +196,24 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.space8),
       decoration: BoxDecoration(
-        color: AppColors.canvasLight,
-        borderRadius: AppDimensions.cardBorderRadius,
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: AppColors.hairline,
-          width: AppDimensions.borderWidth,
+          color: AppColors.borderSubtle,
+          width: 1.0,
         ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x04000000),
+            blurRadius: 6,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: AppDimensions.cardBorderRadius,
+          borderRadius: BorderRadius.circular(14),
           onTap: () {
             Navigator.push(
               context,
@@ -169,6 +230,20 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
               padding: const EdgeInsets.all(AppDimensions.space16),
               child: Row(
                 children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.receipt_long_outlined,
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.space12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,8 +255,9 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
                                 slip.period_name,
                                 style: const TextStyle(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.inkPrimary,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                  letterSpacing: -0.2,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -197,37 +273,37 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
                                   color: slip.status.borderColor,
-                                  width: AppDimensions.borderWidth,
+                                  width: 1.0,
                                 ),
                               ),
                               child: Text(
                                 slip.status.label,
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
                                   color: slip.status.textColor,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: AppDimensions.space4),
+                        const SizedBox(height: 3),
                         Text(
                           slip.formattedPaymentDate,
                           style: const TextStyle(
                             fontSize: 12,
-                            color: AppColors.inkMuted,
+                            color: AppColors.textMuted,
                           ),
                         ),
-                        const SizedBox(height: AppDimensions.space4),
+                        const SizedBox(height: 3),
                         Text(
                           _isSalaryVisible
                               ? slip.formattedNetSalary
                               : 'Rp ••••••••',
                           style: AppTextStyle.currency(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.actionAccent,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryContainer,
                           ),
                         ),
                       ],
@@ -236,8 +312,8 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
                   const SizedBox(width: AppDimensions.space8),
                   const Icon(
                     Icons.chevron_right_rounded,
-                    color: AppColors.inkMuted,
-                    size: 24,
+                    color: AppColors.textMuted,
+                    size: 22,
                   ),
                 ],
               ),
@@ -256,13 +332,30 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
 
     if (isNonEmployee) {
       return Scaffold(
-        backgroundColor: AppColors.canvasLight,
+        backgroundColor: AppColors.surfaceCanvas,
         appBar: AppBar(
-          title: const Row(
+          backgroundColor: AppColors.surfaceCard,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1.0),
+            child: Container(color: AppColors.borderSubtle, height: 1.0),
+          ),
+          title: Row(
             children: [
-              HrHubLogo(size: 24),
-              SizedBox(width: 10),
-              Text('Slip Gaji'),
+              const HrHubLogo(size: 26),
+              const SizedBox(width: 10),
+              Container(width: 1, height: 16, color: AppColors.borderStrong),
+              const SizedBox(width: 10),
+              const Text(
+                'Slip Gaji',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
             ],
           ),
         ),
@@ -285,13 +378,58 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
     final slipsAsync = ref.watch(myPayrollSlipsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.canvasLight,
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
-        title: const Row(
+        backgroundColor: AppColors.surfaceCard,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: AppColors.borderSubtle, height: 1.0),
+        ),
+        title: Row(
           children: [
-            HrHubLogo(size: 24),
-            SizedBox(width: 10),
-            Text('Slip Gaji'),
+            const HrHubLogo(size: 26),
+            const SizedBox(width: 10),
+            Container(width: 1, height: 16, color: AppColors.borderStrong),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Slip Gaji',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                if (auth.companyName.isNotEmpty)
+                  Row(
+                    children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: const BoxDecoration(
+                          color: AppColors.statusSuccess,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        auth.companyName,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
           ],
         ),
       ),
@@ -304,15 +442,15 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
             padding: const EdgeInsets.all(AppDimensions.space16),
             physics: const AlwaysScrollableScrollPhysics(),
             children: const [
-              AppSkeleton(height: 120),
+              AppSkeleton(height: 140),
               SizedBox(height: AppDimensions.space16),
               AppSkeleton(height: 20, width: 140),
               SizedBox(height: AppDimensions.space12),
-              AppSkeleton(height: 72),
+              AppSkeleton(height: 76),
               SizedBox(height: AppDimensions.space8),
-              AppSkeleton(height: 72),
+              AppSkeleton(height: 76),
               SizedBox(height: AppDimensions.space8),
-              AppSkeleton(height: 72),
+              AppSkeleton(height: 76),
             ],
           ),
           error: (error, _) => Center(
@@ -353,13 +491,27 @@ class _PayrollHistoryScreenState extends ConsumerState<PayrollHistoryScreen> {
               children: [
                 _buildSummaryCard(latestSlip),
                 const SizedBox(height: AppDimensions.space16),
-                const Text(
-                  'Riwayat Slip Gaji',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkPrimary,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryContainer,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Riwayat Slip Gaji',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppDimensions.space12),
                 ...slips.map((slip) => _buildSlipItem(context, slip)),

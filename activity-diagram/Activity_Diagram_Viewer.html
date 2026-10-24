@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Diagrams: Sistem SAAS HRIS PT SPINDO</title>
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      background: #FFFFFF;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #E2E8F0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      z-index: 20;
+    }
+    .title-box h1 {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      font-size: 11px;
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: #64748B;
+      margin-top: 2px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn {
+      background: #FFFFFF;
+      color: #0F172A;
+      border: 1px solid #CBD5E1;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: #F1F5F9; border-color: #94A3B8; }
+    .btn-primary { background: #2563EB; color: #FFFFFF; border-color: #2563EB; }
+    .btn-primary:hover { background: #1D4ED8; border-color: #1D4ED8; }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 61px);
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 320px;
+      background: #FFFFFF;
+      border-right: 1px solid #E2E8F0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-header {
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748B;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .nav-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #F1F5F9;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .nav-item:hover { background: #F8FAFC; }
+    .nav-item.active {
+      background: #EFF6FF;
+      border-left: 4px solid #2563EB;
+      padding-left: 12px;
+    }
+    .nav-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0F172A;
+    }
+    .nav-desc {
+      font-size: 11px;
+      color: #64748B;
+      line-height: 1.4;
+    }
+    .nav-tag {
+      align-self: flex-start;
+      margin-top: 4px;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+    .tag-user { background: #E0E7FF; color: #4338CA; }
+    .tag-karyawan { background: #DCFCE7; color: #15803D; }
+    .tag-manager { background: #FEF3C7; color: #B45309; }
+    .tag-admin { background: #FEE2E2; color: #B91C1C; }
+
+    .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: #F1F5F9;
+      overflow: hidden;
+    }
+    .viewer-header {
+      background: #FFFFFF;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .viewer-meta h2 {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .viewer-meta p {
+      font-size: 11.5px;
+      color: #64748B;
+    }
+    .viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      background: #F8FAFC;
+    }
+    .svg-wrapper {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .svg-wrapper.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .svg-wrapper svg {
+      width: 100%;
+      height: 100%;
+    }
+    .floating-tips {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.85);
+      color: #FFFFFF;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .meta-drawer {
+      background: #FFFFFF;
+      border-top: 1px solid #E2E8F0;
+      padding: 12px 20px;
+      font-size: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      box-shadow: 0 -2px 6px rgba(0,0,0,0.03);
+    }
+    .meta-col h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #64748B;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .meta-col p {
+      color: #334155;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-box">
+      <h1>
+        Activity Diagrams: Sistem SAAS HRIS
+        <span class="badge">Standar UML 2.5 / Akademik</span>
+      </h1>
+      <p class="subtitle">Format Swimlane 2 Kolom (Aktor dan Sistem) Sesuai Standar Formal UML</p>
+    </div>
+    <div class="toolbar">
+      <button class="btn" onclick="zoomIn()">➕ Zoom In</button>
+      <button class="btn" onclick="zoomOut()">➖ Zoom Out</button>
+      <button class="btn" onclick="resetZoom()">⟲ Reset</button>
+      <a id="btn-download-png" class="btn btn-primary" href="#" download>⬇ Download PNG (220 DPI)</a>
+      <a id="btn-download-svg" class="btn" href="#" download>⬇ Download SVG</a>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="sidebar">
+      <div class="sidebar-header">Daftar Activity Diagram (10 Modul)</div>
+      <div id="nav-list"></div>
+    </div>
+
+    <div class="content-area">
+      <div class="viewer-header">
+        <div class="viewer-meta">
+          <h2 id="active-title">Pilih Diagram</h2>
+          <p id="active-subtitle"></p>
+        </div>
+      </div>
+      <div class="viewport" id="viewer-container">
+        <div id="wrapper-Activity_01_Login" class="svg-wrapper active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 765" width="850" height="765" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="720" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="745" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">User</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="133.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="157.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Pengguna membuka</tspan>
+    <tspan x="190.0" dy="13.5">halaman Login</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="133.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="130.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">formulir login (Email</tspan>
+    <tspan x="480" dy="13.5">dan Password)</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="382.5" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="265.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Pengguna menginput</tspan>
+    <tspan x="190.0" dy="13.5">email &amp; password,</tspan>
+    <tspan x="190.0" dy="13.5">lalu klik Masuk</tspan>
+  </text>
+  <path d="M 480 189.75 L 480 225 L 190.0 225 L 190.0 265.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="265.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem memvalidasi</tspan>
+    <tspan x="480" dy="13.5">kredensial &amp; status</tspan>
+    <tspan x="480" dy="13.5">akun di database</tspan>
+  </text>
+  <line x1="280.0" y1="295" x2="382.5" y2="295" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <polygon points="480,377.0 557.5,415 480,453.0 402.5,415" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="406.5" font-size="9.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Apakah</tspan>
+    <tspan x="480" dy="12.5">kredensial</tspan>
+    <tspan x="480" dy="12.5">valid?</tspan>
+  </text>
+  <line x1="480" y1="324.75" x2="480" y2="377.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="600.0" y="385.25" width="190" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="695" y="405.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="695" dy="0">Sistem menampilkan</tspan>
+    <tspan x="695" dy="13.5">pesan &quot;Email atau</tspan>
+    <tspan x="695" dy="13.5">password salah&quot;</tspan>
+  </text>
+  <line x1="557.5" y1="415" x2="600.0" y2="415" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="578.75" y="407" font-size="11" text-anchor="middle" fill="#000000">tidak</text>
+  <path d="M 695 385.25 L 695 245 L 65 245 L 65 295 L 100.0 295" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="505.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="525.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem buat token</tspan>
+    <tspan x="480" dy="13.5">Sanctum &amp; arahkan</tspan>
+    <tspan x="480" dy="13.5">ke Dashboard role</tspan>
+  </text>
+  <line x1="480" y1="453.0" x2="480" y2="505.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="468" y="471.0" font-size="11" text-anchor="end" fill="#000000">ya</text>
+  <line x1="480" y1="564.75" x2="480" y2="616" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="480" cy="630" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="480" cy="630" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_02_Presensi" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 855" width="850" height="855" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="810" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="835" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Karyawan</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="130.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan membuka</tspan>
+    <tspan x="190.0" dy="13.5">menu Presensi pada</tspan>
+    <tspan x="190.0" dy="13.5">aplikasi mobile</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="130.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="130.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem mendeteksi GPS</tspan>
+    <tspan x="480" dy="13.5">&amp; aktifkan kamera</tspan>
+    <tspan x="480" dy="13.5">swafoto karyawan</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="382.5" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="265.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan mengambil</tspan>
+    <tspan x="190.0" dy="13.5">foto selfie &amp; klik</tspan>
+    <tspan x="190.0" dy="13.5">Presensi Masuk</tspan>
+  </text>
+  <path d="M 480 189.75 L 480 225 L 190.0 225 L 190.0 265.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="265.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem hitung jarak</tspan>
+    <tspan x="480" dy="13.5">ke kantor &amp; validasi</tspan>
+    <tspan x="480" dy="13.5">radius geofence</tspan>
+  </text>
+  <line x1="280.0" y1="295" x2="382.5" y2="295" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <polygon points="480,377.0 557.5,415 480,453.0 402.5,415" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="406.5" font-size="9.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Apakah radius</tspan>
+    <tspan x="480" dy="12.5">kantor valid</tspan>
+    <tspan x="480" dy="12.5">(&lt; 50 meter)?</tspan>
+  </text>
+  <line x1="480" y1="324.75" x2="480" y2="377.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="600.0" y="385.25" width="190" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="695" y="405.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="695" dy="0">Sistem menampilkan</tspan>
+    <tspan x="695" dy="13.5">peringatan &quot;Di luar</tspan>
+    <tspan x="695" dy="13.5">radius kantor&quot;</tspan>
+  </text>
+  <line x1="557.5" y1="415" x2="600.0" y2="415" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="578.75" y="407" font-size="11" text-anchor="middle" fill="#000000">tidak</text>
+  <path d="M 695 385.25 L 695 245 L 65 245 L 65 295 L 100.0 295" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="505.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="525.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem catat presensi,</tspan>
+    <tspan x="480" dy="13.5">swafoto, &amp; hitung</tspan>
+    <tspan x="480" dy="13.5">keterlambatan</tspan>
+  </text>
+  <line x1="480" y1="453.0" x2="480" y2="505.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="468" y="471.0" font-size="11" text-anchor="end" fill="#000000">ya</text>
+  <rect x="382.5" y="605.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="625.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">notifikasi bahwa</tspan>
+    <tspan x="480" dy="13.5">presensi tersimpan</tspan>
+  </text>
+  <line x1="480" y1="564.75" x2="480" y2="605.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="480" y1="664.75" x2="480" y2="706" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="480" cy="720" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="480" cy="720" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_03_Pengajuan_Cuti" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 855" width="850" height="855" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="810" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="835" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Karyawan</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="133.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="157.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan membuka</tspan>
+    <tspan x="190.0" dy="13.5">menu Pengajuan Cuti</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="133.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="130.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">formulir cuti &amp; sisa</tspan>
+    <tspan x="480" dy="13.5">kuota cuti tahunan</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="382.5" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="265.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan isi tanggal,</tspan>
+    <tspan x="190.0" dy="13.5">alasan, unggah bukti</tspan>
+    <tspan x="190.0" dy="13.5">&amp; klik Ajukan Cuti</tspan>
+  </text>
+  <path d="M 480 189.75 L 480 225 L 190.0 225 L 190.0 265.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="265.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem memeriksa</tspan>
+    <tspan x="480" dy="13.5">sisa kuota cuti &amp;</tspan>
+    <tspan x="480" dy="13.5">validasi berkas</tspan>
+  </text>
+  <line x1="280.0" y1="295" x2="382.5" y2="295" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <polygon points="480,377.0 557.5,415 480,453.0 402.5,415" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="406.5" font-size="9.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Apakah sisa</tspan>
+    <tspan x="480" dy="12.5">kuota cuti</tspan>
+    <tspan x="480" dy="12.5">mencukupi?</tspan>
+  </text>
+  <line x1="480" y1="324.75" x2="480" y2="377.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="600.0" y="385.25" width="190" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="695" y="405.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="695" dy="0">Sistem menampilkan</tspan>
+    <tspan x="695" dy="13.5">peringatan &quot;Sisa kuota</tspan>
+    <tspan x="695" dy="13.5">cuti tidak cukup&quot;</tspan>
+  </text>
+  <line x1="557.5" y1="415" x2="600.0" y2="415" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="578.75" y="407" font-size="11" text-anchor="middle" fill="#000000">tidak</text>
+  <path d="M 695 385.25 L 695 245 L 65 245 L 65 295 L 100.0 295" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="505.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="525.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem simpan cuti</tspan>
+    <tspan x="480" dy="13.5">status Pending lalu</tspan>
+    <tspan x="480" dy="13.5">notifikasi Manager</tspan>
+  </text>
+  <line x1="480" y1="453.0" x2="480" y2="505.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="468" y="471.0" font-size="11" text-anchor="end" fill="#000000">ya</text>
+  <rect x="382.5" y="605.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="625.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">pesan sukses bahwa</tspan>
+    <tspan x="480" dy="13.5">pengajuan terkirim</tspan>
+  </text>
+  <line x1="480" y1="564.75" x2="480" y2="605.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="480" y1="664.75" x2="480" y2="706" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="480" cy="720" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="480" cy="720" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_04_Approval_Cuti" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 805" width="850" height="805" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="760" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="785" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Manager</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="133.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="157.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager membuka</tspan>
+    <tspan x="190.0" dy="13.5">menu Approval Cuti</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="133.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="130.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">daftar cuti pending</tspan>
+    <tspan x="480" dy="13.5">seluruh karyawan</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="382.5" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="245.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="265.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager memilih data</tspan>
+    <tspan x="190.0" dy="13.5">&amp; tinjau rincian</tspan>
+    <tspan x="190.0" dy="13.5">permohonan cuti</tspan>
+  </text>
+  <path d="M 480 189.75 L 480 220 L 190.0 220 L 190.0 245.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <polygon points="190.0,352.0 267.5,390 190.0,428.0 112.5,390" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="381.5" font-size="9.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Apakah permohonan</tspan>
+    <tspan x="190.0" dy="12.5">cuti disetujui</tspan>
+    <tspan x="190.0" dy="12.5">oleh Manager?</tspan>
+  </text>
+  <line x1="190.0" y1="304.75" x2="190.0" y2="352.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="470.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="490.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager menekan</tspan>
+    <tspan x="190.0" dy="13.5">tombol Setujui</tspan>
+    <tspan x="190.0" dy="13.5">Permohonan</tspan>
+  </text>
+  <line x1="190.0" y1="428.0" x2="190.0" y2="470.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="178.0" y="446.0" font-size="10.5" text-anchor="end" fill="#000000">ya [Disetujui]</text>
+  <rect x="382.5" y="470.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="490.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem set status</tspan>
+    <tspan x="480" dy="13.5">Approved, potong</tspan>
+    <tspan x="480" dy="13.5">kuota &amp; notifikasi</tspan>
+  </text>
+  <line x1="280.0" y1="500" x2="382.5" y2="500" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="480" y1="529.75" x2="480" y2="586" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="480" cy="600" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="480" cy="600" r="9" fill="#000000"/>
+  <rect x="600.0" y="470.25" width="190" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="695" y="490.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="695" dy="0">Sistem set status</tspan>
+    <tspan x="695" dy="13.5">Rejected, simpan catatan</tspan>
+    <tspan x="695" dy="13.5">&amp; kirim notifikasi</tspan>
+  </text>
+  <path d="M 267.5 390 L 695 390 L 695 470.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="283.5" y="382" font-size="10.5" text-anchor="left" fill="#000000">tidak [Ditolak]</text>
+  <line x1="695" y1="529.75" x2="695" y2="586" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="695" cy="600" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="695" cy="600" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_05_Pengajuan_Lembur" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 855" width="850" height="855" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="810" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="835" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Karyawan</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="133.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="157.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan membuka</tspan>
+    <tspan x="190.0" dy="13.5">menu Pengajuan Lembur</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="133.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="130.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">formulir lembur &amp;</tspan>
+    <tspan x="480" dy="13.5">jadwal shift karyawan</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="382.5" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="265.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan isi jam,</tspan>
+    <tspan x="190.0" dy="13.5">alasan, tugas lembur</tspan>
+    <tspan x="190.0" dy="13.5">&amp; klik Ajukan Lembur</tspan>
+  </text>
+  <path d="M 480 189.75 L 480 225 L 190.0 225 L 190.0 265.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="265.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem validasi jam</tspan>
+    <tspan x="480" dy="13.5">lembur di luar shift</tspan>
+    <tspan x="480" dy="13.5">&amp; durasi maksimal</tspan>
+  </text>
+  <line x1="280.0" y1="295" x2="382.5" y2="295" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <polygon points="480,377.0 557.5,415 480,453.0 402.5,415" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="406.5" font-size="9.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Apakah jadwal</tspan>
+    <tspan x="480" dy="12.5">lembur valid</tspan>
+    <tspan x="480" dy="12.5">(sesuai shift)?</tspan>
+  </text>
+  <line x1="480" y1="324.75" x2="480" y2="377.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="600.0" y="385.25" width="190" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="695" y="405.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="695" dy="0">Sistem menampilkan</tspan>
+    <tspan x="695" dy="13.5">peringatan bahwa jam</tspan>
+    <tspan x="695" dy="13.5">lembur tidak valid</tspan>
+  </text>
+  <line x1="557.5" y1="415" x2="600.0" y2="415" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="578.75" y="407" font-size="11" text-anchor="middle" fill="#000000">tidak</text>
+  <path d="M 695 385.25 L 695 245 L 65 245 L 65 295 L 100.0 295" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="505.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="525.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem simpan lembur</tspan>
+    <tspan x="480" dy="13.5">status Pending lalu</tspan>
+    <tspan x="480" dy="13.5">notifikasi Manager</tspan>
+  </text>
+  <line x1="480" y1="453.0" x2="480" y2="505.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="468" y="471.0" font-size="11" text-anchor="end" fill="#000000">ya</text>
+  <rect x="382.5" y="605.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="625.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">pesan konfirmasi bahwa</tspan>
+    <tspan x="480" dy="13.5">lembur terkirim</tspan>
+  </text>
+  <line x1="480" y1="564.75" x2="480" y2="605.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="480" y1="664.75" x2="480" y2="706" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="480" cy="720" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="480" cy="720" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_06_Approval_Lembur" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 805" width="850" height="805" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="760" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="785" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Manager</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="133.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="157.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager membuka</tspan>
+    <tspan x="190.0" dy="13.5">menu Approval Lembur</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="133.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="130.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">daftar lembur pending</tspan>
+    <tspan x="480" dy="13.5">seluruh karyawan</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="382.5" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="245.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="265.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager memilih data</tspan>
+    <tspan x="190.0" dy="13.5">&amp; periksa rincian jam</tspan>
+    <tspan x="190.0" dy="13.5">serta tugas lembur</tspan>
+  </text>
+  <path d="M 480 189.75 L 480 220 L 190.0 220 L 190.0 245.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <polygon points="190.0,352.0 267.5,390 190.0,428.0 112.5,390" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="381.5" font-size="9.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Apakah lembur</tspan>
+    <tspan x="190.0" dy="12.5">disetujui oleh</tspan>
+    <tspan x="190.0" dy="12.5">Manager?</tspan>
+  </text>
+  <line x1="190.0" y1="304.75" x2="190.0" y2="352.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="470.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="490.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager menekan</tspan>
+    <tspan x="190.0" dy="13.5">tombol Setujui</tspan>
+    <tspan x="190.0" dy="13.5">Jam Lembur</tspan>
+  </text>
+  <line x1="190.0" y1="428.0" x2="190.0" y2="470.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="178.0" y="446.0" font-size="10.5" text-anchor="end" fill="#000000">ya [Disetujui]</text>
+  <rect x="382.5" y="470.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="490.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem set status</tspan>
+    <tspan x="480" dy="13.5">Approved, hitung upah</tspan>
+    <tspan x="480" dy="13.5">lembur &amp; notifikasi</tspan>
+  </text>
+  <line x1="280.0" y1="500" x2="382.5" y2="500" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="480" y1="529.75" x2="480" y2="586" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="480" cy="600" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="480" cy="600" r="9" fill="#000000"/>
+  <rect x="600.0" y="470.25" width="190" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="695" y="490.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="695" dy="0">Sistem set status</tspan>
+    <tspan x="695" dy="13.5">Rejected, simpan catatan</tspan>
+    <tspan x="695" dy="13.5">&amp; kirim notifikasi</tspan>
+  </text>
+  <path d="M 267.5 390 L 695 390 L 695 470.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="283.5" y="382" font-size="10.5" text-anchor="left" fill="#000000">tidak [Ditolak]</text>
+  <line x1="695" y1="529.75" x2="695" y2="586" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="695" cy="600" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="695" cy="600" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_07_Penggajian_Payroll" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 735" width="850" height="735" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="690" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="715" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Admin</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="133.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="157.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Admin membuka menu</tspan>
+    <tspan x="190.0" dy="13.5">Penggajian (Payroll)</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="133.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="470.0" y="130.25" width="210" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="575.0" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="575.0" dy="0">Sistem menampilkan</tspan>
+    <tspan x="575.0" dy="13.5">periode payroll &amp;</tspan>
+    <tspan x="575.0" dy="13.5">rekapitulasi presensi</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="470.0" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="243.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="267.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Admin pilih periode &amp;</tspan>
+    <tspan x="190.0" dy="13.5">klik Hitung Gaji</tspan>
+  </text>
+  <path d="M 575.0 189.75 L 575.0 215 L 190.0 215 L 190.0 243.0" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="470.0" y="240.25" width="210" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="575.0" y="260.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="575.0" dy="0">Sistem kalkulasi gaji,</tspan>
+    <tspan x="575.0" dy="13.5">tunjangan, lembur &amp;</tspan>
+    <tspan x="575.0" dy="13.5">potongan kehadiran</tspan>
+  </text>
+  <line x1="280.0" y1="270" x2="470.0" y2="270" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="470.0" y="350.25" width="210" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="575.0" y="370.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="575.0" dy="0">Sistem menampilkan</tspan>
+    <tspan x="575.0" dy="13.5">draf rekapitulasi</tspan>
+    <tspan x="575.0" dy="13.5">payroll karyawan</tspan>
+  </text>
+  <line x1="575.0" y1="299.75" x2="575.0" y2="350.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="455.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="475.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Admin meninjau draf</tspan>
+    <tspan x="190.0" dy="13.5">&amp; klik Terbitkan</tspan>
+    <tspan x="190.0" dy="13.5">Slip Gaji</tspan>
+  </text>
+  <path d="M 470.0 380 L 190.0 380 L 190.0 455.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="470.0" y="455.25" width="210" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="575.0" y="475.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="575.0" dy="0">Sistem simpan status</tspan>
+    <tspan x="575.0" dy="13.5">Published, generate</tspan>
+    <tspan x="575.0" dy="13.5">PDF &amp; rilis slip</tspan>
+  </text>
+  <line x1="280.0" y1="485" x2="470.0" y2="485" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="575.0" y1="514.75" x2="575.0" y2="566" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="575.0" cy="580" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="575.0" cy="580" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_08_Slip_Gaji" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 655" width="850" height="655" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="610" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="635" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Karyawan</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="133.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="157.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan membuka</tspan>
+    <tspan x="190.0" dy="13.5">menu Riwayat Slip Gaji</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="133.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="470.0" y="130.25" width="210" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="575.0" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="575.0" dy="0">Sistem menampilkan</tspan>
+    <tspan x="575.0" dy="13.5">daftar riwayat slip</tspan>
+    <tspan x="575.0" dy="13.5">gaji bulanan</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="470.0" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="245.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="265.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan memilih</tspan>
+    <tspan x="190.0" dy="13.5">periode bulan gaji</tspan>
+    <tspan x="190.0" dy="13.5">yang diinginkan</tspan>
+  </text>
+  <path d="M 575.0 189.75 L 575.0 220 L 190.0 220 L 190.0 245.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="470.0" y="245.25" width="210" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="575.0" y="265.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="575.0" dy="0">Sistem menampilkan</tspan>
+    <tspan x="575.0" dy="13.5">rincian gaji pokok,</tspan>
+    <tspan x="575.0" dy="13.5">tunjangan &amp; lembur</tspan>
+  </text>
+  <line x1="280.0" y1="275" x2="470.0" y2="275" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="363.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="387.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Karyawan menekan</tspan>
+    <tspan x="190.0" dy="13.5">tombol Unduh PDF</tspan>
+  </text>
+  <path d="M 575.0 304.75 L 575.0 335 L 190.0 335 L 190.0 363.0" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="470.0" y="360.25" width="210" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="575.0" y="380.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="575.0" dy="0">Sistem menyiapkan &amp;</tspan>
+    <tspan x="575.0" dy="13.5">mengunduh berkas PDF</tspan>
+    <tspan x="575.0" dy="13.5">slip gaji resmi</tspan>
+  </text>
+  <line x1="280.0" y1="390" x2="470.0" y2="390" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="575.0" y1="419.75" x2="575.0" y2="476" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="575.0" cy="490" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="575.0" cy="490" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_09_Penilaian_Kinerja_SMART" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 955" width="850" height="955" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="910" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="935" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Manager</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="130.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager buka menu</tspan>
+    <tspan x="190.0" dy="13.5">Penilaian Kinerja</tspan>
+    <tspan x="190.0" dy="13.5">metode SMART</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="130.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="130.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">daftar staf &amp;</tspan>
+    <tspan x="480" dy="13.5">bobot kriteria C1-C5</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="382.5" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="265.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager pilih staf &amp;</tspan>
+    <tspan x="190.0" dy="13.5">input nilai kriteria</tspan>
+    <tspan x="190.0" dy="13.5">evaluasi (C1-C5)</tspan>
+  </text>
+  <path d="M 480 189.75 L 480 225 L 190.0 225 L 190.0 265.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="378.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="402.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Manager klik tombol</tspan>
+    <tspan x="190.0" dy="13.5">Simpan &amp; Hitung</tspan>
+  </text>
+  <line x1="190.0" y1="324.75" x2="190.0" y2="378.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="375.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="395.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem normalisasi</tspan>
+    <tspan x="480" dy="13.5">bobot, nilai utilitas</tspan>
+    <tspan x="480" dy="13.5">&amp; hitung skor SMART</tspan>
+  </text>
+  <line x1="280.0" y1="405" x2="382.5" y2="405" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <polygon points="480,482.0 557.5,520 480,558.0 402.5,520" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="511.5" font-size="9.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Apakah seluruh</tspan>
+    <tspan x="480" dy="12.5">staf telah</tspan>
+    <tspan x="480" dy="12.5">dinilai?</tspan>
+  </text>
+  <line x1="480" y1="434.75" x2="480" y2="482.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="600.0" y="490.25" width="190" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="695" y="510.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="695" dy="0">Sistem simpan draf</tspan>
+    <tspan x="695" dy="13.5">hasil evaluasi staf</tspan>
+    <tspan x="695" dy="13.5">ke database</tspan>
+  </text>
+  <line x1="557.5" y1="520" x2="600.0" y2="520" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="578.75" y="512" font-size="11" text-anchor="middle" fill="#000000">tidak</text>
+  <path d="M 695 490.25 L 695 245 L 65 245 L 65 295 L 100.0 295" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="605.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="625.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem hitung ranking,</tspan>
+    <tspan x="480" dy="13.5">tentukan grade, serta</tspan>
+    <tspan x="480" dy="13.5">rekomendasi final</tspan>
+  </text>
+  <line x1="480" y1="558.0" x2="480" y2="605.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="468" y="576.0" font-size="11" text-anchor="end" fill="#000000">ya</text>
+  <rect x="382.5" y="700.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="720.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">tabel perangkingan</tspan>
+    <tspan x="480" dy="13.5">kinerja SMART</tspan>
+  </text>
+  <line x1="480" y1="664.75" x2="480" y2="700.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="480" y1="759.75" x2="480" y2="796" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="480" cy="810" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="480" cy="810" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div id="wrapper-Activity_10_Kelola_Karyawan" class="svg-wrapper ">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 855" width="850" height="855" style="background-color: #FFFFFF; font-family: Arial, sans-serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#000000" />
+    </marker>
+  </defs>
+  <rect x="40" y="25" width="770" height="810" fill="none" stroke="#000000" stroke-width="1.6"/>
+  <line x1="40" y1="69" x2="810" y2="69" stroke="#000000" stroke-width="1.4"/>
+  <line x1="340" y1="25" x2="340" y2="835" stroke="#000000" stroke-width="1.4"/>
+  <text x="190.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Admin</text>
+  <text x="575.0" y="52.0" font-size="14" font-weight="bold" text-anchor="middle" fill="#000000">Sistem</text>
+  <circle cx="190.0" cy="95" r="13" fill="#000000"/>
+  <rect x="100.0" y="133.0" width="180" height="54" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="157.25" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Admin membuka menu</tspan>
+    <tspan x="190.0" dy="13.5">Master Data Karyawan</tspan>
+  </text>
+  <line x1="190.0" y1="108" x2="190.0" y2="133.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="130.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="150.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">tabel data karyawan</tspan>
+    <tspan x="480" dy="13.5">&amp; tombol Tambah</tspan>
+  </text>
+  <line x1="280.0" y1="160" x2="382.5" y2="160" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="100.0" y="265.25" width="180" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="190.0" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="190.0" dy="0">Admin isi data staf</tspan>
+    <tspan x="190.0" dy="13.5">(NIK, Nama, Shift) &amp;</tspan>
+    <tspan x="190.0" dy="13.5">klik Simpan Karyawan</tspan>
+  </text>
+  <path d="M 480 189.75 L 480 225 L 190.0 225 L 190.0 265.25" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="265.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="285.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem validasi data</tspan>
+    <tspan x="480" dy="13.5">&amp; periksa keunikan</tspan>
+    <tspan x="480" dy="13.5">NIK serta Email</tspan>
+  </text>
+  <line x1="280.0" y1="295" x2="382.5" y2="295" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <polygon points="480,377.0 557.5,415 480,453.0 402.5,415" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="406.5" font-size="9.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Apakah data</tspan>
+    <tspan x="480" dy="12.5">valid &amp; NIK</tspan>
+    <tspan x="480" dy="12.5">belum ada?</tspan>
+  </text>
+  <line x1="480" y1="324.75" x2="480" y2="377.0" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="600.0" y="385.25" width="190" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="695" y="405.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="695" dy="0">Sistem menampilkan</tspan>
+    <tspan x="695" dy="13.5">peringatan &quot;NIK atau</tspan>
+    <tspan x="695" dy="13.5">Email sudah ada&quot;</tspan>
+  </text>
+  <line x1="557.5" y1="415" x2="600.0" y2="415" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="578.75" y="407" font-size="11" text-anchor="middle" fill="#000000">tidak</text>
+  <path d="M 695 385.25 L 695 245 L 65 245 L 65 295 L 100.0 295" fill="none" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <rect x="382.5" y="505.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="525.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem simpan data</tspan>
+    <tspan x="480" dy="13.5">karyawan baru ke</tspan>
+    <tspan x="480" dy="13.5">tabel employees</tspan>
+  </text>
+  <line x1="480" y1="453.0" x2="480" y2="505.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <text x="468" y="471.0" font-size="11" text-anchor="end" fill="#000000">ya</text>
+  <rect x="382.5" y="605.25" width="195" height="59.5" rx="8" ry="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/>
+  <text x="480" y="625.5" font-size="10.5" text-anchor="middle" fill="#000000">
+    <tspan x="480" dy="0">Sistem menampilkan</tspan>
+    <tspan x="480" dy="13.5">notifikasi sukses &amp;</tspan>
+    <tspan x="480" dy="13.5">refresh tabel data</tspan>
+  </text>
+  <line x1="480" y1="564.75" x2="480" y2="605.25" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <line x1="480" y1="664.75" x2="480" y2="706" stroke="#000000" stroke-width="1.3" marker-end="url(#arrow)"/>
+  <circle cx="480" cy="720" r="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.8"/>
+  <circle cx="480" cy="720" r="9" fill="#000000"/>
+</svg>
+        </div>
+        <div class="floating-tips">
+          💡 Gunakan <strong>Scroll Mouse</strong> untuk Zoom dan <strong>Drag Klik-Kiri</strong> untuk Menggeser Diagram
+        </div>
+      </div>
+      <div class="meta-drawer">
+        <div class="meta-col">
+          <h3>Deskripsi Alur Proses</h3>
+          <p id="meta-desc">-</p>
+        </div>
+        <div class="meta-col">
+          <h3>Kondisi Awal (Prekondisi)</h3>
+          <p id="meta-pre">-</p>
+        </div>
+        <div class="meta-col">
+          <h3>Kondisi Akhir (Postkondisi)</h3>
+          <p id="meta-post">-</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DIAGRAMS = [
+  {
+    "id": "Activity_01_Login",
+    "title": "Activity Diagram: Login dan Autentikasi Pengguna",
+    "actor": "User",
+    "subtitle": "Autentikasi dan Verifikasi Kredensial Berdasarkan Role",
+    "description": "Proses autentikasi masuk ke sistem SAAS HRIS dengan verifikasi email, kata sandi, dan penerbitan token sesi Sanctum.",
+    "preconditions": "Pengguna memiliki akun aktif yang terdaftar di dalam sistem.",
+    "postconditions": "Pengguna berhasil masuk ke dashboard sesuai hak akses atau menerima pesan kesalahan validasi.",
+    "pattern": "validation_loop",
+    "u1": "Pengguna membuka\nhalaman Login",
+    "s1": "Sistem menampilkan\nformulir login (Email\ndan Password)",
+    "u2": "Pengguna menginput\nemail & password,\nlalu klik Masuk",
+    "s2": "Sistem memvalidasi\nkredensial & status\nakun di database",
+    "decision": "Apakah\nkredensial\nvalid?",
+    "alt_branch": "Sistem menampilkan\npesan \"Email atau\npassword salah\"",
+    "succ_branch": "Sistem buat token\nSanctum & arahkan\nke Dashboard role",
+    "final_step": null,
+    "height": 720
+  },
+  {
+    "id": "Activity_02_Presensi",
+    "title": "Activity Diagram: Presensi Kehadiran Mobile",
+    "actor": "Karyawan",
+    "subtitle": "Pencatatan Presensi Masuk dan Pulang dengan Geofencing serta Swafoto",
+    "description": "Proses pencatatan presensi harian karyawan melalui aplikasi mobile dengan validasi radius GPS kantor dan foto swafoto.",
+    "preconditions": "Karyawan telah login pada aplikasi mobile dan berada dalam jadwal shift kerja aktif.",
+    "postconditions": "Data kehadiran tersimpan di database dan status keterlambatan dihitung otomatis.",
+    "pattern": "validation_loop",
+    "u1": "Karyawan membuka\nmenu Presensi pada\naplikasi mobile",
+    "s1": "Sistem mendeteksi GPS\n& aktifkan kamera\nswafoto karyawan",
+    "u2": "Karyawan mengambil\nfoto selfie & klik\nPresensi Masuk",
+    "s2": "Sistem hitung jarak\nke kantor & validasi\nradius geofence",
+    "decision": "Apakah radius\nkantor valid\n(< 50 meter)?",
+    "alt_branch": "Sistem menampilkan\nperingatan \"Di luar\nradius kantor\"",
+    "succ_branch": "Sistem catat presensi,\nswafoto, & hitung\nketerlambatan",
+    "final_step": "Sistem menampilkan\nnotifikasi bahwa\npresensi tersimpan",
+    "height": 810
+  },
+  {
+    "id": "Activity_03_Pengajuan_Cuti",
+    "title": "Activity Diagram: Pengajuan Cuti Karyawan",
+    "actor": "Karyawan",
+    "subtitle": "Permohonan Cuti Tahunan, Izin, atau Sakit Mandiri",
+    "description": "Proses pengajuan cuti oleh karyawan dengan pengecekan saldo kuota cuti tahunan dan unggah berkas pendukung.",
+    "preconditions": "Karyawan memiliki akun aktif dan sisa kuota cuti pada tahun berjalan.",
+    "postconditions": "Pengajuan cuti tersimpan berstatus Pending dan notifikasi terkirim ke Manager.",
+    "pattern": "validation_loop",
+    "u1": "Karyawan membuka\nmenu Pengajuan Cuti",
+    "s1": "Sistem menampilkan\nformulir cuti & sisa\nkuota cuti tahunan",
+    "u2": "Karyawan isi tanggal,\nalasan, unggah bukti\n& klik Ajukan Cuti",
+    "s2": "Sistem memeriksa\nsisa kuota cuti &\nvalidasi berkas",
+    "decision": "Apakah sisa\nkuota cuti\nmencukupi?",
+    "alt_branch": "Sistem menampilkan\nperingatan \"Sisa kuota\ncuti tidak cukup\"",
+    "succ_branch": "Sistem simpan cuti\nstatus Pending lalu\nnotifikasi Manager",
+    "final_step": "Sistem menampilkan\npesan sukses bahwa\npengajuan terkirim",
+    "height": 810
+  },
+  {
+    "id": "Activity_04_Approval_Cuti",
+    "title": "Activity Diagram: Persetujuan Cuti oleh Manager",
+    "actor": "Manager",
+    "subtitle": "Persetujuan atau Penolakan Permohonan Cuti Tim Kerja",
+    "description": "Proses evaluasi permohonan cuti oleh Manager untuk menyetujui (memotong kuota) atau menolak permohonan cuti.",
+    "preconditions": "Terdapat permohonan cuti berstatus Pending dari anggota tim kerja.",
+    "postconditions": "Status permohonan cuti diperbarui menjadi Approved atau Rejected secara definitif.",
+    "pattern": "approval_branch",
+    "u1": "Manager membuka\nmenu Approval Cuti",
+    "s1": "Sistem menampilkan\ndaftar cuti pending\nseluruh karyawan",
+    "u2": "Manager memilih data\n& tinjau rincian\npermohonan cuti",
+    "decision": "Apakah permohonan\ncuti disetujui\noleh Manager?",
+    "u_app": "Manager menekan\ntombol Setujui\nPermohonan",
+    "s_app": "Sistem set status\nApproved, potong\nkuota & notifikasi",
+    "s_rej": "Sistem set status\nRejected, simpan catatan\n& kirim notifikasi",
+    "height": 760
+  },
+  {
+    "id": "Activity_05_Pengajuan_Lembur",
+    "title": "Activity Diagram: Pengajuan Lembur Karyawan",
+    "actor": "Karyawan",
+    "subtitle": "Permohonan Jam Kerja Lembur Mandiri di Luar Shift",
+    "description": "Proses pengajuan jam lembur di luar shift kerja normal lengkap dengan rincian tugas yang dikerjakan.",
+    "preconditions": "Karyawan telah terdaftar pada shift kerja resmi perusahaan.",
+    "postconditions": "Pengajuan lembur tersimpan berstatus Pending menunggu peninjauan Manager.",
+    "pattern": "validation_loop",
+    "u1": "Karyawan membuka\nmenu Pengajuan Lembur",
+    "s1": "Sistem menampilkan\nformulir lembur &\njadwal shift karyawan",
+    "u2": "Karyawan isi jam,\nalasan, tugas lembur\n& klik Ajukan Lembur",
+    "s2": "Sistem validasi jam\nlembur di luar shift\n& durasi maksimal",
+    "decision": "Apakah jadwal\nlembur valid\n(sesuai shift)?",
+    "alt_branch": "Sistem menampilkan\nperingatan bahwa jam\nlembur tidak valid",
+    "succ_branch": "Sistem simpan lembur\nstatus Pending lalu\nnotifikasi Manager",
+    "final_step": "Sistem menampilkan\npesan konfirmasi bahwa\nlembur terkirim",
+    "height": 810
+  },
+  {
+    "id": "Activity_06_Approval_Lembur",
+    "title": "Activity Diagram: Persetujuan Lembur oleh Manager",
+    "actor": "Manager",
+    "subtitle": "Persetujuan atau Penolakan Permohonan Lembur Tim Kerja",
+    "description": "Proses verifikasi jam kerja lembur dan estimasi upah lembur oleh Manager sebelum diteruskan ke rekap payroll.",
+    "preconditions": "Terdapat pengajuan lembur berstatus Pending dari anggota tim kerja.",
+    "postconditions": "Status lembur diperbarui menjadi Approved atau Rejected dan upah lembur dikalkulasi.",
+    "pattern": "approval_branch",
+    "u1": "Manager membuka\nmenu Approval Lembur",
+    "s1": "Sistem menampilkan\ndaftar lembur pending\nseluruh karyawan",
+    "u2": "Manager memilih data\n& periksa rincian jam\nserta tugas lembur",
+    "decision": "Apakah lembur\ndisetujui oleh\nManager?",
+    "u_app": "Manager menekan\ntombol Setujui\nJam Lembur",
+    "s_app": "Sistem set status\nApproved, hitung upah\nlembur & notifikasi",
+    "s_rej": "Sistem set status\nRejected, simpan catatan\n& kirim notifikasi",
+    "height": 760
+  },
+  {
+    "id": "Activity_07_Penggajian_Payroll",
+    "title": "Activity Diagram: Pengelolaan Penggajian (Payroll)",
+    "actor": "Admin",
+    "subtitle": "Kalkulasi Otomatis Gaji Pokok, Tunjangan, Lembur, dan Potongan Kehadiran",
+    "description": "Proses perhitungan gaji bulanan terintegrasi dengan data presensi dan lembur yang menghasilkan slip gaji resmi.",
+    "preconditions": "Rekapitulasi presensi dan lembur pada periode aktif telah ditutup.",
+    "postconditions": "Data slip gaji karyawan tersimpan permanen dan berkas PDF slip gaji siap diakses karyawan.",
+    "pattern": "payroll_flow",
+    "u1": "Admin membuka menu\nPenggajian (Payroll)",
+    "s1": "Sistem menampilkan\nperiode payroll &\nrekapitulasi presensi",
+    "u2": "Admin pilih periode &\nklik Hitung Gaji",
+    "s2": "Sistem kalkulasi gaji,\ntunjangan, lembur &\npotongan kehadiran",
+    "s2_extra": "Sistem menampilkan\ndraf rekapitulasi\npayroll karyawan",
+    "u3": "Admin meninjau draf\n& klik Terbitkan\nSlip Gaji",
+    "s3": "Sistem simpan status\nPublished, generate\nPDF & rilis slip",
+    "height": 690
+  },
+  {
+    "id": "Activity_08_Slip_Gaji",
+    "title": "Activity Diagram: Melihat dan Mengunduh Slip Gaji",
+    "actor": "Karyawan",
+    "subtitle": "Akses Rincian Penghasilan dan Ekspor Berkas PDF Slip Gaji",
+    "description": "Proses karyawan melihat rincian take-home-pay dan mengunduh berkas PDF slip gaji resmi dari sistem.",
+    "preconditions": "Admin telah menerbitkan (published) slip gaji pada periode kerja yang bersangkutan.",
+    "postconditions": "Berkas PDF slip gaji resmi terunduh ke penyimpanan perangkat pengguna.",
+    "pattern": "linear_flow",
+    "u1": "Karyawan membuka\nmenu Riwayat Slip Gaji",
+    "s1": "Sistem menampilkan\ndaftar riwayat slip\ngaji bulanan",
+    "u2": "Karyawan memilih\nperiode bulan gaji\nyang diinginkan",
+    "s2": "Sistem menampilkan\nrincian gaji pokok,\ntunjangan & lembur",
+    "u3": "Karyawan menekan\ntombol Unduh PDF",
+    "s3": "Sistem menyiapkan &\nmengunduh berkas PDF\nslip gaji resmi",
+    "height": 610
+  },
+  {
+    "id": "Activity_09_Penilaian_Kinerja_SMART",
+    "title": "Activity Diagram: Penilaian Kinerja Karyawan (SMART)",
+    "actor": "Manager",
+    "subtitle": "Kalkulasi SPK Metode Simple Multi-Attribute Rating Technique",
+    "description": "Proses evaluasi kinerja berkala karyawan dengan normalisasi bobot, nilai utilitas, pemeringkatan, dan rekomendasi otomatis.",
+    "preconditions": "Periode evaluasi kinerja dibuka dan kriteria penilaian C1-C5 telah ditentukan.",
+    "postconditions": "Skor akhir SMART tersimpan dan tabel pemeringkatan kinerja karyawan diterbitkan.",
+    "pattern": "smart_evaluation",
+    "u1": "Manager buka menu\nPenilaian Kinerja\nmetode SMART",
+    "s1": "Sistem menampilkan\ndaftar staf &\nbobot kriteria C1-C5",
+    "u2": "Manager pilih staf &\ninput nilai kriteria\nevaluasi (C1-C5)",
+    "u2_extra": "Manager klik tombol\nSimpan & Hitung",
+    "s2": "Sistem normalisasi\nbobot, nilai utilitas\n& hitung skor SMART",
+    "decision": "Apakah seluruh\nstaf telah\ndinilai?",
+    "alt_branch": "Sistem simpan draf\nhasil evaluasi staf\nke database",
+    "succ_branch": "Sistem hitung ranking,\ntentukan grade, serta\nrekomendasi final",
+    "final_step": "Sistem menampilkan\ntabel perangkingan\nkinerja SMART",
+    "height": 910
+  },
+  {
+    "id": "Activity_10_Kelola_Karyawan",
+    "title": "Activity Diagram: Manajemen Master Data Karyawan",
+    "actor": "Admin",
+    "subtitle": "Pengelolaan Data Induk Kepegawaian dan Akun Pengguna",
+    "description": "Proses penambahan data induk karyawan baru dengan validasi keunikan NIK, email, jabatan, dan shift kerja.",
+    "preconditions": "Pengguna login sebagai Administrator dengan hak akses penuh master data.",
+    "postconditions": "Data karyawan baru tersimpan di database dan akun login pengguna aktif.",
+    "pattern": "validation_loop",
+    "u1": "Admin membuka menu\nMaster Data Karyawan",
+    "s1": "Sistem menampilkan\ntabel data karyawan\n& tombol Tambah",
+    "u2": "Admin isi data staf\n(NIK, Nama, Shift) &\nklik Simpan Karyawan",
+    "s2": "Sistem validasi data\n& periksa keunikan\nNIK serta Email",
+    "decision": "Apakah data\nvalid & NIK\nbelum ada?",
+    "alt_branch": "Sistem menampilkan\nperingatan \"NIK atau\nEmail sudah ada\"",
+    "succ_branch": "Sistem simpan data\nkaryawan baru ke\ntabel employees",
+    "final_step": "Sistem menampilkan\nnotifikasi sukses &\nrefresh tabel data",
+    "height": 810
+  }
+];
+
+    let panZoomInstance = null;
+    let currentId = DIAGRAMS[0].id;
+
+    function renderNav() {
+      const container = document.getElementById('nav-list');
+      container.innerHTML = '';
+      DIAGRAMS.forEach((d, idx) => {
+        const item = document.createElement('div');
+        item.className = 'nav-item ' + (d.id === currentId ? 'active' : '');
+        item.onclick = () => selectDiagram(d.id);
+
+        let tagClass = 'tag-user';
+        if (d.actor === 'Karyawan') tagClass = 'tag-karyawan';
+        else if (d.actor === 'Manager') tagClass = 'tag-manager';
+        else if (d.actor === 'Admin') tagClass = 'tag-admin';
+
+        item.innerHTML = `
+          <div class="nav-title">${idx + 1}. ${d.title.replace('Activity Diagram: ', '')}</div>
+          <div class="nav-desc">${d.subtitle}</div>
+          <span class="nav-tag ${tagClass}">Aktor: ${d.actor}</span>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function initPanZoom(id) {
+      if (typeof svgPanZoom === 'undefined') {
+        return;
+      }
+      if (panZoomInstance) {
+        try { panZoomInstance.destroy(); } catch (e) {}
+        panZoomInstance = null;
+      }
+      const svgEl = document.querySelector('#wrapper-' + id + ' svg');
+      if (svgEl) {
+        svgEl.id = 'svg-elem-' + id;
+        try {
+          panZoomInstance = svgPanZoom('#svg-elem-' + id, {
+            zoomEnabled: true,
+            controlIconsEnabled: false,
+            fit: true,
+            center: true,
+            minZoom: 0.3,
+            maxZoom: 8.0,
+            zoomScaleSensitivity: 0.2
+          });
+        } catch (e) {
+          console.error('PanZoom error:', e);
+        }
+      }
+    }
+
+    function selectDiagram(id) {
+      currentId = id;
+      renderNav();
+      const d = DIAGRAMS.find(x => x.id === id);
+      if (!d) return;
+
+      document.getElementById('active-title').innerText = d.title;
+      document.getElementById('active-subtitle').innerText = d.subtitle + ' : Aktor ' + d.actor + ' dan Sistem';
+      document.getElementById('meta-desc').innerText = d.description;
+      document.getElementById('meta-pre').innerText = d.preconditions;
+      document.getElementById('meta-post').innerText = d.postconditions;
+
+      document.getElementById('btn-download-png').href = d.id + '.png';
+      document.getElementById('btn-download-png').setAttribute('download', d.id + '.png');
+      document.getElementById('btn-download-svg').href = d.id + '.svg';
+      document.getElementById('btn-download-svg').setAttribute('download', d.id + '.svg');
+
+      document.querySelectorAll('.svg-wrapper').forEach(w => w.classList.remove('active'));
+      const wrapper = document.getElementById('wrapper-' + id);
+      if (wrapper) {
+        wrapper.classList.add('active');
+      }
+
+      setTimeout(() => initPanZoom(id), 30);
+    }
+
+    function zoomIn() { if (panZoomInstance) panZoomInstance.zoomIn(); }
+    function zoomOut() { if (panZoomInstance) panZoomInstance.zoomOut(); }
+    function resetZoom() {
+      if (panZoomInstance) {
+        try {
+          panZoomInstance.reset();
+          panZoomInstance.fit();
+          panZoomInstance.center();
+        } catch (e) {
+          try {
+            panZoomInstance.resetZoom();
+            panZoomInstance.center();
+          } catch (e2) {}
+        }
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderNav();
+      selectDiagram(DIAGRAMS[0].id);
+    });
+  </script>
+</body>
+</html>

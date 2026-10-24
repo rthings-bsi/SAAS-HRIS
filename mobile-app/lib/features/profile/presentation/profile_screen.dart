@@ -13,22 +13,24 @@ class ProfileScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: const RoundedRectangleBorder(
-          borderRadius: AppDimensions.cardBorderRadius,
+        backgroundColor: AppColors.surfaceCard,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.dangerBg,
-                borderRadius: AppDimensions.buttonBorderRadius,
-                border: Border.all(color: AppColors.dangerBorder),
+                color: AppColors.statusDangerBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.statusDangerBorder),
               ),
               child: const Icon(
                 Icons.logout_rounded,
-                color: AppColors.dangerText,
-                size: 22,
+                color: AppColors.statusDanger,
+                size: 20,
               ),
             ),
             const SizedBox(width: 12),
@@ -38,7 +40,8 @@ class ProfileScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.inkPrimary,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.2,
                 ),
               ),
             ),
@@ -48,10 +51,11 @@ class ProfileScreen extends ConsumerWidget {
           'Apakah Anda yakin ingin keluar dari sesi aplikasi HR Hub pada perangkat ini?',
           style: TextStyle(
             fontSize: 13,
-            color: AppColors.inkMuted,
+            color: AppColors.textBody,
             height: 1.45,
           ),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
             style: TextButton.styleFrom(
@@ -61,19 +65,19 @@ class ProfileScreen extends ConsumerWidget {
             child: const Text(
               'Batal',
               style: TextStyle(
-                color: AppColors.inkMuted,
+                color: AppColors.textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.dangerText,
+              backgroundColor: AppColors.statusDanger,
               foregroundColor: Colors.white,
               elevation: 0,
               minimumSize: const Size(100, AppDimensions.minTouchTarget),
-              shape: const RoundedRectangleBorder(
-                borderRadius: AppDimensions.buttonBorderRadius,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             onPressed: () {
@@ -82,7 +86,7 @@ class ProfileScreen extends ConsumerWidget {
             },
             child: const Text(
               'Keluar',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -116,7 +120,6 @@ class ProfileScreen extends ConsumerWidget {
     final statusLabel = auth.employmentStatusLabel;
     final hireDateFormatted = _formatDate(auth.hireDate);
 
-    // Initial avatar letters
     final initials = userName.trim().isNotEmpty
         ? userName
             .trim()
@@ -127,18 +130,27 @@ class ProfileScreen extends ConsumerWidget {
         : 'U';
 
     return Scaffold(
-      backgroundColor: AppColors.surfaceMuted,
+      backgroundColor: AppColors.surfaceCanvas,
       appBar: AppBar(
-        title: const Row(
+        backgroundColor: AppColors.surfaceCard,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(color: AppColors.borderSubtle, height: 1.0),
+        ),
+        title: Row(
           children: [
-            HrHubLogo(size: 24),
-            SizedBox(width: 10),
-            Text(
+            const HrHubLogo(size: 26),
+            const SizedBox(width: 10),
+            Container(width: 1, height: 16, color: AppColors.borderStrong),
+            const SizedBox(width: 10),
+            const Text(
               'Profil Saya',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: AppColors.inkPrimary,
+                color: AppColors.textPrimary,
                 letterSpacing: -0.3,
               ),
             ),
@@ -150,184 +162,240 @@ class ProfileScreen extends ConsumerWidget {
           await ref.read(authStateProvider.notifier).refreshProfile();
         },
         child: ListView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.space16,
-            vertical: AppDimensions.space16,
-          ),
+          padding: const EdgeInsets.all(AppDimensions.space16),
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            // User Header Card with Avatar and Badges
+            // User Header Card
             Container(
-              padding: const EdgeInsets.all(AppDimensions.space20),
+              padding: const EdgeInsets.all(AppDimensions.space16),
               decoration: BoxDecoration(
-                color: AppColors.canvasLight,
+                color: AppColors.surfaceCard,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFFE2E8F0),
+                  color: AppColors.borderSubtle,
                   width: 1.0,
                 ),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x06000000),
-                    blurRadius: 8,
+                    blurRadius: 10,
                     offset: Offset(0, 2),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  // Corporate Navy Avatar Matching Web-Admin
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.corporateNavy, AppColors.corporateBlueMuted],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Corporate Avatar with verified badge
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              initials,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: -3,
+                            right: -3,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              decoration: const BoxDecoration(
+                                color: AppColors.statusSuccess,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 13,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      shape: BoxShape.circle,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x28094595),
-                          blurRadius: 14,
-                          offset: Offset(0, 4),
+                      const SizedBox(width: AppDimensions.space16),
+
+                      // Name & Position details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                if (statusLabel != null)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.statusSuccessBg,
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: AppColors.statusSuccessBorder,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      statusLabel,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.statusSuccess,
+                                      ),
+                                    ),
+                                  ),
+                                if (nik != null && nik.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surfaceMuted,
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      'NIK: $nik',
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              userName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              jobPosition,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppDimensions.space16),
+
+                  // Mini stats banner: Organisasi & Masa Kerja
+                  Container(
+                    padding: const EdgeInsets.all(AppDimensions.space12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceCanvas,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.borderSubtle,
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Tenant Organisasi',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                companyName,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 32,
+                          color: AppColors.borderSubtle,
+                        ),
+                        const SizedBox(width: AppDimensions.space12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Mulai Bekerja',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                hireDateFormatted,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      initials,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.space12),
-
-                  // Name & Position
-                  Text(
-                    userName,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.inkPrimary,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.space4),
-                  Text(
-                    jobPosition,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.actionAccent,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.space12),
-
-                  // Badges (Employment Status & NIK)
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      if (statusLabel != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.successBg,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: AppColors.successBorder,
-                              width: 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.check_circle_rounded,
-                                size: 12,
-                                color: AppColors.successText,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                statusLabel,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.successText,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      if (nik != null && nik.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceMuted,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: AppColors.hairline,
-                              width: 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.badge_outlined,
-                                size: 12,
-                                color: AppColors.inkMuted,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'NIK: $nik',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.inkMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: AppDimensions.space16),
 
-            // Section 1: Employment / Company Details
+            // Section 1: Pekerjaan & Penugasan
             _buildSectionHeader(
-              title: 'Informasi Pekerjaan',
+              title: 'Pekerjaan & Penugasan',
               icon: Icons.business_center_outlined,
             ),
             const SizedBox(height: AppDimensions.space8),
             _buildInfoCard(
               children: [
                 _buildInfoTile(
-                  icon: Icons.apartment_rounded,
-                  label: 'Perusahaan',
-                  value: companyName,
-                ),
-                _buildDivider(),
-                _buildInfoTile(
-                  icon: Icons.location_on_outlined,
+                  icon: Icons.store_rounded,
                   label: 'Kantor Cabang',
                   value: branch,
                 ),
@@ -345,17 +413,24 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 _buildDivider(),
                 _buildInfoTile(
-                  icon: Icons.event_available_outlined,
-                  label: 'Tanggal Bergabung',
-                  value: hireDateFormatted,
+                  icon: Icons.schedule_rounded,
+                  label: 'Shift Kerja',
+                  value: 'Reguler Operasional',
+                ),
+                _buildDivider(),
+                _buildInfoTile(
+                  icon: Icons.near_me_rounded,
+                  label: 'Geofence Presensi',
+                  value: 'Radius 50m Aktif',
+                  valueColor: AppColors.statusSuccess,
                 ),
               ],
             ),
             const SizedBox(height: AppDimensions.space16),
 
-            // Section 2: Personal Contact Details
+            // Section 2: Kontak & Keamanan Akun
             _buildSectionHeader(
-              title: 'Kontak & Akun',
+              title: 'Kontak & Keamanan Akun',
               icon: Icons.person_outline_rounded,
             ),
             const SizedBox(height: AppDimensions.space8),
@@ -388,7 +463,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppDimensions.space16),
 
-            // Section 3: Payroll Bank Account (if present)
+            // Section 3: Rekening Penggajian
             if (auth.bankName != null && auth.bankName!.isNotEmpty) ...[
               _buildSectionHeader(
                 title: 'Rekening Penggajian',
@@ -419,50 +494,50 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: AppDimensions.space16),
             ],
 
-            // Section 4: App Information
+            // Section 4: Aplikasi & Dukungan
             _buildSectionHeader(
-              title: 'Aplikasi',
+              title: 'Bantuan & Informasi',
               icon: Icons.info_outline_rounded,
             ),
             const SizedBox(height: AppDimensions.space8),
             _buildInfoCard(
               children: [
                 _buildInfoTile(
+                  icon: Icons.support_agent_rounded,
+                  label: 'Pusat Bantuan',
+                  value: 'Tim HR & Operasional',
+                ),
+                _buildDivider(),
+                _buildInfoTile(
                   icon: Icons.phone_android_rounded,
                   label: 'Versi Aplikasi',
-                  value: 'HR Hub Mobile v1.0.0',
+                  value: 'HR Hub Mobile v2.4.0',
                 ),
                 _buildDivider(),
                 _buildInfoTile(
                   icon: Icons.cloud_done_outlined,
                   label: 'Status Layanan',
-                  value: 'Terhubung ke Cloud',
-                  valueColor: AppColors.successText,
-                ),
-                _buildDivider(),
-                _buildInfoTile(
-                  icon: Icons.dns_outlined,
-                  label: 'Server API Terhubung',
-                  value: 'api-hris.rickysatria.web.id',
+                  value: 'Terkoneksi Aman (SSL)',
+                  valueColor: AppColors.statusSuccess,
                 ),
               ],
             ),
             const SizedBox(height: AppDimensions.space24),
 
-            // Destructive Log Out Action Card
+            // Log Out Button
             Container(
               decoration: BoxDecoration(
-                color: AppColors.dangerBg,
-                borderRadius: BorderRadius.circular(16),
+                color: AppColors.statusDangerBg,
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppColors.dangerBorder,
-                  width: AppDimensions.borderWidth,
+                  color: AppColors.statusDangerBorder,
+                  width: 1.0,
                 ),
               ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   onTap: () => _showLogoutDialog(context, ref),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(
@@ -478,7 +553,7 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           Icon(
                             Icons.logout_rounded,
-                            color: AppColors.dangerText,
+                            color: AppColors.statusDanger,
                             size: 20,
                           ),
                           SizedBox(width: 8),
@@ -487,7 +562,7 @@ class ProfileScreen extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.dangerText,
+                              color: AppColors.statusDanger,
                             ),
                           ),
                         ],
@@ -509,14 +584,15 @@ class ProfileScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: AppColors.inkMuted),
+          Icon(icon, size: 16, color: AppColors.textMuted),
           const SizedBox(width: 6),
           Text(
             title,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.inkMuted,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted,
+              letterSpacing: -0.1,
             ),
           ),
         ],
@@ -527,17 +603,17 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildInfoCard({required List<Widget> children}) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.canvasLight,
+        color: AppColors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE2E8F0),
+          color: AppColors.borderSubtle,
           width: 1.0,
         ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x04000000),
             blurRadius: 6,
-            offset: Offset(0, 2),
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -554,7 +630,7 @@ class ProfileScreen extends ConsumerWidget {
     Color? valueColor,
   }) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 46),
+      constraints: const BoxConstraints(minHeight: 48),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.space16,
@@ -565,7 +641,7 @@ class ProfileScreen extends ConsumerWidget {
             Icon(
               icon,
               size: 18,
-              color: AppColors.inkMuted,
+              color: AppColors.textMuted,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -575,7 +651,7 @@ class ProfileScreen extends ConsumerWidget {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.inkMuted,
+                  color: AppColors.textMuted,
                 ),
               ),
             ),
@@ -588,7 +664,7 @@ class ProfileScreen extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: valueColor ?? AppColors.inkPrimary,
+                  color: valueColor ?? AppColors.textPrimary,
                 ),
               ),
             ),
@@ -602,7 +678,7 @@ class ProfileScreen extends ConsumerWidget {
     return const Divider(
       height: 1,
       thickness: 1,
-      color: Color(0xFFF1F5F9),
+      color: AppColors.borderSubtle,
       indent: 16,
       endIndent: 16,
     );

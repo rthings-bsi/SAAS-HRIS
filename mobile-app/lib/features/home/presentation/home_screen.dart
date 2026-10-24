@@ -230,15 +230,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           decoration: BoxDecoration(
                             color: isActive ? AppColors.navActive : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
-                            boxShadow: isActive
-                                ? const [
-                                    BoxShadow(
-                                      color: Color(0x3816A34A),
-                                      blurRadius: 8,
-                                      offset: Offset(0, 3),
-                                    ),
-                                  ]
-                                : null,
                           ),
                           alignment: Alignment.center,
                           child: Icon(
@@ -255,7 +246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                            color: isActive ? const Color(0xFF15803D) : const Color(0xFF64748B),
+                            color: isActive ? AppColors.navActive : AppColors.navInactive,
                             letterSpacing: -0.2,
                           ),
                         ),

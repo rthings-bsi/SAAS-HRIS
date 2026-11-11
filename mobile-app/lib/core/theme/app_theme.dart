@@ -173,6 +173,16 @@ class AppTheme {
           );
         }),
       ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: SmoothMenuPageTransitionsBuilder(),
+          TargetPlatform.iOS: SmoothMenuPageTransitionsBuilder(),
+          TargetPlatform.linux: SmoothMenuPageTransitionsBuilder(),
+          TargetPlatform.macOS: SmoothMenuPageTransitionsBuilder(),
+          TargetPlatform.windows: SmoothMenuPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: SmoothMenuPageTransitionsBuilder(),
+        },
+      ),
       textTheme: const TextTheme(
         headlineMedium: TextStyle(
           fontSize: 24,
@@ -258,6 +268,75 @@ class AppTextStyle {
       fontWeight: fontWeight,
       color: color,
       fontFeatures: const [FontFeature.tabularFigures()],
+    );
+  }
+}
+
+class SmoothMenuPageTransitionsBuilder extends PageTransitionsBuilder {
+  const SmoothMenuPageTransitionsBuilder();
+
+  static final Animatable<Offset> _primaryEnterTween = Tween<Offset>(
+    begin: const Offset(0.14, 0.0),
+    end: Offset.zero,
+  ).chain(CurveTween(curve: Curves.easeOutCubic));
+
+  static final Animatable<Offset> _primaryExitTween = Tween<Offset>(
+    begin: const Offset(0.14, 0.0),
+    end: Offset.zero,
+  ).chain(CurveTween(curve: Curves.easeInCubic));
+
+  static final Animatable<Offset> _secondarySlideTween = Tween<Offset>(
+    begin: Offset.zero,
+    end: const Offset(-0.05, 0.0),
+  ).chain(CurveTween(curve: Curves.easeOutCubic));
+
+  static final Animatable<double> _fadeEnterTween = Tween<double>(
+    begin: 0.25,
+    end: 1.0,
+  ).chain(
+    CurveTween(
+      curve: const Interval(0.0, 0.65, curve: Curves.easeOutCubic),
+    ),
+  );
+
+  static final Animatable<double> _fadeExitTween = Tween<double>(
+    begin: 0.25,
+    end: 1.0,
+  ).chain(
+    CurveTween(
+      curve: const Interval(0.15, 1.0, curve: Curves.easeInCubic),
+    ),
+  );
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return child;
+    }
+
+    final isReversing = animation.status == AnimationStatus.reverse;
+    final primaryPosition = animation.drive(
+      isReversing ? _primaryExitTween : _primaryEnterTween,
+    );
+    final fadeOpacity = animation.drive(
+      isReversing ? _fadeExitTween : _fadeEnterTween,
+    );
+
+    return SlideTransition(
+      position: secondaryAnimation.drive(_secondarySlideTween),
+      child: SlideTransition(
+        position: primaryPosition,
+        child: FadeTransition(
+          opacity: fadeOpacity,
+          child: child,
+        ),
+      ),
     );
   }
 }

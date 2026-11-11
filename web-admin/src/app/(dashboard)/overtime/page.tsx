@@ -39,7 +39,12 @@ import {
 } from "@/components/ui/SingleDateRangePicker";
 import apiClient from "@/lib/axios";
 import { cn, formatDate, getLocalDateIso } from "@/lib/utils";
-import type { ApiResponse, OvertimeRequest, User } from "@/types";
+import type {
+  ApiResponse,
+  OvertimeRequest,
+  OvertimeRequestItem,
+  User,
+} from "@/types";
 
 const OVERTIME_TYPE_OPTIONS = [
   "Jam Lembur",
@@ -89,6 +94,131 @@ function extractAttachmentFileName(url?: string | null): string {
   return parts[parts.length - 1] || "Lampiran tersimpan";
 }
 
+function normalizeIsoDate(raw?: string | null): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  return trimmed.length >= 10 ? trimmed.slice(0, 10) : trimmed;
+}
+
+function getEffectiveOvertimeItems(req: OvertimeRequest): OvertimeRequestItem[] {
+  if (req.items && req.items.length > 0) {
+    return [...req.items].sort((a, b) => {
+      const da = normalizeIsoDate(a.date);
+      const db = normalizeIsoDate(b.date);
+      if (da !== db) return da.localeCompare(db);
+      return (a.start_time || "").localeCompare(b.start_time || "");
+    });
+  }
+  return [
+    {
+      id_overtime_request_items: 0,
+      date: normalizeIsoDate(req.date),
+      end_date: req.end_date ? normalizeIsoDate(req.end_date) : null,
+      start_time: req.start_time,
+      end_time: req.end_time,
+      duration_hours: Number(req.duration_hours) || 0,
+    },
+  ];
+}
+
+function getEffectiveOvertimeEndDate(req: OvertimeRequest): string {
+  if (req.end_date && normalizeIsoDate(req.end_date)) {
+    return normalizeIsoDate(req.end_date);
+  }
+  const items = getEffectiveOvertimeItems(req);
+  let maxEnd = normalizeIsoDate(req.date);
+  for (const item of items) {
+    const candidate = normalizeIsoDate(item.end_date) || normalizeIsoDate(item.date);
+    if (candidate && candidate > maxEnd) {
+      maxEnd = candidate;
+    }
+  }
+  return maxEnd;
+}
+
+function countDistinctOvertimeDays(items: OvertimeRequestItem[]): number {
+  const days = new Set<string>();
+  for (const item of items) {
+    const d = normalizeIsoDate(item.date);
+    if (d) days.add(d);
+  }
+  return Math.max(1, days.size);
+}
+
+function getDisplayRequestNumber(req: OvertimeRequest): string {
+  const explicit = req.request_number?.trim();
+  if (explicit) return explicit;
+  const iso = normalizeIsoDate(req.date);
+  const parts = iso.split("-");
+  const ym = parts.length >= 2 ? `${parts[0]}${parts[1]}` : "000000";
+  const padded = String(req.id_overtime_requests).padStart(6, "0");
+  return `OVR-${ym}-${padded}`;
+}
+
+function formatShortDateId(isoDate: string): string {
+  const iso = normalizeIsoDate(isoDate);
+  if (!iso) return "-";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  const dt = new Date(y, m - 1, d);
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+  }).format(dt);
+}
+
+function calcWindowDuration(
+  startDate: string,
+  endDate: string,
+  startTime: string,
+  endTime: string
+): { valid: boolean; hours: number; error: string | null } | null {
+  if (!startDate || !endDate || !startTime || !endTime) {
+    return null;
+  }
+  const maxEnd = addDaysToIso(startDate, 1);
+  if (endDate < startDate || endDate > maxEnd) {
+    return {
+      valid: false,
+      hours: 0,
+      error: "Tanggal berakhir maksimal H+1 dari tanggal mulai.",
+    };
+  }
+  const startDt = new Date(`${startDate}T${startTime}:00`);
+  const endDt = new Date(`${endDate}T${endTime}:00`);
+  if (Number.isNaN(startDt.getTime()) || Number.isNaN(endDt.getTime())) {
+    return null;
+  }
+  const diffMinutes = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
+  if (diffMinutes <= 0) {
+    return {
+      valid: false,
+      hours: 0,
+      error: "Jam selesai harus lebih akhir dari jam mulai.",
+    };
+  }
+  if (diffMinutes > 1440) {
+    return {
+      valid: false,
+      hours: 0,
+      error: "Durasi satu sesi lembur tidak boleh melebihi 24 jam.",
+    };
+  }
+  return {
+    valid: true,
+    hours: Math.round((diffMinutes / 60) * 100) / 100,
+    error: null,
+  };
+}
+
+interface ReviseEntryItem {
+  key: string;
+  date: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+}
+
 export default function OvertimePage() {
   const queryClient = useQueryClient();
 
@@ -122,6 +252,7 @@ export default function OvertimePage() {
   const activeTab = isEmployee ? "my-requests" : selectedTab;
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [expandedRowIds, setExpandedRowIds] = useState<Record<number, boolean>>({});
 
   // Apply Overtime Modal State
   const [isApplyOpen, setIsApplyOpen] = useState(false);
@@ -148,6 +279,8 @@ export default function OvertimePage() {
   const [reviseEndDate, setReviseEndDate] = useState("");
   const [reviseStartTime, setReviseStartTime] = useState("17:00");
   const [reviseEndTime, setReviseEndTime] = useState("20:00");
+  const [reviseEntries, setReviseEntries] = useState<ReviseEntryItem[]>([]);
+  const [reviseExtraDateInput, setReviseExtraDateInput] = useState("");
   const [reviseType, setReviseType] = useState<string>("Jam Lembur");
   const [reviseCategory, setReviseCategory] = useState<string>("Lembur");
   const [reviseReason, setReviseReason] = useState("");
@@ -167,6 +300,14 @@ export default function OvertimePage() {
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  const isMultiEntryRevision = Boolean(
+    reviseTarget && reviseTarget.items && reviseTarget.items.length > 1
+  );
+
+  const toggleRowExpanded = (id: number) => {
+    setExpandedRowIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const calcTimeDurationHours = (startTime: string, endTime: string): number | null => {
     if (!startTime || !endTime) return null;
@@ -201,43 +342,62 @@ export default function OvertimePage() {
 
   // Real-time calculated duration for revision (supports same-day or H+1 overnight)
   const calculatedReviseDuration = useMemo(() => {
-    if (!reviseDate || !reviseEndDate || !reviseStartTime || !reviseEndTime) {
-      return null;
-    }
-    const maxEnd = addDaysToIso(reviseDate, 1);
-    if (reviseEndDate < reviseDate || reviseEndDate > maxEnd) {
-      return {
-        valid: false,
-        hours: 0,
-        error: "Tanggal berakhir maksimal H+1 dari tanggal mulai.",
-      };
-    }
-    const startDt = new Date(`${reviseDate}T${reviseStartTime}:00`);
-    const endDt = new Date(`${reviseEndDate}T${reviseEndTime}:00`);
-    if (Number.isNaN(startDt.getTime()) || Number.isNaN(endDt.getTime())) {
-      return null;
-    }
-    const diffMinutes = Math.round((endDt.getTime() - startDt.getTime()) / 60000);
-    if (diffMinutes <= 0) {
-      return {
-        valid: false,
-        hours: 0,
-        error: "Jam selesai harus lebih akhir dari jam mulai.",
-      };
-    }
-    if (diffMinutes > 1440) {
-      return {
-        valid: false,
-        hours: 0,
-        error: "Durasi satu sesi lembur tidak boleh melebihi 24 jam.",
-      };
-    }
-    return {
-      valid: true,
-      hours: Math.round((diffMinutes / 60) * 100) / 100,
-      error: null,
-    };
+    return calcWindowDuration(
+      reviseDate,
+      reviseEndDate,
+      reviseStartTime,
+      reviseEndTime
+    );
   }, [reviseDate, reviseEndDate, reviseStartTime, reviseEndTime]);
+
+  const multiReviseSummary = useMemo(() => {
+    let totalHours = 0;
+    let valid = reviseEntries.length > 0;
+    let firstError: string | null = null;
+    const days = new Set<string>();
+
+    const windows: Array<{ startMs: number; endMs: number; date: string }> = [];
+
+    for (const entry of reviseEntries) {
+      if (entry.date) days.add(entry.date);
+      const res = calcWindowDuration(
+        entry.date,
+        entry.endDate,
+        entry.startTime,
+        entry.endTime
+      );
+      if (!res || !res.valid) {
+        valid = false;
+        firstError ??= res?.error || `Periksa jadwal pada ${formatDate(entry.date)}.`;
+      } else {
+        totalHours += res.hours;
+        windows.push({
+          startMs: new Date(`${entry.date}T${entry.startTime}:00`).getTime(),
+          endMs: new Date(`${entry.endDate}T${entry.endTime}:00`).getTime(),
+          date: entry.date,
+        });
+      }
+    }
+
+    if (valid && windows.length > 1) {
+      const sorted = [...windows].sort((a, b) => a.startMs - b.startMs);
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i].startMs < sorted[i - 1].endMs) {
+          valid = false;
+          firstError = `Terdapat dua sesi yang bertabrakan di tanggal ${formatDate(sorted[i].date)}.`;
+          break;
+        }
+      }
+    }
+
+    return {
+      sessionCount: reviseEntries.length,
+      dayCount: Math.max(1, days.size),
+      totalHours: Math.round(totalHours * 100) / 100,
+      valid,
+      error: firstError,
+    };
+  }, [reviseEntries]);
 
   // Query: Data Lembur
   const {
@@ -316,22 +476,23 @@ export default function OvertimePage() {
         }
         return r.status === "approved" || r.status === "pending";
       })
-      .map((r) => {
+      .flatMap((r) => {
         const statusLabel = r.status === "approved" ? "Disetujui" : "Menunggu";
-        const dateStr = typeof r.date === "string" ? r.date.split("T")[0] : r.date;
-        const endDateStr = r.end_date
-          ? (typeof r.end_date === "string" ? r.end_date.split("T")[0] : r.end_date)
-          : dateStr;
-        return {
-          startDate: dateStr,
-          endDate: endDateStr >= dateStr ? endDateStr : dateStr,
-          label: `Lembur: ${r.start_time.slice(0, 5)}-${r.end_time.slice(0, 5)} (${statusLabel})`,
-          status: r.status,
-        };
+        const effective = getEffectiveOvertimeItems(r);
+        return effective.map((slot) => {
+          const dateStr = normalizeIsoDate(slot.date);
+          const endDateStr = normalizeIsoDate(slot.end_date) || dateStr;
+          return {
+            startDate: dateStr,
+            endDate: endDateStr >= dateStr ? endDateStr : dateStr,
+            label: `Lembur: ${slot.start_time.slice(0, 5)}-${slot.end_time.slice(0, 5)} (${statusLabel})`,
+            status: r.status,
+          };
+        });
       });
   }, [overtimeList, myOwnOvertimeRequests, reviseTarget]);
 
-  // Mutasi: Ajukan Lembur Baru (Single atau Batch Multi-Hari)
+  // Mutasi: Ajukan Lembur Baru (Single atau Konsolidasi Multi-Sesi)
   const applyMutation = useMutation({
     mutationFn: async (
       payload:
@@ -378,14 +539,20 @@ export default function OvertimePage() {
     },
   });
 
-  // Mutasi: Revisi Lembur (Karyawan)
+  // Mutasi: Revisi Lembur (Karyawan - Single maupun Konsolidasi Multi-Sesi)
   const reviseMutation = useMutation({
     mutationFn: async (payload: {
       id: number;
-      date: string;
-      end_date: string;
-      start_time: string;
-      end_time: string;
+      date?: string;
+      end_date?: string;
+      start_time?: string;
+      end_time?: string;
+      entries?: Array<{
+        date: string;
+        end_date?: string | null;
+        start_time: string;
+        end_time: string;
+      }>;
       overtime_type: string;
       reason_category: string;
       reason: string;
@@ -394,10 +561,14 @@ export default function OvertimePage() {
     }) => {
       if (payload.attachment) {
         const formData = new FormData();
-        formData.append("date", payload.date);
-        formData.append("end_date", payload.end_date);
-        formData.append("start_time", payload.start_time);
-        formData.append("end_time", payload.end_time);
+        if (payload.entries && payload.entries.length > 0) {
+          formData.append("entries", JSON.stringify(payload.entries));
+        } else {
+          if (payload.date) formData.append("date", payload.date);
+          if (payload.end_date) formData.append("end_date", payload.end_date);
+          if (payload.start_time) formData.append("start_time", payload.start_time);
+          if (payload.end_time) formData.append("end_time", payload.end_time);
+        }
         formData.append("overtime_type", payload.overtime_type);
         formData.append("reason_category", payload.reason_category);
         formData.append("reason", payload.reason);
@@ -410,18 +581,24 @@ export default function OvertimePage() {
         return res.data;
       }
 
+      const body: Record<string, unknown> = {
+        overtime_type: payload.overtime_type,
+        reason_category: payload.reason_category,
+        reason: payload.reason,
+        remove_attachment: Boolean(payload.remove_attachment),
+      };
+      if (payload.entries && payload.entries.length > 0) {
+        body.entries = payload.entries;
+      } else {
+        body.date = payload.date;
+        body.end_date = payload.end_date;
+        body.start_time = payload.start_time;
+        body.end_time = payload.end_time;
+      }
+
       const res = await apiClient.put<ApiResponse<OvertimeRequest>>(
         `/overtime/requests/${payload.id}`,
-        {
-          date: payload.date,
-          end_date: payload.end_date,
-          start_time: payload.start_time,
-          end_time: payload.end_time,
-          overtime_type: payload.overtime_type,
-          reason_category: payload.reason_category,
-          reason: payload.reason,
-          remove_attachment: Boolean(payload.remove_attachment),
-        }
+        body
       );
       return res.data;
     },
@@ -430,6 +607,8 @@ export default function OvertimePage() {
       queryClient.invalidateQueries({ queryKey: ["my-own-overtime-requests"] });
       queryClient.invalidateQueries({ queryKey: ["overtime-approvals"] });
       setReviseTarget(null);
+      setReviseEntries([]);
+      setReviseExtraDateInput("");
       setReviseAttachmentFile(null);
       setReviseRemoveAttachment(false);
       setReviseError(null);
@@ -492,18 +671,36 @@ export default function OvertimePage() {
   });
 
   const openReviseModal = (item: OvertimeRequest) => {
-    const startIso = typeof item.date === "string" ? item.date.split("T")[0] : item.date;
-    const rawEnd = item.end_date
-      ? (typeof item.end_date === "string" ? item.end_date.split("T")[0] : item.end_date)
-      : startIso;
+    const startIso = normalizeIsoDate(item.date);
+    const rawEnd = normalizeIsoDate(item.end_date) || startIso;
     const maxEnd = addDaysToIso(startIso, 1);
     const normalizedEnd = rawEnd >= startIso && rawEnd <= maxEnd ? rawEnd : startIso;
+    const itemsList = getEffectiveOvertimeItems(item);
 
     setReviseTarget(item);
     setReviseDate(startIso);
     setReviseEndDate(normalizedEnd);
     setReviseStartTime(item.start_time.slice(0, 5));
     setReviseEndTime(item.end_time.slice(0, 5));
+    setReviseEntries(
+      itemsList.map((slot, index) => {
+        const slotStart = normalizeIsoDate(slot.date);
+        const slotRawEnd = normalizeIsoDate(slot.end_date) || slotStart;
+        const slotMaxEnd = addDaysToIso(slotStart, 1);
+        const slotEnd =
+          slotRawEnd >= slotStart && slotRawEnd <= slotMaxEnd
+            ? slotRawEnd
+            : slotStart;
+        return {
+          key: `${slot.id_overtime_request_items || index}-${slotStart}-${slot.start_time}`,
+          date: slotStart,
+          endDate: slotEnd,
+          startTime: slot.start_time.slice(0, 5),
+          endTime: slot.end_time.slice(0, 5),
+        };
+      })
+    );
+    setReviseExtraDateInput("");
     setReviseType(item.overtime_type?.trim() || OVERTIME_TYPE_OPTIONS[0]);
     setReviseCategory(
       item.reason_category?.trim() || OVERTIME_REASON_CATEGORIES[0]
@@ -522,6 +719,65 @@ export default function OvertimePage() {
     setReviseDate(newStartIso);
     setReviseEndDate(hadOvernightSpan ? addDaysToIso(newStartIso, 1) : newStartIso);
     setReviseError(null);
+  };
+
+  const updateReviseEntryField = (
+    key: string,
+    field: "date" | "endDate" | "startTime" | "endTime",
+    value: string
+  ) => {
+    setReviseEntries((prev) =>
+      prev.map((entry) => {
+        if (entry.key !== key) return entry;
+        if (field === "date") {
+          const hadOvernight = entry.endDate > entry.date;
+          return {
+            ...entry,
+            date: value,
+            endDate: hadOvernight ? addDaysToIso(value, 1) : value,
+          };
+        }
+        return { ...entry, [field]: value };
+      })
+    );
+    setReviseError(null);
+  };
+
+  const removeReviseEntry = (key: string) => {
+    setReviseEntries((prev) =>
+      prev.length > 1 ? prev.filter((entry) => entry.key !== key) : prev
+    );
+    setReviseError(null);
+  };
+
+  const addReviseEntryDate = () => {
+    setReviseError(null);
+    if (!reviseExtraDateInput) return;
+    if (reviseEntries.length >= 62) {
+      setReviseError("Maksimal 62 sesi lembur dalam satu pengajuan.");
+      return;
+    }
+    const last = reviseEntries[reviseEntries.length - 1] || {
+      startTime: "17:00",
+      endTime: "20:00",
+    };
+    const uniqueKey = `added-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setReviseEntries((prev) =>
+      [
+        ...prev,
+        {
+          key: uniqueKey,
+          date: reviseExtraDateInput,
+          endDate: reviseExtraDateInput,
+          startTime: last.startTime,
+          endTime: last.endTime,
+        },
+      ].sort((a, b) => {
+        const dc = a.date.localeCompare(b.date);
+        return dc !== 0 ? dc : a.startTime.localeCompare(b.startTime);
+      })
+    );
+    setReviseExtraDateInput("");
   };
 
   const handleReviseAttachmentPick = (
@@ -552,19 +808,53 @@ export default function OvertimePage() {
     if (!reviseTarget) return;
     setReviseError(null);
 
-    if (
-      !reviseDate ||
-      !reviseEndDate ||
-      !reviseStartTime ||
-      !reviseEndTime ||
-      !reviseReason.trim()
-    ) {
-      setReviseError("Harap lengkapi seluruh kolom formulir revisi lembur.");
+    if (!reviseReason.trim()) {
+      setReviseError("Harap lengkapi keterangan / rincian tugas lembur.");
       return;
     }
 
     if (reviseReason.trim().length < 5) {
       setReviseError("Uraian alasan / tugas lembur minimal 5 karakter.");
+      return;
+    }
+
+    if (isMultiEntryRevision) {
+      if (reviseEntries.length === 0) {
+        setReviseError("Minimal harus terdapat 1 sesi lembur.");
+        return;
+      }
+      if (!multiReviseSummary.valid) {
+        setReviseError(
+          multiReviseSummary.error ||
+            "Periksa kembali tanggal dan jam lembur pada setiap sesi."
+        );
+        return;
+      }
+
+      reviseMutation.mutate({
+        id: reviseTarget.id_overtime_requests,
+        entries: reviseEntries.map((entry) => ({
+          date: entry.date,
+          end_date: entry.endDate,
+          start_time: entry.startTime,
+          end_time: entry.endTime,
+        })),
+        overtime_type: reviseType,
+        reason_category: reviseCategory,
+        reason: reviseReason.trim(),
+        attachment: reviseAttachmentFile,
+        remove_attachment: !reviseAttachmentFile && reviseRemoveAttachment,
+      });
+      return;
+    }
+
+    if (
+      !reviseDate ||
+      !reviseEndDate ||
+      !reviseStartTime ||
+      !reviseEndTime
+    ) {
+      setReviseError("Harap lengkapi seluruh kolom formulir revisi lembur.");
       return;
     }
 
@@ -1086,7 +1376,7 @@ export default function OvertimePage() {
                 : "Daftar jam lembur yang telah Anda ajukan beserta status atasan."}
             </p>
           </div>
-          <span className="text-xs text-slate-500 font-mono tabular-nums">
+          <span className="text-xs text-slate-600 font-mono tabular-nums shrink-0 whitespace-nowrap ml-3">
             Total: <strong className="text-slate-800">{overtimeList.length}</strong> data
           </span>
         </div>
@@ -1126,275 +1416,394 @@ export default function OvertimePage() {
           <div>
             {/* 1. Mobile Inset Rows View (< sm) */}
             <div className="sm:hidden space-y-2.5">
-              {overtimeList.map((item) => (
-                <div
-                  key={item.id_overtime_requests}
-                  className="p-3.5 rounded-2xl border border-slate-200/70 bg-white hover:bg-slate-50/70 transition-colors space-y-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                        <Clock4 className="w-4 h-4" />
-                      </div>
-                      <div>
-                        {activeTab === "approvals" && item.employee && (
-                          <div className="text-xs font-bold text-slate-900 leading-tight">
-                            {item.employee.user?.name || item.employee.nik}
+              {overtimeList.map((item) => {
+                const effectiveItems = getEffectiveOvertimeItems(item);
+                const effectiveEndDate = getEffectiveOvertimeEndDate(item);
+                const distinctDays = countDistinctOvertimeDays(effectiveItems);
+                const isMulti = effectiveItems.length > 1;
+                const isExpanded = Boolean(expandedRowIds[item.id_overtime_requests]);
+                const visibleItems =
+                  isMulti && !isExpanded
+                    ? effectiveItems.slice(0, 3)
+                    : effectiveItems;
+                const startIso = normalizeIsoDate(item.date);
+
+                return (
+                  <div
+                    key={item.id_overtime_requests}
+                    className="p-3.5 rounded-2xl border border-slate-200/70 bg-white hover:bg-slate-50/70 transition-colors space-y-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Clock4 className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-mono font-semibold text-slate-600 tabular-nums">
+                            {getDisplayRequestNumber(item)}
                           </div>
-                        )}
-                        <div className="text-xs font-bold text-slate-900">
-                          {item.end_date && item.end_date !== item.date
-                            ? `${formatDate(item.date)} - ${formatDate(item.end_date)}`
-                            : formatDate(item.date)}
+                          {activeTab === "approvals" && item.employee && (
+                            <div className="text-xs font-bold text-slate-900 leading-tight mt-0.5">
+                              {item.employee.user?.name || item.employee.nik}
+                            </div>
+                          )}
+                          <div className="text-xs font-bold text-slate-900 mt-0.5">
+                            {effectiveEndDate && effectiveEndDate !== startIso
+                              ? `${formatDate(startIso)} - ${formatDate(effectiveEndDate)}`
+                              : formatDate(startIso)}
+                          </div>
+                          <div className="text-[11px] text-slate-600 font-mono tabular-nums">
+                            {isMulti
+                              ? `${distinctDays} hari, ${effectiveItems.length} sesi`
+                              : `${item.start_time.slice(0, 5)} - ${item.end_time.slice(0, 5)} WIB`}
+                          </div>
                         </div>
-                        <div className="text-[11px] text-slate-500 font-mono tabular-nums">
-                          {item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)} WIB
+                      </div>
+                      <StatusBadge status={item.status} />
+                    </div>
+
+                    {/* Durasi, Rincian Sesi & Alasan (Flat Section, Zero Nested Border) */}
+                    <div className="pt-2.5 border-t border-slate-100 text-[11.5px] space-y-2 font-sans">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-600">Total Durasi:</span>
+                        <span className="font-mono font-bold text-slate-900 tabular-nums">
+                          {item.duration_hours} Jam
+                        </span>
+                      </div>
+
+                      {isMulti && (
+                        <div className="divide-y divide-slate-100 bg-slate-50/90 rounded-xl px-2.5 py-1">
+                          {visibleItems.map((slot, sIdx) => {
+                            const sStart = normalizeIsoDate(slot.date);
+                            const sEnd = normalizeIsoDate(slot.end_date) || sStart;
+                            const crossDayTag = sEnd > sStart ? " (+1)" : "";
+                            return (
+                              <div
+                                key={`${slot.id_overtime_request_items || sIdx}-${sStart}`}
+                                className="py-1.5 flex items-center justify-between gap-2 text-[11px]"
+                              >
+                                <span className="font-medium text-slate-700">
+                                  {formatShortDateId(sStart)}
+                                </span>
+                                <span className="font-mono text-slate-600 tabular-nums">
+                                  {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)}
+                                  {crossDayTag} ({slot.duration_hours}j)
+                                </span>
+                              </div>
+                            );
+                          })}
+                          {effectiveItems.length > 3 && (
+                            <div className="py-1">
+                              <button
+                                type="button"
+                                onClick={() => toggleRowExpanded(item.id_overtime_requests)}
+                                className="w-full min-h-[36px] text-left text-[11px] font-semibold text-[#1E40AF] hover:underline cursor-pointer"
+                              >
+                                {isExpanded
+                                  ? "Ringkas jadwal"
+                                  : `Lihat semua ${effectiveItems.length} sesi`}
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </div>
-                    <StatusBadge status={item.status} />
-                  </div>
+                      )}
 
-                  {/* Durasi & Alasan */}
-                  <div className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100 text-[11.5px] space-y-1.5 font-sans">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Durasi Lembur:</span>
-                      <span className="font-mono font-bold text-slate-900 tabular-nums">
-                        {item.duration_hours} Jam
-                      </span>
-                    </div>
-                    {(item.overtime_type || item.reason_category) && (
-                      <div className="text-[11px] text-slate-600 font-medium">
-                        {[item.overtime_type, item.reason_category].filter(Boolean).join(" / ")}
+                      {(item.overtime_type || item.reason_category) && (
+                        <div className="text-[11px] text-slate-600 font-medium">
+                          {[item.overtime_type, item.reason_category].filter(Boolean).join(" / ")}
+                        </div>
+                      )}
+                      <div className="text-slate-700">
+                        <span className="text-slate-600 font-medium">Tugas: </span>
+                        <span>{item.reason}</span>
                       </div>
-                    )}
-                    <div className="text-slate-700">
-                      <span className="text-slate-400">Tugas: </span>
-                      <span>{item.reason}</span>
+                      {item.attachment_url && (
+                        <a
+                          href={item.attachment_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[#1E40AF] hover:underline text-[11px] font-semibold"
+                        >
+                          <FileText className="w-3 h-3" aria-hidden="true" />
+                          <span>Lihat Lampiran</span>
+                          <ExternalLink className="w-2.5 h-2.5" aria-hidden="true" />
+                        </a>
+                      )}
+                      {item.rejected_reason && (
+                        <div className="text-rose-700 text-[11px] italic pt-1 border-t border-rose-100">
+                          Catatan: {item.rejected_reason}
+                        </div>
+                      )}
                     </div>
-                    {item.attachment_url && (
-                      <a
-                        href={item.attachment_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[#1E40AF] hover:underline text-[11px] font-semibold"
-                      >
-                        <FileText className="w-3 h-3" />
-                        <span>Lihat Lampiran</span>
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
-                    )}
-                    {item.rejected_reason && (
-                      <div className="text-rose-600 text-[11px] italic pt-1 border-t border-rose-100">
-                        Alasan Penolakan: {item.rejected_reason}
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Tombol Aksi Persetujuan pada Mobile */}
-                  {activeTab === "approvals" &&
-                    item.status === "pending" &&
-                    canApprove && (
+                    {/* Tombol Aksi Persetujuan pada Mobile */}
+                    {activeTab === "approvals" &&
+                      item.status === "pending" &&
+                      canApprove && (
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActionTarget(item);
+                              setActionType("approved");
+                              setActionNotes("");
+                              setActionError(null);
+                            }}
+                            className="min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                          >
+                            <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Setujui</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActionTarget(item);
+                              setActionType("rejected");
+                              setActionNotes("");
+                              setActionError(null);
+                            }}
+                            className="min-h-[44px] rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Tolak</span>
+                          </button>
+                        </div>
+                      )}
+
+                    {/* Tombol Aksi Karyawan pada Mobile (Revisi & Batalkan) */}
+                    {activeTab === "my-requests" && item.status === "pending" && (
                       <div className="grid grid-cols-2 gap-2 pt-1">
                         <button
                           type="button"
-                          onClick={() => {
-                            setActionTarget(item);
-                            setActionType("approved");
-                            setActionNotes("");
-                            setActionError(null);
-                          }}
-                          className="min-h-[40px] rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                          onClick={() => openReviseModal(item)}
+                          className="min-h-[44px] rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
                         >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Setujui</span>
+                          <Edit3 className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+                          <span>Revisi</span>
                         </button>
                         <button
                           type="button"
-                          onClick={() => {
-                            setActionTarget(item);
-                            setActionType("rejected");
-                            setActionNotes("");
-                            setActionError(null);
-                          }}
-                          className="min-h-[40px] rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                          onClick={() => openCancelModal(item)}
+                          className="min-h-[44px] rounded-xl bg-rose-50 hover:bg-rose-100 active:scale-[0.98] text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-200 transition-all cursor-pointer"
                         >
-                          <X className="w-3.5 h-3.5" />
-                          <span>Tolak</span>
+                          <Ban className="w-3.5 h-3.5 text-rose-600" aria-hidden="true" />
+                          <span>Batalkan</span>
                         </button>
                       </div>
                     )}
-
-                  {/* Tombol Aksi Karyawan pada Mobile (Revisi & Batalkan) */}
-                  {activeTab === "my-requests" && item.status === "pending" && (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => openReviseModal(item)}
-                        className="min-h-[40px] rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 border border-slate-200 transition-all cursor-pointer"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-slate-600" />
-                        <span>Revisi</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => openCancelModal(item)}
-                        className="min-h-[40px] rounded-xl bg-rose-50 hover:bg-rose-100 active:scale-[0.98] text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 border border-rose-200 transition-all cursor-pointer"
-                      >
-                        <Ban className="w-3.5 h-3.5 text-rose-600" />
-                        <span>Batalkan</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
 
             {/* 2. Desktop Table View (>= sm) */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-500 uppercase tracking-wider font-semibold">
-                    {activeTab === "approvals" && <th className="px-4 py-3">Karyawan</th>}
-                    <th className="px-4 py-3">Tanggal Lembur</th>
-                    <th className="px-4 py-3 font-mono">Waktu Mulai - Selesai</th>
-                    <th className="px-4 py-3 text-center font-mono">Durasi</th>
-                    <th className="px-4 py-3">Uraian Tugas Lembur</th>
-                    <th className="px-4 py-3 text-center">Status</th>
-                    <th className="px-4 py-3 text-right">Aksi</th>
+                  <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-600 uppercase tracking-wider font-semibold">
+                    {activeTab === "approvals" && <th className="px-2.5 lg:px-3 py-3">Karyawan</th>}
+                    <th className="px-2.5 lg:px-3 py-3">Nomor & Tanggal Lembur</th>
+                    <th className="px-2.5 lg:px-3 py-3 font-mono">Jadwal Lembur</th>
+                    <th className="px-2.5 lg:px-3 py-3 text-center font-mono whitespace-nowrap">Durasi</th>
+                    <th className="px-2.5 lg:px-3 py-3">Uraian Tugas Lembur</th>
+                    <th className="px-2.5 lg:px-3 py-3 text-center">Status</th>
+                    <th className="px-2.5 lg:px-3 py-3 text-right whitespace-nowrap">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
-                  {overtimeList.map((item) => (
-                    <tr
-                      key={item.id_overtime_requests}
-                      className="hover:bg-slate-50/60 transition-colors"
-                    >
-                      {activeTab === "approvals" && (
-                        <td className="px-4 py-3.5">
+                  {overtimeList.map((item) => {
+                    const effectiveItems = getEffectiveOvertimeItems(item);
+                    const effectiveEndDate = getEffectiveOvertimeEndDate(item);
+                    const distinctDays = countDistinctOvertimeDays(effectiveItems);
+                    const isMulti = effectiveItems.length > 1;
+                    const isExpanded = Boolean(
+                      expandedRowIds[item.id_overtime_requests]
+                    );
+                    const visibleItems =
+                      isMulti && !isExpanded
+                        ? effectiveItems.slice(0, 3)
+                        : effectiveItems;
+                    const startIso = normalizeIsoDate(item.date);
+
+                    return (
+                      <tr
+                        key={item.id_overtime_requests}
+                        className="hover:bg-slate-50/60 transition-colors align-top"
+                      >
+                        {activeTab === "approvals" && (
+                          <td className="px-2.5 lg:px-3 py-3.5">
+                            <div className="font-bold text-slate-900">
+                              {item.employee?.user?.name || item.employee?.nik || "-"}
+                            </div>
+                            <div className="text-[11px] text-slate-600 font-mono">
+                              {item.employee?.department?.name || "Karyawan"}
+                            </div>
+                          </td>
+                        )}
+                        <td className="px-2.5 lg:px-3 py-3.5">
+                          <div className="text-[11px] font-mono text-slate-600 tabular-nums whitespace-nowrap mb-0.5">
+                            {getDisplayRequestNumber(item)}
+                          </div>
                           <div className="font-bold text-slate-900">
-                            {item.employee?.user?.name || item.employee?.nik || "-"}
+                            {formatDate(startIso)}
                           </div>
-                          <div className="text-[11px] text-slate-400 font-mono">
-                            {item.employee?.department?.name || "Karyawan"}
-                          </div>
+                          {effectiveEndDate && effectiveEndDate !== startIso && (
+                            <div className="text-[11px] font-normal text-slate-600">
+                              s.d. {formatDate(effectiveEndDate)}
+                            </div>
+                          )}
+                          {isMulti && (
+                            <div className="text-[11px] font-semibold text-emerald-700 mt-0.5">
+                              {distinctDays} hari, {effectiveItems.length} sesi
+                            </div>
+                          )}
                         </td>
-                      )}
-                      <td className="px-4 py-3.5 font-bold text-slate-900">
-                        <div>{formatDate(item.date)}</div>
-                        {item.end_date && item.end_date !== item.date && (
-                          <div className="text-[11px] font-normal text-slate-500">
-                            s.d. {formatDate(item.end_date)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3.5 text-slate-600 font-mono tabular-nums">
-                        {item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)} WIB
-                      </td>
-                      <td className="px-4 py-3.5 text-center font-mono font-bold text-slate-900 tabular-nums">
-                        {item.duration_hours} Jam
-                      </td>
-                      <td className="px-4 py-3.5 text-slate-600 max-w-xs">
-                        {(item.overtime_type || item.reason_category) && (
-                          <div className="text-[11px] font-semibold text-slate-700 mb-0.5">
-                            {[item.overtime_type, item.reason_category].filter(Boolean).join(" / ")}
-                          </div>
-                        )}
-                        <div className="truncate">{item.reason}</div>
-                        {item.attachment_url && (
-                          <a
-                            href={item.attachment_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[#1E40AF] hover:underline text-[11px] mt-0.5 font-semibold"
-                          >
-                            <FileText className="w-3 h-3" />
-                            <span>Lampiran</span>
-                            <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        )}
-                        {item.rejected_reason && (
-                          <div className="text-[11px] text-rose-600 mt-0.5 italic">
-                            Catatan: {item.rejected_reason}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <StatusBadge status={item.status} />
-                      </td>
-                      <td className="px-4 py-3.5 text-right">
-                        {activeTab === "approvals" ? (
-                          item.status === "pending" && canApprove ? (
+                        <td className="px-2.5 lg:px-3 py-3.5 text-slate-700 font-mono tabular-nums">
+                          {isMulti ? (
+                            <div className="space-y-1 min-w-[165px]">
+                              {visibleItems.map((slot, sIdx) => {
+                                const sStart = normalizeIsoDate(slot.date);
+                                const sEnd = normalizeIsoDate(slot.end_date) || sStart;
+                                const crossDayTag = sEnd > sStart ? " (+1)" : "";
+                                return (
+                                  <div
+                                    key={`${slot.id_overtime_request_items || sIdx}-${sStart}`}
+                                    className="flex items-center justify-between gap-2 text-[11px]"
+                                  >
+                                    <span className="font-sans font-semibold text-slate-700 whitespace-nowrap">
+                                      {formatShortDateId(sStart)}
+                                    </span>
+                                    <span className="text-slate-700 whitespace-nowrap">
+                                      {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)}
+                                      {crossDayTag} ({slot.duration_hours}j)
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                              {effectiveItems.length > 3 && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleRowExpanded(item.id_overtime_requests)}
+                                  className="font-sans text-[11px] font-semibold text-[#1E40AF] hover:underline cursor-pointer pt-0.5"
+                                >
+                                  {isExpanded
+                                    ? "Ringkas jadwal"
+                                    : `Lihat semua ${effectiveItems.length} sesi`}
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="whitespace-nowrap">
+                              {item.start_time.slice(0, 5)} - {item.end_time.slice(0, 5)} WIB
+                              {effectiveEndDate > startIso ? " (+1)" : ""}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-2.5 lg:px-3 py-3.5 text-center font-mono font-bold text-slate-900 tabular-nums whitespace-nowrap">
+                          {item.duration_hours} Jam
+                        </td>
+                        <td className="px-2.5 lg:px-3 py-3.5 text-slate-700 max-w-[180px]">
+                          {(item.overtime_type || item.reason_category) && (
+                            <div className="text-[11px] font-semibold text-slate-700 mb-0.5">
+                              {[item.overtime_type, item.reason_category].filter(Boolean).join(" / ")}
+                            </div>
+                          )}
+                          <div className="line-clamp-2">{item.reason}</div>
+                          {item.attachment_url && (
+                            <a
+                              href={item.attachment_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[#1E40AF] hover:underline text-[11px] mt-0.5 font-semibold"
+                            >
+                              <FileText className="w-3 h-3" aria-hidden="true" />
+                              <span>Lampiran</span>
+                              <ExternalLink className="w-2.5 h-2.5" aria-hidden="true" />
+                            </a>
+                          )}
+                          {item.rejected_reason && (
+                            <div className="text-[11px] text-rose-700 mt-0.5 italic">
+                              Catatan: {item.rejected_reason}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-2.5 lg:px-3 py-3.5 text-center whitespace-nowrap">
+                          <StatusBadge status={item.status} />
+                        </td>
+                        <td className="px-2.5 lg:px-3 py-3.5 text-right whitespace-nowrap">
+                          {activeTab === "approvals" ? (
+                            item.status === "pending" && canApprove ? (
+                              <div className="inline-flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActionTarget(item);
+                                    setActionType("approved");
+                                    setActionNotes("");
+                                    setActionError(null);
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center gap-1 border border-emerald-200 transition-colors cursor-pointer"
+                                >
+                                  <Check className="w-3 h-3" aria-hidden="true" />
+                                  <span>Setujui</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActionTarget(item);
+                                    setActionType("rejected");
+                                    setActionNotes("");
+                                    setActionError(null);
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center gap-1 border border-rose-200 transition-colors cursor-pointer"
+                                >
+                                  <X className="w-3 h-3" aria-hidden="true" />
+                                  <span>Tolak</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-600 italic">
+                                {item.approver?.name
+                                  ? `Oleh ${item.approver.name}`
+                                  : item.status === "cancelled"
+                                  ? "Dibatalkan"
+                                  : "Selesai"}
+                              </span>
+                            )
+                          ) : item.status === "pending" ? (
                             <div className="inline-flex items-center gap-1.5">
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setActionTarget(item);
-                                  setActionType("approved");
-                                  setActionNotes("");
-                                  setActionError(null);
-                                }}
-                                className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center gap-1 border border-emerald-200 transition-colors cursor-pointer"
+                                onClick={() => openReviseModal(item)}
+                                className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1 border border-slate-200 transition-colors cursor-pointer"
+                                title="Revisi jadwal atau tugas lembur"
                               >
-                                <Check className="w-3 h-3" />
-                                <span>Setujui</span>
+                                <Edit3 className="w-3 h-3 text-slate-600" aria-hidden="true" />
+                                <span>Revisi</span>
                               </button>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setActionTarget(item);
-                                  setActionType("rejected");
-                                  setActionNotes("");
-                                  setActionError(null);
-                                }}
+                                onClick={() => openCancelModal(item)}
                                 className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center gap-1 border border-rose-200 transition-colors cursor-pointer"
+                                title="Batalkan pengajuan lembur ini"
                               >
-                                <X className="w-3 h-3" />
-                                <span>Tolak</span>
+                                <Ban className="w-3 h-3 text-rose-600" aria-hidden="true" />
+                                <span>Batalkan</span>
                               </button>
                             </div>
                           ) : (
-                            <span className="text-xs text-slate-400 italic">
-                              {item.approver?.name
-                                ? `Oleh ${item.approver.name}`
-                                : item.status === "cancelled"
+                            <span className="text-xs text-slate-600 italic">
+                              {item.status === "cancelled"
                                 ? "Dibatalkan"
-                                : "Selesai"}
+                                : item.approver?.name
+                                ? `Disetujui ${item.approver.name}`
+                                : "-"}
                             </span>
-                          )
-                        ) : item.status === "pending" ? (
-                          <div className="inline-flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => openReviseModal(item)}
-                              className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1 border border-slate-200 transition-colors cursor-pointer"
-                              title="Revisi jadwal atau tugas lembur"
-                            >
-                              <Edit3 className="w-3 h-3 text-slate-600" />
-                              <span>Revisi</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openCancelModal(item)}
-                              className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center gap-1 border border-rose-200 transition-colors cursor-pointer"
-                              title="Batalkan pengajuan lembur ini"
-                            >
-                              <Ban className="w-3 h-3 text-rose-600" />
-                              <span>Batalkan</span>
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-slate-400 italic">
-                            {item.status === "cancelled"
-                              ? "Dibatalkan"
-                              : item.approver?.name
-                              ? `Disetujui ${item.approver.name}`
-                              : "-"}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1437,7 +1846,7 @@ export default function OvertimePage() {
                 className="min-h-[44px] rounded-xl bg-[#16A34A] hover:bg-[#15803D] font-bold"
               >
                 {applyEntries.length > 1
-                  ? `Kirim ${applyEntries.length} Pengajuan`
+                  ? `Kirim Pengajuan (${applyEntries.length} Sesi)`
                   : "Kirim Pengajuan"}
               </Button>
             </div>
@@ -1653,6 +2062,8 @@ export default function OvertimePage() {
           onClose={() => {
             if (!reviseMutation.isPending) {
               setReviseTarget(null);
+              setReviseEntries([]);
+              setReviseExtraDateInput("");
               setReviseAttachmentFile(null);
               setReviseRemoveAttachment(false);
               setReviseError(null);
@@ -1660,7 +2071,7 @@ export default function OvertimePage() {
           }}
           title="Revisi Pengajuan Lembur"
           description="Perbarui jadwal, klasifikasi lembur, keterangan, atau lampiran sebelum pengajuan disetujui."
-          maxWidth="lg"
+          maxWidth={isMultiEntryRevision ? "xl" : "lg"}
           footer={
             <div className="flex items-center justify-end gap-2 w-full">
               <Button
@@ -1668,6 +2079,8 @@ export default function OvertimePage() {
                 size="md"
                 onClick={() => {
                   setReviseTarget(null);
+                  setReviseEntries([]);
+                  setReviseExtraDateInput("");
                   setReviseAttachmentFile(null);
                   setReviseRemoveAttachment(false);
                   setReviseError(null);
@@ -1699,104 +2112,295 @@ export default function OvertimePage() {
               </div>
             )}
 
-            <div>
-              <SingleDateRangePicker
-                singleDateMode={true}
-                label="Tanggal Mulai Lembur"
-                required={true}
-                defaultExpanded={false}
-                startDate={reviseDate}
-                endDate={reviseDate}
-                onChange={(range) => handleReviseStartDateChange(range.startDate)}
-                disabledRanges={existingOvertimeDates}
-              />
-            </div>
+            {isMultiEntryRevision ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-[#0F172A]">
+                    Jadwal Sesi Lembur ({multiReviseSummary.sessionCount} Sesi)
+                  </span>
+                  <span className="text-[11px] font-mono text-[#475569] tabular-nums">
+                    {getDisplayRequestNumber(reviseTarget)}
+                  </span>
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label
-                  htmlFor="revise_end_date"
-                  className="block text-xs font-semibold text-[#0F172A] mb-1.5"
-                >
-                  Tanggal Berakhir <span className="text-[#B91C1C]">*</span>
-                </label>
-                <input
-                  id="revise_end_date"
-                  type="date"
-                  value={reviseEndDate}
-                  min={reviseDate}
-                  max={addDaysToIso(reviseDate, 1)}
-                  onChange={(e) => {
-                    setReviseEndDate(e.target.value);
-                    setReviseError(null);
-                  }}
-                  className="w-full rounded-md border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-mono text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#1E40AF]/20 focus:border-[#1E40AF] min-h-[44px]"
-                  required
-                />
-              </div>
+                <div className="divide-y divide-slate-200 border border-[#CBD5E1] rounded-lg bg-white max-h-64 overflow-y-auto">
+                  {reviseEntries.map((entry, idx) => {
+                    const entryCalc = calcWindowDuration(
+                      entry.date,
+                      entry.endDate,
+                      entry.startTime,
+                      entry.endTime
+                    );
+                    return (
+                      <div key={entry.key} className="p-3 space-y-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[11px] font-mono font-bold text-[#475569]">
+                              Sesi {idx + 1}
+                            </span>
+                            <span className="text-xs font-semibold text-[#0F172A] truncate">
+                              {formatDate(entry.date)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              className={cn(
+                                "px-2 py-0.5 rounded font-mono font-bold text-[11px] tabular-nums",
+                                entryCalc?.valid
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-[#FEF2F2] text-[#B91C1C]"
+                              )}
+                            >
+                              {entryCalc?.valid ? `${entryCalc.hours} Jam` : "Tidak valid"}
+                            </span>
+                            {reviseEntries.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeReviseEntry(entry.key)}
+                                aria-label={`Hapus sesi ${idx + 1}`}
+                                className="min-w-[36px] min-h-[36px] rounded-md text-[#B91C1C] hover:bg-[#FEF2F2] inline-flex items-center justify-center cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
 
-              <div>
-                <label
-                  htmlFor="revise_start_time"
-                  className="block text-xs font-semibold text-[#0F172A] mb-1.5"
-                >
-                  Jam Mulai <span className="text-[#B91C1C]">*</span>
-                </label>
-                <input
-                  id="revise_start_time"
-                  type="time"
-                  value={reviseStartTime}
-                  onChange={(e) => {
-                    setReviseStartTime(e.target.value);
-                    setReviseError(null);
-                  }}
-                  className="w-full rounded-md border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-mono text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#1E40AF]/20 focus:border-[#1E40AF] min-h-[44px]"
-                  required
-                />
-              </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label
+                              htmlFor={`rev_entry_date_${entry.key}`}
+                              className="block text-[11px] font-medium text-[#475569] mb-1"
+                            >
+                              Tanggal Mulai
+                            </label>
+                            <input
+                              id={`rev_entry_date_${entry.key}`}
+                              type="date"
+                              value={entry.date}
+                              onChange={(e) =>
+                                updateReviseEntryField(entry.key, "date", e.target.value)
+                              }
+                              className="w-full rounded-md border border-[#CBD5E1] bg-white px-2.5 py-1.5 text-xs font-mono text-[#0F172A] min-h-[40px]"
+                              required
+                            />
+                          </div>
 
-              <div>
-                <label
-                  htmlFor="revise_end_time"
-                  className="block text-xs font-semibold text-[#0F172A] mb-1.5"
-                >
-                  Jam Selesai <span className="text-[#B91C1C]">*</span>
-                </label>
-                <input
-                  id="revise_end_time"
-                  type="time"
-                  value={reviseEndTime}
-                  onChange={(e) => {
-                    setReviseEndTime(e.target.value);
-                    setReviseError(null);
-                  }}
-                  className="w-full rounded-md border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-mono text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#1E40AF]/20 focus:border-[#1E40AF] min-h-[44px]"
-                  required
-                />
-              </div>
-            </div>
+                          <div>
+                            <label
+                              htmlFor={`rev_entry_end_date_${entry.key}`}
+                              className="block text-[11px] font-medium text-[#475569] mb-1"
+                            >
+                              Tanggal Berakhir
+                            </label>
+                            <input
+                              id={`rev_entry_end_date_${entry.key}`}
+                              type="date"
+                              value={entry.endDate}
+                              min={entry.date}
+                              max={addDaysToIso(entry.date, 1)}
+                              onChange={(e) =>
+                                updateReviseEntryField(entry.key, "endDate", e.target.value)
+                              }
+                              className="w-full rounded-md border border-[#CBD5E1] bg-white px-2.5 py-1.5 text-xs font-mono text-[#0F172A] min-h-[40px]"
+                              required
+                            />
+                          </div>
 
-            {/* Durasi Terkalkulasi Otomatis */}
-            <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#CBD5E1] flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="text-[#475569] font-semibold">
-                Estimasi Durasi Lembur
-                {reviseEndDate > reviseDate ? " (Lintas Hari H+1)" : ""}:
+                          <div>
+                            <label
+                              htmlFor={`rev_entry_start_${entry.key}`}
+                              className="block text-[11px] font-medium text-[#475569] mb-1"
+                            >
+                              Jam Mulai
+                            </label>
+                            <input
+                              id={`rev_entry_start_${entry.key}`}
+                              type="time"
+                              value={entry.startTime}
+                              onChange={(e) =>
+                                updateReviseEntryField(entry.key, "startTime", e.target.value)
+                              }
+                              className="w-full rounded-md border border-[#CBD5E1] bg-white px-2.5 py-1.5 text-xs font-mono text-[#0F172A] min-h-[40px]"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`rev_entry_end_${entry.key}`}
+                              className="block text-[11px] font-medium text-[#475569] mb-1"
+                            >
+                              Jam Selesai
+                            </label>
+                            <input
+                              id={`rev_entry_end_${entry.key}`}
+                              type="time"
+                              value={entry.endTime}
+                              onChange={(e) =>
+                                updateReviseEntryField(entry.key, "endTime", e.target.value)
+                              }
+                              className="w-full rounded-md border border-[#CBD5E1] bg-white px-2.5 py-1.5 text-xs font-mono text-[#0F172A] min-h-[40px]"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+                  <div className="flex-1">
+                    <label
+                      htmlFor="revise_extra_date"
+                      className="block text-xs font-semibold text-[#0F172A] mb-1"
+                    >
+                      Tambah Tanggal Sesi Baru
+                    </label>
+                    <input
+                      id="revise_extra_date"
+                      type="date"
+                      value={reviseExtraDateInput}
+                      onChange={(e) => setReviseExtraDateInput(e.target.value)}
+                      className="w-full rounded-md border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-mono text-[#0F172A] min-h-[44px]"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    onClick={addReviseEntryDate}
+                    disabled={!reviseExtraDateInput}
+                    className="min-h-[44px] rounded-md shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
+                    Tambah Sesi
+                  </Button>
+                </div>
+
+                <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#CBD5E1] flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="text-[#475569] font-semibold">
+                    Total Diajukan ({multiReviseSummary.dayCount} hari, {multiReviseSummary.sessionCount} sesi):
+                  </div>
+                  <span
+                    className={cn(
+                      "font-mono font-bold tabular-nums",
+                      multiReviseSummary.valid
+                        ? "text-[#1E40AF] text-sm"
+                        : "text-[#B91C1C]"
+                    )}
+                  >
+                    {multiReviseSummary.valid
+                      ? `${multiReviseSummary.totalHours} Jam (${Math.round(
+                          multiReviseSummary.totalHours * 60
+                        )} menit)`
+                      : multiReviseSummary.error || "Periksa jadwal sesi"}
+                  </span>
+                </div>
               </div>
-              <span
-                className={cn(
-                  "font-mono font-bold tabular-nums",
-                  calculatedReviseDuration?.valid
-                    ? "text-[#1E40AF] text-sm"
-                    : "text-[#B91C1C]"
-                )}
-              >
-                {calculatedReviseDuration?.valid
-                  ? `${calculatedReviseDuration.hours} Jam (${Math.round(
-                      calculatedReviseDuration.hours * 60
-                    )} menit)`
-                  : calculatedReviseDuration?.error || "Format waktu tidak valid"}
-              </span>
-            </div>
+            ) : (
+              <>
+                <div>
+                  <SingleDateRangePicker
+                    singleDateMode={true}
+                    label="Tanggal Mulai Lembur"
+                    required={true}
+                    defaultExpanded={false}
+                    startDate={reviseDate}
+                    endDate={reviseDate}
+                    onChange={(range) => handleReviseStartDateChange(range.startDate)}
+                    disabledRanges={existingOvertimeDates}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label
+                      htmlFor="revise_end_date"
+                      className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                    >
+                      Tanggal Berakhir <span className="text-[#B91C1C]">*</span>
+                    </label>
+                    <input
+                      id="revise_end_date"
+                      type="date"
+                      value={reviseEndDate}
+                      min={reviseDate}
+                      max={addDaysToIso(reviseDate, 1)}
+                      onChange={(e) => {
+                        setReviseEndDate(e.target.value);
+                        setReviseError(null);
+                      }}
+                      className="w-full rounded-md border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-mono text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#1E40AF]/20 focus:border-[#1E40AF] min-h-[44px]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="revise_start_time"
+                      className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                    >
+                      Jam Mulai <span className="text-[#B91C1C]">*</span>
+                    </label>
+                    <input
+                      id="revise_start_time"
+                      type="time"
+                      value={reviseStartTime}
+                      onChange={(e) => {
+                        setReviseStartTime(e.target.value);
+                        setReviseError(null);
+                      }}
+                      className="w-full rounded-md border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-mono text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#1E40AF]/20 focus:border-[#1E40AF] min-h-[44px]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="revise_end_time"
+                      className="block text-xs font-semibold text-[#0F172A] mb-1.5"
+                    >
+                      Jam Selesai <span className="text-[#B91C1C]">*</span>
+                    </label>
+                    <input
+                      id="revise_end_time"
+                      type="time"
+                      value={reviseEndTime}
+                      onChange={(e) => {
+                        setReviseEndTime(e.target.value);
+                        setReviseError(null);
+                      }}
+                      className="w-full rounded-md border border-[#CBD5E1] bg-white px-3 py-2 text-xs font-mono text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#1E40AF]/20 focus:border-[#1E40AF] min-h-[44px]"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Durasi Terkalkulasi Otomatis */}
+                <div className="p-3.5 rounded-lg bg-[#F8FAFC] border border-[#CBD5E1] flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="text-[#475569] font-semibold">
+                    Estimasi Durasi Lembur
+                    {reviseEndDate > reviseDate ? " (Lintas Hari H+1)" : ""}:
+                  </div>
+                  <span
+                    className={cn(
+                      "font-mono font-bold tabular-nums",
+                      calculatedReviseDuration?.valid
+                        ? "text-[#1E40AF] text-sm"
+                        : "text-[#B91C1C]"
+                    )}
+                  >
+                    {calculatedReviseDuration?.valid
+                      ? `${calculatedReviseDuration.hours} Jam (${Math.round(
+                          calculatedReviseDuration.hours * 60
+                        )} menit)`
+                      : calculatedReviseDuration?.error || "Format waktu tidak valid"}
+                  </span>
+                </div>
+              </>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -1993,202 +2597,282 @@ export default function OvertimePage() {
       )}
 
       {/* 6c. Modal Batalkan Lembur (Karyawan) */}
-      {cancelTarget && (
-        <Modal
-          isOpen={true}
-          onClose={() => {
-            if (!cancelMutation.isPending) {
-              setCancelTarget(null);
-              setCancelReason("");
-              setCancelError(null);
+      {cancelTarget && (() => {
+        const cancelItems = getEffectiveOvertimeItems(cancelTarget);
+        const cancelStartIso = normalizeIsoDate(cancelTarget.date);
+        const cancelEndIso = getEffectiveOvertimeEndDate(cancelTarget);
+        const cancelDistinctDays = countDistinctOvertimeDays(cancelItems);
+        const isCancelMulti = cancelItems.length > 1;
+        const cancelDateLabel =
+          cancelEndIso && cancelEndIso !== cancelStartIso
+            ? `${formatDate(cancelStartIso)} - ${formatDate(cancelEndIso)}`
+            : formatDate(cancelStartIso);
+
+        return (
+          <Modal
+            isOpen={true}
+            onClose={() => {
+              if (!cancelMutation.isPending) {
+                setCancelTarget(null);
+                setCancelReason("");
+                setCancelError(null);
+              }
+            }}
+            title="Batalkan Pengajuan Lembur"
+            description={`Apakah Anda yakin ingin membatalkan pengajuan ${getDisplayRequestNumber(cancelTarget)} (${cancelDateLabel})?`}
+            maxWidth="md"
+            footer={
+              <div className="flex items-center justify-end gap-2 w-full">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => {
+                    setCancelTarget(null);
+                    setCancelReason("");
+                    setCancelError(null);
+                  }}
+                  disabled={cancelMutation.isPending}
+                  className="min-h-[44px] rounded-xl"
+                >
+                  Kembali
+                </Button>
+                <Button
+                  variant="danger"
+                  size="md"
+                  onClick={handleCancelSubmit}
+                  isLoading={cancelMutation.isPending}
+                  className="min-h-[44px] rounded-xl font-bold bg-rose-600 hover:bg-rose-700"
+                >
+                  Ya, Batalkan Lembur
+                </Button>
+              </div>
             }
-          }}
-          title="Batalkan Pengajuan Lembur"
-          description={`Apakah Anda yakin ingin membatalkan pengajuan lembur tanggal ${formatDate(cancelTarget.date)}?`}
-          maxWidth="md"
-          footer={
-            <div className="flex items-center justify-end gap-2 w-full">
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => {
-                  setCancelTarget(null);
-                  setCancelReason("");
-                  setCancelError(null);
-                }}
-                disabled={cancelMutation.isPending}
-                className="min-h-[44px] rounded-xl"
-              >
-                Kembali
-              </Button>
-              <Button
-                variant="danger"
-                size="md"
-                onClick={handleCancelSubmit}
-                isLoading={cancelMutation.isPending}
-                className="min-h-[44px] rounded-xl font-bold bg-rose-600 hover:bg-rose-700"
-              >
-                Ya, Batalkan Lembur
-              </Button>
-            </div>
-          }
-        >
-          <div className="space-y-4 text-xs">
-            {cancelError && (
-              <div
-                role="alert"
-                className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-medium"
-              >
-                {cancelError}
-              </div>
-            )}
+          >
+            <div className="space-y-4 text-xs">
+              {cancelError && (
+                <div
+                  role="alert"
+                  className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-medium"
+                >
+                  {cancelError}
+                </div>
+              )}
 
-            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 space-y-1">
-              <div className="font-bold">Perhatian</div>
-              <p className="text-[11.5px] leading-relaxed">
-                Pengajuan yang telah dibatalkan tidak akan diproses lebih lanjut oleh atasan dan statusnya tidak dapat dikembalikan.
-              </p>
-            </div>
+              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 space-y-1">
+                <div className="font-bold">Perhatian</div>
+                <p className="text-[11.5px] leading-relaxed">
+                  Pengajuan yang telah dibatalkan tidak akan diproses lebih lanjut oleh atasan dan statusnya tidak dapat dikembalikan.
+                </p>
+              </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 font-sans">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Tanggal:</span>
-                <span className="font-bold text-slate-900">
-                  {formatDate(cancelTarget.date)}
-                </span>
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 font-sans">
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-600">Nomor:</span>
+                  <span className="font-mono font-bold text-slate-900">
+                    {getDisplayRequestNumber(cancelTarget)}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-600">Tanggal:</span>
+                  <span className="font-bold text-slate-900 text-right">
+                    {cancelDateLabel}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-600">Total Durasi:</span>
+                  <span className="font-mono font-bold text-slate-900 text-right">
+                    {isCancelMulti
+                      ? `${cancelDistinctDays} hari, ${cancelItems.length} sesi (${cancelTarget.duration_hours} Jam)`
+                      : `${cancelTarget.start_time.slice(0, 5)} - ${cancelTarget.end_time.slice(0, 5)} WIB (${cancelTarget.duration_hours} Jam)`}
+                  </span>
+                </div>
+                {isCancelMulti && (
+                  <div className="pt-1.5 border-t border-slate-200/70 divide-y divide-slate-200/60 max-h-36 overflow-y-auto">
+                    {cancelItems.map((slot, idx) => (
+                      <div
+                        key={`${slot.id_overtime_request_items || idx}-${slot.date}`}
+                        className="py-1 flex items-center justify-between text-[11px]"
+                      >
+                        <span className="text-slate-700 font-medium">
+                          {formatShortDateId(slot.date)}
+                        </span>
+                        <span className="font-mono text-slate-700">
+                          {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)} ({slot.duration_hours}j)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="text-slate-700 pt-1.5 border-t border-slate-200/60">
+                  <span className="text-slate-600 font-medium">Tugas: </span>
+                  <span>{cancelTarget.reason}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Jam Lembur:</span>
-                <span className="font-mono font-bold text-slate-900">
-                  {cancelTarget.start_time.slice(0, 5)} - {cancelTarget.end_time.slice(0, 5)} WIB ({cancelTarget.duration_hours} Jam)
-                </span>
-              </div>
-              <div className="text-slate-600 pt-1 border-t border-slate-200/60">
-                <span className="text-slate-400">Tugas: </span>
-                <span>{cancelTarget.reason}</span>
-              </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="cancelReasonInput"
-                className="block text-xs font-semibold text-slate-700 mb-1.5"
-              >
-                Alasan Pembatalan <span className="text-slate-400 font-normal">(opsional)</span>
-              </label>
-              <textarea
-                id="cancelReasonInput"
-                rows={3}
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                placeholder="Contoh: Pekerjaan selesai lebih awal, perubahan jadwal proyek..."
-                className="w-full rounded-2xl border border-slate-200/80 bg-white p-3.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-              />
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* 7. Modal Konfirmasi Persetujuan / Penolakan (Admin / HR) */}
-      {actionTarget && actionType && (
-        <Modal
-          isOpen={true}
-          onClose={() => {
-            if (!actionMutation.isPending) {
-              setActionTarget(null);
-              setActionType(null);
-              setActionNotes("");
-              setActionError(null);
-            }
-          }}
-          title={
-            actionType === "approved"
-              ? "Konfirmasi Persetujuan Lembur"
-              : "Konfirmasi Penolakan Lembur"
-          }
-          description={`Pengajuan dari ${
-            actionTarget.employee?.user?.name || "Karyawan"
-          } untuk lembur selama ${actionTarget.duration_hours} jam.`}
-          maxWidth="md"
-          footer={
-            <div className="flex items-center justify-end gap-2 w-full">
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => {
-                  setActionTarget(null);
-                  setActionType(null);
-                  setActionNotes("");
-                  setActionError(null);
-                }}
-                disabled={actionMutation.isPending}
-                className="min-h-[44px] rounded-xl"
-              >
-                Batal
-              </Button>
-              <Button
-                variant={actionType === "approved" ? "primary" : "danger"}
-                size="md"
-                onClick={handleActionConfirm}
-                isLoading={actionMutation.isPending}
-                className="min-h-[44px] rounded-xl font-bold"
-              >
-                {actionType === "approved" ? "Setujui Lembur" : "Tolak Lembur"}
-              </Button>
-            </div>
-          }
-        >
-          <div className="space-y-4 text-xs">
-            {actionError && (
-              <div
-                role="alert"
-                className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-medium"
-              >
-                {actionError}
-              </div>
-            )}
-
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 font-sans">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Tanggal:</span>
-                <span className="font-bold text-slate-900">
-                  {formatDate(actionTarget.date)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Waktu:</span>
-                <span className="font-mono font-bold text-slate-900">
-                  {actionTarget.start_time.slice(0, 5)} - {actionTarget.end_time.slice(0, 5)} WIB ({actionTarget.duration_hours} Jam)
-                </span>
-              </div>
-              <div className="text-slate-600 pt-1 border-t border-slate-200/60">
-                <span className="text-slate-400">Tugas: </span>
-                <span>{actionTarget.reason}</span>
-              </div>
-            </div>
-
-            {actionType === "rejected" && (
               <div>
                 <label
-                  htmlFor="actionNotesInput"
+                  htmlFor="cancelReasonInput"
                   className="block text-xs font-semibold text-slate-700 mb-1.5"
                 >
-                  Alasan Penolakan <span className="text-rose-500">*</span>
+                  Alasan Pembatalan <span className="text-slate-500 font-normal">(opsional)</span>
                 </label>
                 <textarea
-                  id="actionNotesInput"
+                  id="cancelReasonInput"
                   rows={3}
-                  value={actionNotes}
-                  onChange={(e) => setActionNotes(e.target.value)}
-                  placeholder="Tuliskan catatan alasan penolakan..."
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Contoh: Pekerjaan selesai lebih awal, perubahan jadwal proyek..."
                   className="w-full rounded-2xl border border-slate-200/80 bg-white p-3.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-                  required
                 />
               </div>
-            )}
-          </div>
-        </Modal>
-      )}
+            </div>
+          </Modal>
+        );
+      })()}
+
+      {/* 7. Modal Konfirmasi Persetujuan / Penolakan (Admin / HR) */}
+      {actionTarget && actionType && (() => {
+        const actionItems = getEffectiveOvertimeItems(actionTarget);
+        const actionStartIso = normalizeIsoDate(actionTarget.date);
+        const actionEndIso = getEffectiveOvertimeEndDate(actionTarget);
+        const actionDistinctDays = countDistinctOvertimeDays(actionItems);
+        const isActionMulti = actionItems.length > 1;
+        const actionDateLabel =
+          actionEndIso && actionEndIso !== actionStartIso
+            ? `${formatDate(actionStartIso)} - ${formatDate(actionEndIso)}`
+            : formatDate(actionStartIso);
+
+        return (
+          <Modal
+            isOpen={true}
+            onClose={() => {
+              if (!actionMutation.isPending) {
+                setActionTarget(null);
+                setActionType(null);
+                setActionNotes("");
+                setActionError(null);
+              }
+            }}
+            title={
+              actionType === "approved"
+                ? "Konfirmasi Persetujuan Lembur"
+                : "Konfirmasi Penolakan Lembur"
+            }
+            description={`Pengajuan ${getDisplayRequestNumber(actionTarget)} dari ${
+              actionTarget.employee?.user?.name || "Karyawan"
+            } selama ${actionTarget.duration_hours} jam.`}
+            maxWidth="md"
+            footer={
+              <div className="flex items-center justify-end gap-2 w-full">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => {
+                    setActionTarget(null);
+                    setActionType(null);
+                    setActionNotes("");
+                    setActionError(null);
+                  }}
+                  disabled={actionMutation.isPending}
+                  className="min-h-[44px] rounded-xl"
+                >
+                  Batal
+                </Button>
+                <Button
+                  variant={actionType === "approved" ? "primary" : "danger"}
+                  size="md"
+                  onClick={handleActionConfirm}
+                  isLoading={actionMutation.isPending}
+                  className="min-h-[44px] rounded-xl font-bold"
+                >
+                  {actionType === "approved" ? "Setujui Lembur" : "Tolak Lembur"}
+                </Button>
+              </div>
+            }
+          >
+            <div className="space-y-4 text-xs">
+              {actionError && (
+                <div
+                  role="alert"
+                  className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-medium"
+                >
+                  {actionError}
+                </div>
+              )}
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5 font-sans">
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-600">Nomor:</span>
+                  <span className="font-mono font-bold text-slate-900">
+                    {getDisplayRequestNumber(actionTarget)}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-600">Tanggal:</span>
+                  <span className="font-bold text-slate-900 text-right">
+                    {actionDateLabel}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <span className="text-slate-600">Waktu:</span>
+                  <span className="font-mono font-bold text-slate-900 text-right">
+                    {isActionMulti
+                      ? `${actionDistinctDays} hari, ${actionItems.length} sesi (${actionTarget.duration_hours} Jam)`
+                      : `${actionTarget.start_time.slice(0, 5)} - ${actionTarget.end_time.slice(0, 5)} WIB (${actionTarget.duration_hours} Jam)`}
+                  </span>
+                </div>
+                {isActionMulti && (
+                  <div className="pt-1.5 border-t border-slate-200/70 divide-y divide-slate-200/60 max-h-40 overflow-y-auto">
+                    {actionItems.map((slot, idx) => {
+                      const sStart = normalizeIsoDate(slot.date);
+                      const sEnd = normalizeIsoDate(slot.end_date) || sStart;
+                      const crossTag = sEnd > sStart ? " (+1)" : "";
+                      return (
+                        <div
+                          key={`${slot.id_overtime_request_items || idx}-${sStart}`}
+                          className="py-1 flex items-center justify-between text-[11px]"
+                        >
+                          <span className="text-slate-700 font-medium">
+                            {formatShortDateId(sStart)}
+                          </span>
+                          <span className="font-mono text-slate-700">
+                            {slot.start_time.slice(0, 5)}-{slot.end_time.slice(0, 5)}
+                            {crossTag} ({slot.duration_hours}j)
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="text-slate-700 pt-1.5 border-t border-slate-200/60">
+                  <span className="text-slate-600 font-medium">Tugas: </span>
+                  <span>{actionTarget.reason}</span>
+                </div>
+              </div>
+
+              {actionType === "rejected" && (
+                <div>
+                  <label
+                    htmlFor="actionNotesInput"
+                    className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  >
+                    Alasan Penolakan <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    id="actionNotesInput"
+                    rows={3}
+                    value={actionNotes}
+                    onChange={(e) => setActionNotes(e.target.value)}
+                    placeholder="Tuliskan catatan alasan penolakan..."
+                    className="w-full rounded-2xl border border-slate-200/80 bg-white p-3.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    required
+                  />
+                </div>
+              )}
+            </div>
+          </Modal>
+        );
+      })()}
 
       {/* Floating Action Button (FAB) + Mobile */}
       <button

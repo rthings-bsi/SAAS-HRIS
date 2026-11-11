@@ -4,14 +4,34 @@ import 'notification_model.dart';
 
 class NotificationRepository {
   final ApiClient _client;
+  int? _lastUnreadCount;
 
   NotificationRepository(this._client);
 
+  int? get lastUnreadCount => _lastUnreadCount;
+
+  static int _parseInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim()) ?? 0;
+    return 0;
+  }
+
+  // ApiClient._handleResponse already unwraps body['data'], while raw responses may still wrap it.
+  static Map<String, dynamic>? _extractPayloadMap(dynamic response) {
+    if (response is! Map) return null;
+    final map = Map<String, dynamic>.from(response);
+    if (map['data'] is Map) {
+      return Map<String, dynamic>.from(map['data'] as Map);
+    }
+    return map;
+  }
+
   Future<int> getUnreadCount() async {
     final response = await _client.get(ApiEndpoints.notificationUnreadCount);
-    if (response is Map && response['data'] is Map) {
-      final data = response['data'] as Map;
-      return data['unread_count'] as int? ?? 0;
+    final payload = _extractPayloadMap(response);
+    if (payload != null) {
+      return _parseInt(payload['unread_count']);
     }
     return 0;
   }
@@ -22,14 +42,23 @@ class NotificationRepository {
       queryParameters: {'per_page': perPage},
     );
 
-    if (response is Map && response['data'] is Map) {
-      final data = response['data'] as Map;
-      final rawList = data['notifications'] as List? ?? [];
-      return rawList
-          .map((item) => NotificationModel.fromJson(Map<String, dynamic>.from(item as Map)))
-          .toList();
+    final payload = _extractPayloadMap(response);
+    if (payload == null) {
+      _lastUnreadCount = null;
+      return [];
     }
-    return [];
+
+    if (payload.containsKey('unread_count')) {
+      _lastUnreadCount = _parseInt(payload['unread_count']);
+    } else {
+      _lastUnreadCount = null;
+    }
+
+    final rawList = payload['notifications'] as List? ?? const [];
+    return rawList
+        .whereType<Map>()
+        .map((item) => NotificationModel.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
   }
 
   Future<void> markAsRead(int id) async {

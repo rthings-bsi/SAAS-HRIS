@@ -25,6 +25,7 @@ class OvertimeDetailReviewScreen extends ConsumerStatefulWidget {
   final String? attachmentName;
   final String? draftId;
   final int? revisingRequestId;
+  final bool allowMultiEntryRevision;
   final bool removeAttachment;
   final bool hasExistingRemoteAttachment;
   final List<OvertimeDaySchedule> initialSchedules;
@@ -44,6 +45,7 @@ class OvertimeDetailReviewScreen extends ConsumerStatefulWidget {
     this.attachmentName,
     this.draftId,
     this.revisingRequestId,
+    this.allowMultiEntryRevision = false,
     this.removeAttachment = false,
     this.hasExistingRemoteAttachment = false,
     required this.initialSchedules,
@@ -128,8 +130,8 @@ class _OvertimeDetailReviewScreenState
         shiftName: dayContext?.shiftName,
         shiftRange: dayContext?.formattedShiftRange,
         actualAttendance: actualAttendance,
-        allowMultipleSlots: !widget.isRevision,
-        allowReset: !widget.isRevision,
+        allowMultipleSlots: !widget.isRevision || widget.allowMultiEntryRevision,
+        allowReset: !widget.isRevision || widget.allowMultiEntryRevision,
       ),
     );
 
@@ -226,18 +228,19 @@ class _OvertimeDetailReviewScreenState
       if (slotStart == null || slotEnd == null) continue;
 
       for (final req in activeRequests) {
-        final reqEndDate = (req.end_date != null && req.end_date!.isNotEmpty)
-            ? req.end_date!
-            : req.date;
-        final reqStart = _parseRequestBoundary(req.date, req.start_time);
-        final reqEnd = _parseRequestBoundary(reqEndDate, req.end_time);
-        if (reqStart == null || reqEnd == null) continue;
+        for (final reqItem in req.effectiveItems) {
+          final reqEndDate = reqItem.effectiveEndDate;
+          final reqStart =
+              _parseRequestBoundary(reqItem.date, reqItem.start_time);
+          final reqEnd = _parseRequestBoundary(reqEndDate, reqItem.end_time);
+          if (reqStart == null || reqEnd == null) continue;
 
-        if (reqStart.isBefore(slotEnd) && reqEnd.isAfter(slotStart)) {
-          final dayLabel = _metaDateFormat.format(slot.startDate);
-          final timeLabel =
-              '${OvertimeSlotEntry.formatTime(slot.startTime)}-${OvertimeSlotEntry.formatTime(slot.endTime)}';
-          return 'Jadwal $dayLabel ($timeLabel) tumpang tindih dengan pengajuan aktif.';
+          if (reqStart.isBefore(slotEnd) && reqEnd.isAfter(slotStart)) {
+            final dayLabel = _metaDateFormat.format(slot.startDate);
+            final timeLabel =
+                '${OvertimeSlotEntry.formatTime(slot.startTime)}-${OvertimeSlotEntry.formatTime(slot.endTime)}';
+            return 'Jadwal $dayLabel ($timeLabel) tumpang tindih dengan pengajuan aktif.';
+          }
         }
       }
     }
@@ -338,8 +341,21 @@ class _OvertimeDetailReviewScreenState
       _submitError = null;
     });
 
+    final entries = validSlots
+        .map(
+          (slot) => {
+            'date': OvertimeSlotEntry.formatIsoDate(slot.startDate),
+            'end_date': OvertimeSlotEntry.formatIsoDate(slot.endDate),
+            'start_time': OvertimeSlotEntry.formatTime(slot.startTime),
+            'end_time': OvertimeSlotEntry.formatTime(slot.endTime),
+          },
+        )
+        .toList();
+
     if (widget.isRevision) {
       final slot = validSlots.first;
+      final sendEntries =
+          widget.allowMultiEntryRevision || validSlots.length > 1;
       final ok = await ref.read(overtimeActionProvider.notifier).updateOvertime(
             id: widget.revisingRequestId!,
             date: OvertimeSlotEntry.formatIsoDate(slot.startDate),
@@ -347,6 +363,7 @@ class _OvertimeDetailReviewScreenState
             startTime: OvertimeSlotEntry.formatTime(slot.startTime),
             endTime: OvertimeSlotEntry.formatTime(slot.endTime),
             reason: widget.reason,
+            entries: sendEntries ? entries : null,
             overtimeType: widget.overtimeType,
             reasonCategory: widget.reasonCategory,
             attachmentPath: widget.attachmentPath,
@@ -365,17 +382,6 @@ class _OvertimeDetailReviewScreenState
       }
       return;
     }
-
-    final entries = validSlots
-        .map(
-          (slot) => {
-            'date': OvertimeSlotEntry.formatIsoDate(slot.startDate),
-            'end_date': OvertimeSlotEntry.formatIsoDate(slot.endDate),
-            'start_time': OvertimeSlotEntry.formatTime(slot.startTime),
-            'end_time': OvertimeSlotEntry.formatTime(slot.endTime),
-          },
-        )
-        .toList();
 
     final ok = await ref.read(overtimeActionProvider.notifier).submitOvertimeForm(
           entries: entries,
@@ -576,6 +582,7 @@ class _OvertimeDetailReviewScreenState
                       label: 'Tanggal Berakhir',
                       value: _metaDateFormat.format(
                         (widget.isRevision &&
+                                !widget.allowMultiEntryRevision &&
                                 _schedules.isNotEmpty &&
                                 _schedules.first.validSlots.isNotEmpty)
                             ? _schedules.first.validSlots.first.endDate

@@ -55,6 +55,43 @@ class OvertimeDetailScreen extends ConsumerWidget {
     return DateFormat('d MMM', 'id_ID').format(parsed);
   }
 
+  String _resolveClockOutShortDate(
+    String dayIso,
+    String? clockInHm,
+    String? clockOutHm,
+  ) {
+    if (clockInHm != null &&
+        clockOutHm != null &&
+        clockOutHm.compareTo(clockInHm) < 0) {
+      final parsed = DateTime.tryParse(dayIso);
+      if (parsed != null) {
+        return DateFormat('d MMM', 'id_ID').format(
+          parsed.add(const Duration(days: 1)),
+        );
+      }
+    }
+    return _formatShortDate(dayIso);
+  }
+
+  List<({String dayIso, List<OvertimeRequestItemModel> slots})>
+      _groupItemsByDate(OvertimeRequestModel req) {
+    final sorted = [...req.effectiveItems]..sort((a, b) {
+        final dateCmp = _isoDateOnly(a.date).compareTo(_isoDateOnly(b.date));
+        if (dateCmp != 0) return dateCmp;
+        return a.start_time.compareTo(b.start_time);
+      });
+
+    final grouped = <String, List<OvertimeRequestItemModel>>{};
+    for (final entry in sorted) {
+      final key = _isoDateOnly(entry.date);
+      grouped.putIfAbsent(key, () => []).add(entry);
+    }
+
+    return grouped.entries
+        .map((e) => (dayIso: e.key, slots: e.value))
+        .toList();
+  }
+
   String _initialsFromName(String name) {
     final parts = name
         .trim()
@@ -400,14 +437,16 @@ class OvertimeDetailScreen extends ConsumerWidget {
     final auth = ref.watch(authStateProvider);
     final actionState = ref.watch(overtimeActionProvider);
 
-    final dateKey = _isoDateOnly(item.date);
+    final dayGroups = _groupItemsByDate(item);
+    final firstIsoDate =
+        dayGroups.isNotEmpty ? dayGroups.first.dayIso : _isoDateOnly(item.date);
+    final lastIsoDate =
+        dayGroups.isNotEmpty ? dayGroups.last.dayIso : _isoDateOnly(item.date);
+    final dayContextRange = (startDate: firstIsoDate, endDate: lastIsoDate);
+
     final dayContextAsync = isApprovalView
         ? null
-        : ref.watch(
-            overtimeDayContextProvider(
-              (startDate: dateKey, endDate: dateKey),
-            ),
-          );
+        : ref.watch(overtimeDayContextProvider(dayContextRange));
     final dayContext = dayContextAsync?.valueOrNull;
 
     final rawItemName = item.employee_name?.trim();
@@ -437,44 +476,12 @@ class OvertimeDetailScreen extends ConsumerWidget {
     final resolvedShiftRange = item.formattedShiftRange ??
         (!isApprovalView ? dayContext?.formattedShiftRange : null);
 
-    final resolvedClockIn = OvertimeRequestModel.trimHm(item.actual_clock_in) ??
-        (!isApprovalView
-            ? OvertimeRequestModel.trimHm(
-                dayContext?.attendanceByDate[dateKey]?.clockIn,
-              )
-            : null);
-    final resolvedClockOut =
-        OvertimeRequestModel.trimHm(item.actual_clock_out) ??
-            (!isApprovalView
-                ? OvertimeRequestModel.trimHm(
-                    dayContext?.attendanceByDate[dateKey]?.clockOut,
-                  )
-                : null);
-
     final startDateLabel = _formatFullDate(item.date);
-    final rawEndDate =
-        (item.end_date != null && item.end_date!.trim().isNotEmpty)
-            ? item.end_date!
-            : item.date;
-    final endDateLabel = _formatFullDate(rawEndDate);
+    final endDateLabel = _formatFullDate(item.effectiveEndDate);
     final requestDateLabel =
         (item.created_at != null && item.created_at!.trim().isNotEmpty)
             ? _formatFullDate(item.created_at!, isTimestamp: true)
             : startDateLabel;
-
-    final otStartShortDate = _formatShortDate(item.date);
-    final otEndShortDate = _formatShortDate(rawEndDate);
-    final otStartHm =
-        OvertimeRequestModel.trimHm(item.start_time) ?? item.start_time;
-    final otEndHm = OvertimeRequestModel.trimHm(item.end_time) ?? item.end_time;
-    final otStartText = '$otStartHm | $otStartShortDate';
-    final otEndText = '$otEndHm | $otEndShortDate';
-
-    final actualInText =
-        resolvedClockIn != null ? '$resolvedClockIn | $otStartShortDate' : '--:--';
-    final actualOutText = resolvedClockOut != null
-        ? '$resolvedClockOut | $otStartShortDate'
-        : '--:--';
 
     final shiftLineParts = <String>[
       if (resolvedShiftName != null && resolvedShiftName.isNotEmpty)
@@ -495,16 +502,22 @@ class OvertimeDetailScreen extends ConsumerWidget {
         ? item.reason_category!.trim()
         : '-';
 
+    final firstSlot =
+        dayGroups.isNotEmpty ? dayGroups.first.slots.first : null;
+    final firstHasActual = OvertimeRequestModel.trimHm(
+          firstSlot?.actual_clock_in ?? item.actual_clock_in,
+        ) !=
+        null;
     final showOwnLoadingSkeleton = !isApprovalView &&
         dayContextAsync != null &&
         dayContextAsync.isLoading &&
         resolvedShiftName == null &&
-        resolvedClockIn == null;
+        !firstHasActual;
     final showOwnContextError = !isApprovalView &&
         dayContextAsync != null &&
         dayContextAsync.hasError &&
         resolvedShiftName == null &&
-        resolvedClockIn == null;
+        !firstHasActual;
 
     final hasStatusBanner = (item.status == OvertimeStatus.approved &&
             item.approver_name != null &&
@@ -803,7 +816,7 @@ class OvertimeDetailScreen extends ConsumerWidget {
                                   TextButton(
                                     onPressed: () => ref.invalidate(
                                       overtimeDayContextProvider(
-                                        (startDate: dateKey, endDate: dateKey),
+                                        dayContextRange,
                                       ),
                                     ),
                                     style: TextButton.styleFrom(
@@ -823,82 +836,204 @@ class OvertimeDetailScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 12),
                           ],
-                          Text(
-                            startDateLabel,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.inkPrimary,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                            ),
-                          ),
-                          if (shiftLine.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              shiftLine,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF475569),
-                                fontFeatures: [FontFeature.tabularFigures()],
+                          for (int dayIdx = 0;
+                              dayIdx < dayGroups.length;
+                              dayIdx++) ...[
+                            if (dayIdx > 0) ...[
+                              const SizedBox(height: 16),
+                              const Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: AppColors.borderSubtle,
                               ),
+                              const SizedBox(height: 16),
+                            ],
+                            ...() {
+                              final group = dayGroups[dayIdx];
+                              final dayIso = group.dayIso;
+                              final slots = group.slots;
+                              final dayDateLabel = _formatFullDate(dayIso);
+                              final dayShortDate = _formatShortDate(dayIso);
+
+                              String? itemClockIn;
+                              String? itemClockOut;
+                              for (final slot in slots) {
+                                itemClockIn ??= OvertimeRequestModel.trimHm(
+                                  slot.actual_clock_in,
+                                );
+                                itemClockOut ??= OvertimeRequestModel.trimHm(
+                                  slot.actual_clock_out,
+                                );
+                              }
+                              if (dayIso == _isoDateOnly(item.date)) {
+                                itemClockIn ??= OvertimeRequestModel.trimHm(
+                                  item.actual_clock_in,
+                                );
+                                itemClockOut ??= OvertimeRequestModel.trimHm(
+                                  item.actual_clock_out,
+                                );
+                              }
+
+                              final resolvedDayClockIn = itemClockIn ??
+                                  (!isApprovalView
+                                      ? OvertimeRequestModel.trimHm(
+                                          dayContext
+                                              ?.attendanceByDate[dayIso]
+                                              ?.clockIn,
+                                        )
+                                      : null);
+                              final resolvedDayClockOut = itemClockOut ??
+                                  (!isApprovalView
+                                      ? OvertimeRequestModel.trimHm(
+                                          dayContext
+                                              ?.attendanceByDate[dayIso]
+                                              ?.clockOut,
+                                        )
+                                      : null);
+
+                              final actualInText = resolvedDayClockIn != null
+                                  ? '$resolvedDayClockIn | $dayShortDate'
+                                  : '--:--';
+                              final clockOutShortDate =
+                                  _resolveClockOutShortDate(
+                                dayIso,
+                                resolvedDayClockIn,
+                                resolvedDayClockOut,
+                              );
+                              final actualOutText = resolvedDayClockOut != null
+                                  ? '$resolvedDayClockOut | $clockOutShortDate'
+                                  : '--:--';
+
+                              return <Widget>[
+                                Text(
+                                  dayDateLabel,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.inkPrimary,
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                                if (shiftLine.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    shiftLine,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF475569),
+                                      fontFeatures: [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 14),
+                                const Text(
+                                  'Kehadiran Aktual',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.inkPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildTwoColumnPair(
+                                  stack: stackPairs,
+                                  left: _DetailMetaColumn(
+                                    label: 'Jam Masuk',
+                                    value: actualInText,
+                                    mutedValue: resolvedDayClockIn == null,
+                                  ),
+                                  right: _DetailMetaColumn(
+                                    label: 'Jam Keluar',
+                                    value: actualOutText,
+                                    mutedValue: resolvedDayClockOut == null,
+                                  ),
+                                ),
+                                for (int sIdx = 0;
+                                    sIdx < slots.length;
+                                    sIdx++) ...[
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Overtime ${sIdx + 1}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.inkPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildTwoColumnPair(
+                                    stack: stackPairs,
+                                    left: _DetailMetaColumn(
+                                      label: 'Mulai Lembur',
+                                      value:
+                                          '${OvertimeRequestModel.trimHm(slots[sIdx].start_time) ?? slots[sIdx].start_time} | ${_formatShortDate(slots[sIdx].date)}',
+                                    ),
+                                    right: _DetailMetaColumn(
+                                      label: 'Lembur Berakhir',
+                                      value:
+                                          '${OvertimeRequestModel.trimHm(slots[sIdx].end_time) ?? slots[sIdx].end_time} | ${_formatShortDate(slots[sIdx].effectiveEndDate)}',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Durasi diajukan ${slots[sIdx].formattedRequestedDurationLong}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF475569),
+                                      fontFeatures: [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ];
+                            }(),
+                          ],
+                          if (item.effectiveItems.length > 1) ...[
+                            const SizedBox(height: 16),
+                            const Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: AppColors.borderSubtle,
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                Text(
+                                  'Total Diajukan (${dayGroups.length} hari, ${item.effectiveItems.length} sesi)',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF475569),
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  item.formattedRequestedDurationLong,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.inkPrimary,
+                                    fontFeatures: [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Kehadiran Aktual',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.inkPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildTwoColumnPair(
-                            stack: stackPairs,
-                            left: _DetailMetaColumn(
-                              label: 'Jam Masuk',
-                              value: actualInText,
-                              mutedValue: resolvedClockIn == null,
-                            ),
-                            right: _DetailMetaColumn(
-                              label: 'Jam Keluar',
-                              value: actualOutText,
-                              mutedValue: resolvedClockOut == null,
-                            ),
-                          ),
                         ],
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Overtime 1',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.inkPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _buildTwoColumnPair(
-                          stack: stackPairs,
-                          left: _DetailMetaColumn(
-                            label: 'Mulai Lembur',
-                            value: otStartText,
-                          ),
-                          right: _DetailMetaColumn(
-                            label: 'Lembur Berakhir',
-                            value: otEndText,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Durasi diajukan ${item.formattedRequestedDurationLong}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF475569),
-                            fontFeatures: [FontFeature.tabularFigures()],
-                          ),
-                        ),
                       ],
                     ),
                   ),

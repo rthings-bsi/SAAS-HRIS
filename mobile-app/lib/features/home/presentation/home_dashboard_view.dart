@@ -9,6 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_phosphor_icons.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/hr_hub_logo.dart';
+import '../../../core/widgets/ios_glass_menu_icon.dart';
 import '../../attendance/data/attendance_models.dart';
 import '../../attendance/presentation/attendance_screen.dart';
 import '../../attendance/presentation/history_screen.dart';
@@ -44,8 +45,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Pengajuan Lembur',
     subtitle: 'Ajukan dan pantau jam lembur kerja',
     icon: PhosphorIconsFill.clockClockwise,
-    bgColor: Color(0xFFE0ECFF),
-    iconColor: Color(0xFF2563EB),
+    bgColor: Color(0xFFDBEAFE),
+    iconColor: Color(0xFF1D4ED8),
   ),
   FavoriteMenuDefinition(
     id: 'leave',
@@ -53,8 +54,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Pengajuan Cuti & Izin',
     subtitle: 'Kelola cuti tahunan dan izin karyawan',
     icon: PhosphorIconsFill.calendarCheck,
-    bgColor: Color(0xFFDCFCE7),
-    iconColor: Color(0xFF15803D),
+    bgColor: Color(0xFFD1FAE5),
+    iconColor: Color(0xFF059669),
   ),
   FavoriteMenuDefinition(
     id: 'payroll',
@@ -62,8 +63,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Slip Gaji Karyawan',
     subtitle: 'Rincian gaji dan potongan bulanan',
     icon: PhosphorIconsFill.receipt,
-    bgColor: Color(0xFFE0ECFF),
-    iconColor: Color(0xFF2563EB),
+    bgColor: Color(0xFFCCFBF1),
+    iconColor: Color(0xFF0D9488),
   ),
   FavoriteMenuDefinition(
     id: 'attendance_camera',
@@ -71,8 +72,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Presensi Kamera GPS',
     subtitle: 'Rekam kehadiran swafoto & lokasi',
     icon: PhosphorIconsFill.camera,
-    bgColor: Color(0xFFDCFCE7),
-    iconColor: Color(0xFF15803D),
+    bgColor: Color(0xFFE0F2FE),
+    iconColor: Color(0xFF0284C7),
   ),
   FavoriteMenuDefinition(
     id: 'on_duty',
@@ -80,8 +81,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Tugas Luar (On Duty)',
     subtitle: 'Surat tugas dinas di luar area kantor',
     icon: PhosphorIconsFill.briefcase,
-    bgColor: Color(0xFFDCFCE7),
-    iconColor: Color(0xFF15803D),
+    bgColor: Color(0xFFFFEDD5),
+    iconColor: Color(0xFFEA580C),
   ),
   FavoriteMenuDefinition(
     id: 'profile',
@@ -89,8 +90,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Profil & Data Diri',
     subtitle: 'Informasi kepegawaian dan akun',
     icon: PhosphorIconsFill.identificationCard,
-    bgColor: Color(0xFFE0ECFF),
-    iconColor: Color(0xFF2563EB),
+    bgColor: Color(0xFFE2E8F0),
+    iconColor: Color(0xFF1E293B),
   ),
   FavoriteMenuDefinition(
     id: 'attendance_history',
@@ -98,8 +99,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Riwayat Presensi',
     subtitle: 'Daftar jam masuk dan pulang harian',
     icon: PhosphorIconsFill.clockCounterClockwise,
-    bgColor: Color(0xFFE0ECFF),
-    iconColor: Color(0xFF2563EB),
+    bgColor: Color(0xFFE0E7FF),
+    iconColor: Color(0xFF4338CA),
   ),
   FavoriteMenuDefinition(
     id: 'shift_schedule',
@@ -107,8 +108,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Jadwal Shift Kerja',
     subtitle: 'Jam operasional dan toleransi shift',
     icon: PhosphorIconsFill.calendarDots,
-    bgColor: Color(0xFFDCFCE7),
-    iconColor: Color(0xFF15803D),
+    bgColor: Color(0xFFCFFAFE),
+    iconColor: Color(0xFF0891B2),
   ),
   FavoriteMenuDefinition(
     id: 'company_policy',
@@ -116,8 +117,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     title: 'Pedoman & Regulasi',
     subtitle: 'Tata tertib kerja dan prosedur K3',
     icon: PhosphorIconsFill.bookOpenText,
-    bgColor: Color(0xFFE0ECFF),
-    iconColor: Color(0xFF2563EB),
+    bgColor: Color(0xFFDBEAFE),
+    iconColor: Color(0xFF1E3A8A),
   ),
 ];
 
@@ -293,9 +294,26 @@ class HomeDashboardView extends ConsumerWidget {
           bottom: false,
           child: Container(
             color: const Color(0xFFF8FAFC),
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
+            child: RefreshIndicator(
+              color: AppColors.actionAccent,
+              onRefresh: () async {
+                ref.invalidate(todayAttendanceProvider);
+                ref.invalidate(unreadNotificationCountProvider);
+                await Future.wait<void>([
+                  ref
+                      .read(todayAttendanceProvider.future)
+                      .then((_) {})
+                      .catchError((_) {}),
+                  ref
+                      .read(unreadNotificationCountProvider.future)
+                      .then((_) {})
+                      .catchError((_) {}),
+                ]);
+              },
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                children: [
                 // 1. Header Bar: Brand Mark + HR Hub + SPINDO Badge + Search + Notifications
                 Container(
                   color: Colors.white,
@@ -388,34 +406,71 @@ class HomeDashboardView extends ConsumerWidget {
                         onPressed: () => _showSearchDialog(context),
                       ),
                       IconButton(
-                        icon: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            const Icon(
-                              LucideIcons.bell,
-                              color: Color(0xFF475569),
-                              size: 20,
-                            ),
-                            if (unreadNotificationCount > 0)
-                              Positioned(
-                                top: -2,
-                                right: -2,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFDC2626),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 10,
-                                    minHeight: 10,
+                        key: const Key('home_notification_bell_btn'),
+                        constraints: const BoxConstraints(
+                          minWidth: AppDimensions.minTouchTarget,
+                          minHeight: AppDimensions.minTouchTarget,
+                        ),
+                        icon: Semantics(
+                          label: unreadNotificationCount > 0
+                              ? 'Notifikasi, $unreadNotificationCount belum dibaca'
+                              : 'Notifikasi',
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              const Icon(
+                                LucideIcons.bell,
+                                color: Color(0xFF475569),
+                                size: 20,
+                              ),
+                              if (unreadNotificationCount > 0)
+                                Positioned(
+                                  top: -6,
+                                  right: -8,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 1.5,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDC2626),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      unreadNotificationCount > 99
+                                          ? '99+'
+                                          : '$unreadNotificationCount',
+                                      style: const TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                        height: 1.0,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                        tooltip: 'Notifikasi',
-                        onPressed: () => NotificationSheet.show(context, onNavigateToTab: onNavigateToTab),
+                        tooltip: unreadNotificationCount > 0
+                            ? 'Notifikasi ($unreadNotificationCount belum dibaca)'
+                            : 'Notifikasi',
+                        onPressed: () async {
+                          await NotificationSheet.show(
+                            context,
+                            onNavigateToTab: onNavigateToTab,
+                          );
+                          ref.invalidate(unreadNotificationCountProvider);
+                        },
                       ),
                     ],
                   ),
@@ -1151,8 +1206,9 @@ class HomeDashboardView extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           InkWell(
+                            key: const Key('favorite_menu_edit_btn'),
                             onTap: () => _showEditFavoriteDialog(context, ref),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(999),
                             child: ConstrainedBox(
                               constraints: const BoxConstraints(
                                 minWidth: AppDimensions.minTouchTarget,
@@ -1163,28 +1219,46 @@ class HomeDashboardView extends ConsumerWidget {
                                 heightFactor: 1.0,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
+                                    horizontal: 12,
+                                    vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE0ECFF),
-                                    borderRadius: BorderRadius.circular(16),
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFFFFFFF),
+                                        Color(0xFFEFF6FF),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: const Color(0xFFBFDBFE),
+                                      width: 1.0,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x121D4ED8),
+                                        blurRadius: 8,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        LucideIcons.pencil,
+                                        LucideIcons.slidersHorizontal,
                                         size: 13,
-                                        color: Color(0xFF2563EB),
+                                        color: Color(0xFF1D4ED8),
                                       ),
-                                      SizedBox(width: 4),
+                                      SizedBox(width: 5),
                                       Text(
                                         'Edit',
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF2563EB),
+                                          color: Color(0xFF1D4ED8),
                                         ),
                                       ),
                                     ],
@@ -1207,13 +1281,13 @@ class HomeDashboardView extends ConsumerWidget {
 
                           if (constraints.maxWidth < 310) {
                             columns = 3;
-                            horizontalGap = 6;
-                            verticalGap = 8;
+                            horizontalGap = 8;
+                            verticalGap = 10;
                             labelFontSize = 11;
                           } else if (constraints.maxWidth < 470) {
                             columns = 4;
                             horizontalGap = 8;
-                            verticalGap = 10;
+                            verticalGap = 12;
                             labelFontSize = 11.5;
                           } else if (constraints.maxWidth < 550) {
                             columns = 5;
@@ -1420,6 +1494,7 @@ class HomeDashboardView extends ConsumerWidget {
                 ),
               ],
             ),
+            ),
           ),
         ),
       ),
@@ -1479,21 +1554,32 @@ class HomeDashboardView extends ConsumerWidget {
                   label: const Text('Presensi Kerja'),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    onNavigateToTab(3);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AttendanceScreen(),
+                      ),
+                    );
                   },
                 ),
                 ActionChip(
-                  label: const Text('Pengajuan Cuti'),
+                  label: const Text('Pengajuan Lembur'),
                   onPressed: () {
                     Navigator.pop(ctx);
                     onNavigateToTab(1);
                   },
                 ),
                 ActionChip(
-                  label: const Text('Slip Gaji'),
+                  label: const Text('Pengajuan Cuti'),
                   onPressed: () {
                     Navigator.pop(ctx);
                     onNavigateToTab(2);
+                  },
+                ),
+                ActionChip(
+                  label: const Text('Slip Gaji'),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    onNavigateToTab(3);
                   },
                 ),
                 ActionChip(
@@ -1643,7 +1729,11 @@ class HomeDashboardView extends ConsumerWidget {
                 ),
                 onPressed: () {
                   Navigator.pop(ctx);
-                  onNavigateToTab(3);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AttendanceScreen(),
+                    ),
+                  );
                 },
               ),
             ),
@@ -1905,58 +1995,103 @@ class _FavoriteMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final menuId = kAllFavoriteMenus
+            .where((m) => m.gridLabel == label)
+            .firstOrNull
+            ?.id ??
+        'overtime';
+    return _IosFavoriteMenuTile(
+      menuId: menuId,
+      label: label,
+      accentColor: iconColor,
+      onTap: onTap,
+      labelFontSize: labelFontSize,
+    );
+  }
+}
+
+class _IosFavoriteMenuTile extends StatefulWidget {
+  final String menuId;
+  final String label;
+  final Color accentColor;
+  final VoidCallback onTap;
+  final double labelFontSize;
+
+  const _IosFavoriteMenuTile({
+    required this.menuId,
+    required this.label,
+    required this.accentColor,
+    required this.onTap,
+    this.labelFontSize = 11.5,
+  });
+
+  @override
+  State<_IosFavoriteMenuTile> createState() => _IosFavoriteMenuTileState();
+}
+
+class _IosFavoriteMenuTileState extends State<_IosFavoriteMenuTile> {
+  bool _isPressed = false;
+
+  void _setPressed(bool value) {
+    if (_isPressed == value) return;
+    setState(() {
+      _isPressed = value;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final duration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 140);
+
     return Semantics(
       button: true,
-      label: label.replaceAll('\n', ' '),
+      label: widget.label.replaceAll('\n', ' '),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          hoverColor: iconColor.withValues(alpha: 0.05),
-          splashColor: iconColor.withValues(alpha: 0.12),
+          onTap: widget.onTap,
+          onTapDown: (_) => _setPressed(true),
+          onTapUp: (_) => _setPressed(false),
+          onTapCancel: () => _setPressed(false),
+          borderRadius: BorderRadius.circular(18),
+          hoverColor: widget.accentColor.withValues(alpha: 0.05),
+          splashColor: widget.accentColor.withValues(alpha: 0.12),
           child: ConstrainedBox(
             constraints: const BoxConstraints(
               minWidth: AppDimensions.minTouchTarget,
-              minHeight: 74,
+              minHeight: 78,
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: iconColor.withValues(alpha: 0.16),
-                        width: 1.0,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      icon,
-                      color: iconColor,
-                      size: 22,
+                  AnimatedScale(
+                    scale: _isPressed ? 0.93 : 1.0,
+                    duration: duration,
+                    curve: Curves.easeOutCubic,
+                    child: IosGlassMenuIcon(
+                      menuId: widget.menuId,
+                      size: 52,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
-                    label,
+                    widget.label,
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: labelFontSize,
+                      fontSize: widget.labelFontSize,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1E293B),
-                      height: 1.22,
-                      letterSpacing: -0.1,
+                      color: const Color(0xFF0F172A),
+                      height: 1.24,
+                      letterSpacing: -0.15,
                     ),
                   ),
                 ],
@@ -2175,19 +2310,9 @@ class _EditFavoriteMenuSheetState extends State<_EditFavoriteMenuSheet> {
                           ),
                           child: Row(
                             children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: menu.bgColor,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  menu.icon,
-                                  color: menu.iconColor,
-                                  size: 20,
-                                ),
+                              IosGlassMenuIcon(
+                                menuId: menu.id,
+                                size: 42,
                               ),
                               const SizedBox(width: 12),
                               Expanded(

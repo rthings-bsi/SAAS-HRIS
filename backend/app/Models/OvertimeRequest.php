@@ -6,6 +6,7 @@ use App\Models\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OvertimeRequest extends Model
 {
@@ -77,5 +78,14 @@ class OvertimeRequest extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by', 'id_users');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(
+            OvertimeRequestItem::class,
+            'id_overtime_requests',
+            'id_overtime_requests'
+        )->orderBy('date')->orderBy('start_time')->orderBy('id_overtime_request_items');
     }
 }

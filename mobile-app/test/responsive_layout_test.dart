@@ -1454,5 +1454,100 @@ void main() {
     expect(tester.takeException(), isNull);
     await pumpViewport(tester, size: const Size(640, 900), child: buildDaySheetScreen());
     expect(tester.takeException(), isNull);
+
+    // 5. Consolidated multi-day OvertimeDetailScreen across breakpoints (no nested bordered boxes)
+    const consolidatedDetail = OvertimeRequestModel(
+      id_overtime_requests: 88,
+      request_number: 'OVR-202611-000088',
+      employee_name: 'Budi Pratama',
+      employee_position: 'System Engineer',
+      shift_name: 'U5SH3OPR6',
+      shift_start_time: '23:00:00',
+      shift_end_time: '07:00:00',
+      date: '2026-11-02',
+      end_date: '2026-11-06',
+      start_time: '21:00:00',
+      end_time: '20:30:00',
+      duration_hours: 7.5,
+      overtime_type: 'Jam Lembur',
+      reason_category: 'Dukungan Operasional',
+      reason: 'Support Produksi + Delivery lini gudang 13',
+      status: OvertimeStatus.pending,
+      created_at: '2026-11-06T09:00:00Z',
+      items: [
+        OvertimeRequestItemModel(
+          id_overtime_request_items: 1,
+          date: '2026-11-02',
+          end_date: '2026-11-02',
+          start_time: '21:00:00',
+          end_time: '23:00:00',
+          duration_hours: 2.0,
+          actual_clock_in: '20:49:00',
+          actual_clock_out: '08:07:00',
+        ),
+        OvertimeRequestItemModel(
+          id_overtime_request_items: 2,
+          date: '2026-11-02',
+          end_date: '2026-11-03',
+          start_time: '23:30:00',
+          end_time: '01:30:00',
+          duration_hours: 2.0,
+          actual_clock_in: '20:49:00',
+          actual_clock_out: '08:07:00',
+        ),
+        OvertimeRequestItemModel(
+          id_overtime_request_items: 3,
+          date: '2026-11-06',
+          end_date: '2026-11-06',
+          start_time: '17:00:00',
+          end_time: '20:30:00',
+          duration_hours: 3.5,
+          actual_clock_in: '07:55:00',
+          actual_clock_out: '17:05:00',
+        ),
+      ],
+    );
+
+    Widget buildConsolidatedDetail() => ProviderScope(
+          key: const ValueKey('ot_consolidated_detail_scope'),
+          overrides: [
+            authRepositoryProvider.overrideWithValue(mockAuth),
+            authStateProvider.overrideWith((ref) {
+              final n = AuthNotifier(mockAuth, ref);
+              n.state = AuthState(status: AuthStatus.authenticated, user: employeeUser);
+              return n;
+            }),
+            overtimeRepositoryProvider.overrideWithValue(mockOvertimeRepo),
+            attendanceRepositoryProvider.overrideWithValue(mockAttRepo),
+          ],
+          child: const MaterialApp(
+            home: OvertimeDetailScreen(item: consolidatedDetail),
+          ),
+        );
+
+    await pumpViewport(
+      tester,
+      size: const Size(300, 900),
+      textScale: 1.3,
+      child: buildConsolidatedDetail(),
+    );
+    expect(tester.takeException(), isNull);
+    expect(
+      _borderedContainersInside(find.byKey(const Key('overtime_detail_schedule_box'))),
+      findsNothing,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('overtime_detail_revise_btn'))).height,
+      greaterThanOrEqualTo(AppDimensions.minTouchTarget),
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('overtime_detail_cancel_btn'))).height,
+      greaterThanOrEqualTo(AppDimensions.minTouchTarget),
+    );
+
+    await pumpViewport(tester, size: const Size(375, 900), child: buildConsolidatedDetail());
+    expect(tester.takeException(), isNull);
+    await pumpViewport(tester, size: const Size(640, 900), child: buildConsolidatedDetail());
+    expect(tester.takeException(), isNull);
   });
 }

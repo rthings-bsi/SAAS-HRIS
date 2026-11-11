@@ -35,7 +35,9 @@ class NotificationController extends Controller
 
         $notifications = collect($paginator->items())->map(function ($item) {
             return [
-                'id_notifications' => $item->id_notifications,
+                'id_notifications' => (int) $item->id_notifications,
+                'id_companies' => (int) $item->id_companies,
+                'id_users' => (int) $item->id_users,
                 'type' => $item->type,
                 'title' => $item->title,
                 'message' => $item->message,

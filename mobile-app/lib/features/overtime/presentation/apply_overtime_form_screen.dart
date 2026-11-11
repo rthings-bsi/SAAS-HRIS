@@ -102,6 +102,9 @@ class _ApplyOvertimeFormScreenState
   final Map<String, OvertimeDaySchedule> _cachedSchedulesByIso = {};
 
   bool get _isRevision => widget.existingRequest != null;
+  bool get _isMultiEntryRevision =>
+      widget.existingRequest != null &&
+      (widget.existingRequest!.items?.length ?? 0) > 1;
 
   @override
   void initState() {
@@ -134,19 +137,9 @@ class _ApplyOvertimeFormScreenState
   }
 
   void _applyExistingRequestValues(OvertimeRequestModel existing) {
-    final parsedStart = DateTime.tryParse(existing.date) ?? _normalizeDate(DateTime.now());
-    final normStart = _normalizeDate(parsedStart);
-    var slotEnd = DateTime.tryParse(existing.end_date ?? '') ?? normStart;
-    slotEnd = _normalizeDate(slotEnd);
-    if (slotEnd.isBefore(normStart)) {
-      slotEnd = normStart;
-    }
-
     final typeRaw = existing.overtime_type?.trim();
     final catRaw = existing.reason_category?.trim();
 
-    _startDate = normStart;
-    _endDate = normStart;
     _overtimeType =
         (typeRaw != null && typeRaw.isNotEmpty) ? typeRaw : _overtimeTypes.first;
     _reasonCategory =
@@ -155,12 +148,76 @@ class _ApplyOvertimeFormScreenState
     _existingRemoteAttachmentName = _extractAttachmentName(existing.attachment_url);
     _removeExistingAttachment = false;
 
+    _cachedSchedulesByIso.clear();
+
+    final existingItems = existing.items ?? const [];
+    if (existingItems.length > 1) {
+      final groupedSlots = <String, List<OvertimeSlotEntry>>{};
+      DateTime? minDay;
+      DateTime? maxDay;
+
+      for (final item in existingItems) {
+        final sDateRaw =
+            DateTime.tryParse(item.date) ?? _normalizeDate(DateTime.now());
+        final sDay = _normalizeDate(sDateRaw);
+        var eDay = DateTime.tryParse(item.effectiveEndDate) ?? sDay;
+        eDay = _normalizeDate(eDay);
+        if (eDay.isBefore(sDay)) {
+          eDay = sDay;
+        }
+
+        if (minDay == null || sDay.isBefore(minDay)) minDay = sDay;
+        if (maxDay == null || sDay.isAfter(maxDay)) maxDay = sDay;
+
+        final iso = OvertimeSlotEntry.formatIsoDate(sDay);
+        groupedSlots.putIfAbsent(iso, () => []).add(
+              OvertimeSlotEntry(
+                startDate: sDay,
+                endDate: eDay,
+                startTime: OvertimeSlotEntry.parseTime(item.start_time) ??
+                    const TimeOfDay(hour: 17, minute: 0),
+                endTime: OvertimeSlotEntry.parseTime(item.end_time) ??
+                    const TimeOfDay(hour: 20, minute: 0),
+              ),
+            );
+      }
+
+      final resolvedStart = minDay ?? _normalizeDate(DateTime.now());
+      var resolvedEnd = maxDay ?? resolvedStart;
+      if (resolvedEnd.difference(resolvedStart).inDays + 1 > _maxSpanDays) {
+        resolvedEnd = resolvedStart.add(const Duration(days: _maxSpanDays - 1));
+      }
+
+      _startDate = resolvedStart;
+      _endDate = resolvedEnd;
+
+      groupedSlots.forEach((iso, slots) {
+        final dayDate = slots.first.startDate;
+        _cachedSchedulesByIso[iso] = OvertimeDaySchedule(
+          date: dayDate,
+          slots: slots,
+        );
+      });
+      return;
+    }
+
+    final parsedStart =
+        DateTime.tryParse(existing.date) ?? _normalizeDate(DateTime.now());
+    final normStart = _normalizeDate(parsedStart);
+    var slotEnd = DateTime.tryParse(existing.end_date ?? '') ?? normStart;
+    slotEnd = _normalizeDate(slotEnd);
+    if (slotEnd.isBefore(normStart)) {
+      slotEnd = normStart;
+    }
+
+    _startDate = normStart;
+    _endDate = normStart;
+
     final startTime = OvertimeSlotEntry.parseTime(existing.start_time) ??
         const TimeOfDay(hour: 17, minute: 0);
     final endTime = OvertimeSlotEntry.parseTime(existing.end_time) ??
         const TimeOfDay(hour: 20, minute: 0);
 
-    _cachedSchedulesByIso.clear();
     _cachedSchedulesByIso[OvertimeSlotEntry.formatIsoDate(normStart)] =
         OvertimeDaySchedule(
       date: normStart,
@@ -251,7 +308,7 @@ class _ApplyOvertimeFormScreenState
     bool clamped = false;
 
     setState(() {
-      if (_isRevision) {
+      if (_isRevision && !_isMultiEntryRevision) {
         final prevIso = OvertimeSlotEntry.formatIsoDate(_startDate);
         final prevSchedule = _cachedSchedulesByIso[prevIso];
         _startDate = normPicked;
@@ -696,6 +753,7 @@ class _ApplyOvertimeFormScreenState
                   : (_isRevision ? null : _draftPreviousAttachmentName)),
           draftId: _draftId,
           revisingRequestId: widget.existingRequest?.id_overtime_requests,
+          allowMultiEntryRevision: _isMultiEntryRevision,
           removeAttachment: _isRevision && _removeExistingAttachment && !hasNewAttachment,
           hasExistingRemoteAttachment: activeExistingRemote,
           initialSchedules: initialSchedules,
@@ -920,7 +978,7 @@ class _ApplyOvertimeFormScreenState
                         ),
                       ),
                       const SizedBox(height: 16),
-                      if (_isRevision) ...[
+                      if (_isRevision && !_isMultiEntryRevision) ...[
                         _DatePickerBox(
                           fieldKey: const Key('overtime_start_date_btn'),
                           label: 'Tanggal Lembur',

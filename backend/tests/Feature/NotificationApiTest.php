@@ -154,7 +154,14 @@ class NotificationApiTest extends TestCase
                 'message' => 'Daftar notifikasi berhasil diambil.',
             ])
             ->assertJsonPath('data.unread_count', 1)
-            ->assertJsonCount(2, 'data.notifications');
+            ->assertJsonCount(2, 'data.notifications')
+            ->assertJsonPath('data.notifications.0.id_companies', $this->companyA->id_companies)
+            ->assertJsonPath('data.notifications.0.id_users', $this->hrA->id_users);
+
+        $unreadOnlyResponse = $this->getJson('/api/v1/notifications?unread_only=true');
+        $unreadOnlyResponse->assertStatus(200)
+            ->assertJsonPath('data.unread_count', 1)
+            ->assertJsonCount(1, 'data.notifications');
     }
 
     public function test_user_can_fetch_unread_count_only(): void
@@ -339,6 +346,74 @@ class NotificationApiTest extends TestCase
             'id_users' => $this->empUserA->id_users,
             'type' => 'overtime',
             'title' => 'Pengajuan Lembur Disetujui',
+        ]);
+    }
+
+    public function test_user_can_delete_notification_and_same_second_tie_breaker_orders_newest_first(): void
+    {
+        $older = Notification::create([
+            'id_companies' => $this->companyA->id_companies,
+            'id_users' => $this->empUserA->id_users,
+            'type' => 'system',
+            'title' => 'Urutan Pertama',
+            'message' => 'Notifikasi lebih lama.',
+            'is_read' => false,
+        ]);
+
+        $newer = Notification::create([
+            'id_companies' => $this->companyA->id_companies,
+            'id_users' => $this->empUserA->id_users,
+            'type' => 'system',
+            'title' => 'Urutan Kedua',
+            'message' => 'Notifikasi lebih baru.',
+            'is_read' => false,
+        ]);
+
+        Sanctum::actingAs($this->empUserA);
+
+        $listResponse = $this->getJson('/api/v1/notifications');
+        $listResponse->assertStatus(200)
+            ->assertJsonPath('data.unread_count', 2)
+            ->assertJsonPath('data.notifications.0.id_notifications', $newer->id_notifications)
+            ->assertJsonPath('data.notifications.1.id_notifications', $older->id_notifications);
+
+        $deleteResponse = $this->deleteJson("/api/v1/notifications/{$newer->id_notifications}");
+        $deleteResponse->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'deleted_id' => $newer->id_notifications,
+                    'unread_count' => 1,
+                ],
+            ]);
+
+        $this->assertDatabaseMissing('notifications', [
+            'id_notifications' => $newer->id_notifications,
+        ]);
+    }
+
+    public function test_super_admin_underscore_role_receives_admin_notifications(): void
+    {
+        $superAdmin = User::create([
+            'id_companies' => $this->companyA->id_companies,
+            'name' => 'Super Admin Underscore',
+            'email' => 'superadmin-u@a.test',
+            'password' => Hash::make('password'),
+            'role' => 'super_admin',
+            'is_active' => true,
+        ]);
+
+        app(\App\Services\Notification\NotificationService::class)->notifyAdmins(
+            $this->companyA->id_companies,
+            'overtime',
+            'Uji Notify Admin',
+            'Pesan uji role super_admin'
+        );
+
+        $this->assertDatabaseHas('notifications', [
+            'id_companies' => $this->companyA->id_companies,
+            'id_users' => $superAdmin->id_users,
+            'title' => 'Uji Notify Admin',
         ]);
     }
 }

@@ -20,6 +20,16 @@ class OvertimeController extends Controller
         protected OvertimeService $overtimeService
     ) {}
 
+    private function normalizeIsoDate(mixed $value): string
+    {
+        if ($value instanceof Carbon) {
+            return $value->format('Y-m-d');
+        }
+        $str = (string) $value;
+
+        return strlen($str) >= 10 ? substr($str, 0, 10) : $str;
+    }
+
     /**
      * Melampirkan jam masuk/keluar aktual pada tanggal lembur secara batch (tanpa N+1).
      */
@@ -31,14 +41,18 @@ class OvertimeController extends Controller
         }
 
         $employeeIds = $rows->pluck('id_employees')->filter()->unique()->values();
-        $dates = $rows->map(function ($row) {
-            if ($row->date instanceof Carbon) {
-                return $row->date->format('Y-m-d');
-            }
-            $str = (string) $row->date;
+        $dates = collect();
 
-            return strlen($str) >= 10 ? substr($str, 0, 10) : $str;
-        })->filter()->unique()->values();
+        foreach ($rows as $row) {
+            $dates->push($this->normalizeIsoDate($row->date));
+            if ($row->relationLoaded('items') && $row->items->isNotEmpty()) {
+                foreach ($row->items as $child) {
+                    $dates->push($this->normalizeIsoDate($child->date));
+                }
+            }
+        }
+
+        $dates = $dates->filter()->unique()->values();
 
         if ($employeeIds->isEmpty() || $dates->isEmpty()) {
             return;
@@ -49,20 +63,23 @@ class OvertimeController extends Controller
             ->whereIn('date', $dates)
             ->get()
             ->keyBy(function ($att) {
-                $d = $att->date instanceof Carbon
-                    ? $att->date->format('Y-m-d')
-                    : substr((string) $att->date, 0, 10);
-
-                return $att->id_employees . '|' . $d;
+                return $att->id_employees . '|' . $this->normalizeIsoDate($att->date);
             });
 
         foreach ($rows as $row) {
-            $d = $row->date instanceof Carbon
-                ? $row->date->format('Y-m-d')
-                : substr((string) $row->date, 0, 10);
+            $d = $this->normalizeIsoDate($row->date);
             $att = $attendances->get($row->id_employees . '|' . $d);
             $row->setAttribute('actual_clock_in', $att?->clock_in_time);
             $row->setAttribute('actual_clock_out', $att?->clock_out_time);
+
+            if ($row->relationLoaded('items') && $row->items->isNotEmpty()) {
+                foreach ($row->items as $child) {
+                    $cd = $this->normalizeIsoDate($child->date);
+                    $childAtt = $attendances->get($row->id_employees . '|' . $cd);
+                    $child->setAttribute('actual_clock_in', $childAtt?->clock_in_time);
+                    $child->setAttribute('actual_clock_out', $childAtt?->clock_out_time);
+                }
+            }
         }
     }
 
@@ -79,14 +96,20 @@ class OvertimeController extends Controller
         }
 
         $query = OvertimeRequest::where('id_employees', $employee->id_employees)
-            ->with(['employee.user', 'employee.shift', 'approver']);
+            ->with(['items', 'employee.user', 'employee.shift', 'approver']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
         }
 
         if ($request->filled('month')) {
-            $query->where('date', 'like', $request->input('month') . '%');
+            $monthPrefix = $request->input('month') . '%';
+            $query->where(function ($q) use ($monthPrefix) {
+                $q->where('date', 'like', $monthPrefix)
+                    ->orWhereHas('items', function ($iq) use ($monthPrefix) {
+                        $iq->where('date', 'like', $monthPrefix);
+                    });
+            });
         }
 
         $perPage = (int) $request->input('per_page', 15);
@@ -113,7 +136,7 @@ class OvertimeController extends Controller
             $attachment = $request->file('attachment');
 
             if (isset($validated['entries'])) {
-                $created = $this->overtimeService->applyOvertimeBatch(
+                $overtime = $this->overtimeService->applyOvertimeBatch(
                     $employee,
                     $validated['entries'],
                     $validated['reason'],
@@ -121,11 +144,16 @@ class OvertimeController extends Controller
                     $validated['reason_category'] ?? null,
                     $attachment
                 );
-                $count = count($created);
+                $itemCount = $overtime->items->count();
+                $message = $itemCount > 1
+                    ? "Pengajuan lembur ({$itemCount} sesi) berhasil dikirim."
+                    : 'Pengajuan lembur berhasil dikirim.';
+
+                $this->attachActualAttendance([$overtime], (int) $employee->id_companies);
 
                 return $this->successResponse(
-                    $created,
-                    "{$count} pengajuan lembur berhasil dikirim.",
+                    $overtime,
+                    $message,
                     201
                 );
             }
@@ -135,6 +163,7 @@ class OvertimeController extends Controller
                 $validated,
                 $attachment
             );
+            $this->attachActualAttendance([$overtime], (int) $employee->id_companies);
 
             return $this->successResponse(
                 $overtime,
@@ -172,6 +201,7 @@ class OvertimeController extends Controller
                 $request->validated(),
                 $request->file('attachment')
             );
+            $this->attachActualAttendance([$updated], (int) $employee->id_companies);
 
             return $this->successResponse(
                 $updated,
@@ -208,6 +238,7 @@ class OvertimeController extends Controller
                 $employee,
                 $reason
             );
+            $this->attachActualAttendance([$cancelled], (int) $employee->id_companies);
 
             return $this->successResponse(
                 $cancelled,
@@ -230,14 +261,21 @@ class OvertimeController extends Controller
         }
 
         $query = OvertimeRequest::where('id_companies', $user->id_companies)
-            ->with(['employee.user', 'employee.shift', 'approver']);
+            ->with(['items', 'employee.user', 'employee.shift', 'approver']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
         }
 
         if ($request->filled('date')) {
-            $query->where('date', $request->input('date'));
+            $targetDate = $request->input('date');
+            $query->where(function ($q) use ($targetDate) {
+                $q->whereHas('items', function ($iq) use ($targetDate) {
+                    $iq->where('date', $targetDate);
+                })->orWhere(function ($legacy) use ($targetDate) {
+                    $legacy->doesntHave('items')->where('date', $targetDate);
+                });
+            });
         }
 
         $perPage = (int) $request->input('per_page', 15);
@@ -272,6 +310,7 @@ class OvertimeController extends Controller
                 $request->input('action'),
                 $request->input('notes')
             );
+            $this->attachActualAttendance([$updated], (int) $user->id_companies);
 
             return $this->successResponse($updated, 'Status pengajuan lembur berhasil diperbarui.');
         } catch (ValidationException $e) {

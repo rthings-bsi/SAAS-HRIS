@@ -178,6 +178,7 @@ class OvertimeRepository {
     required String startTime,
     required String endTime,
     required String reason,
+    List<Map<String, dynamic>>? entries,
     String? overtimeType,
     String? reasonCategory,
     String? attachmentPath,
@@ -187,15 +188,21 @@ class OvertimeRepository {
   }) async {
     final hasFileBytes = attachmentBytes != null && attachmentBytes.isNotEmpty;
     final hasFilePath = attachmentPath != null && attachmentPath.isNotEmpty;
+    final hasEntries = entries != null && entries.isNotEmpty;
 
     if (hasFileBytes || hasFilePath) {
       final formMap = <String, dynamic>{
-        'date': date,
-        'end_date': (endDate != null && endDate.isNotEmpty) ? endDate : date,
-        'start_time': startTime,
-        'end_time': endTime,
         'reason': reason,
       };
+      if (hasEntries) {
+        formMap['entries'] = jsonEncode(entries);
+      } else {
+        formMap['date'] = date;
+        formMap['end_date'] =
+            (endDate != null && endDate.isNotEmpty) ? endDate : date;
+        formMap['start_time'] = startTime;
+        formMap['end_time'] = endTime;
+      }
       if (overtimeType != null && overtimeType.isNotEmpty) {
         formMap['overtime_type'] = overtimeType;
       }
@@ -230,12 +237,17 @@ class OvertimeRepository {
     }
 
     final payload = <String, dynamic>{
-      'date': date,
-      'end_date': (endDate != null && endDate.isNotEmpty) ? endDate : date,
-      'start_time': startTime,
-      'end_time': endTime,
       'reason': reason,
     };
+    if (hasEntries) {
+      payload['entries'] = entries;
+    } else {
+      payload['date'] = date;
+      payload['end_date'] =
+          (endDate != null && endDate.isNotEmpty) ? endDate : date;
+      payload['start_time'] = startTime;
+      payload['end_time'] = endTime;
+    }
     if (overtimeType != null && overtimeType.isNotEmpty) {
       payload['overtime_type'] = overtimeType;
     }

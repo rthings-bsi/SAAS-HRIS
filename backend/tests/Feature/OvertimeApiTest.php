@@ -6,6 +6,8 @@ use App\Models\Attendance;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\OvertimeRequest;
+use App\Models\OvertimeRequestItem;
+use App\Models\PayrollSlip;
 use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -459,32 +461,51 @@ class OvertimeApiTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonPath('success', true)
-            ->assertJsonCount(3, 'data')
-            ->assertJsonPath('data.0.duration_hours', 2)
-            ->assertJsonPath('data.1.duration_hours', 3.5)
-            ->assertJsonPath('data.2.duration_hours', 1.5);
+            ->assertJsonPath('data.date', '2026-10-20')
+            ->assertJsonPath('data.end_date', '2026-10-23')
+            ->assertJsonPath('data.duration_hours', 7)
+            ->assertJsonCount(3, 'data.items')
+            ->assertJsonPath('data.items.0.date', '2026-10-20')
+            ->assertJsonPath('data.items.0.duration_hours', 2)
+            ->assertJsonPath('data.items.1.date', '2026-10-21')
+            ->assertJsonPath('data.items.1.duration_hours', 3.5)
+            ->assertJsonPath('data.items.2.date', '2026-10-23')
+            ->assertJsonPath('data.items.2.duration_hours', 1.5);
+
+        $this->assertDatabaseCount('overtime_requests', 1);
+        $this->assertDatabaseCount('overtime_request_items', 3);
 
         $this->assertDatabaseHas('overtime_requests', [
             'id_companies' => $this->companyA->id_companies,
             'id_employees' => $this->employeeA->id_employees,
             'date' => '2026-10-20',
-            'duration_hours' => 2.0,
+            'end_date' => '2026-10-23',
+            'duration_hours' => 7.0,
             'status' => 'pending',
         ]);
-        $this->assertDatabaseHas('overtime_requests', [
+        $this->assertDatabaseHas('overtime_request_items', [
             'id_companies' => $this->companyA->id_companies,
-            'id_employees' => $this->employeeA->id_employees,
+            'date' => '2026-10-20',
+            'duration_hours' => 2.0,
+        ]);
+        $this->assertDatabaseHas('overtime_request_items', [
+            'id_companies' => $this->companyA->id_companies,
             'date' => '2026-10-21',
             'duration_hours' => 3.5,
-            'status' => 'pending',
         ]);
-        $this->assertDatabaseHas('overtime_requests', [
+        $this->assertDatabaseHas('overtime_request_items', [
             'id_companies' => $this->companyA->id_companies,
-            'id_employees' => $this->employeeA->id_employees,
             'date' => '2026-10-23',
             'duration_hours' => 1.5,
-            'status' => 'pending',
         ]);
+
+        // Gap day between sparse batch entries (2026-10-22) must NOT be blocked
+        $this->postJson('/api/v1/overtime/request', [
+            'date' => '2026-10-22',
+            'start_time' => '17:00',
+            'end_time' => '19:00',
+            'reason' => 'Lembur di hari sela yang tidak termasuk pengajuan massal',
+        ])->assertStatus(201);
 
         $this->assertDatabaseHas('notifications', [
             'id_companies' => $this->companyA->id_companies,
@@ -526,15 +547,19 @@ class OvertimeApiTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonPath('success', true)
-            ->assertJsonCount(3, 'data')
-            ->assertJsonPath('data.0.duration_hours', 2)
-            ->assertJsonPath('data.0.overtime_type', 'Jam Lembur')
-            ->assertJsonPath('data.0.reason_category', 'Dukungan Operasional')
-            ->assertJsonPath('data.1.duration_hours', 2)
-            ->assertJsonPath('data.2.end_date', '2026-10-22')
-            ->assertJsonPath('data.2.duration_hours', 3);
+            ->assertJsonPath('data.date', '2026-10-20')
+            ->assertJsonPath('data.end_date', '2026-10-22')
+            ->assertJsonPath('data.duration_hours', 7)
+            ->assertJsonPath('data.overtime_type', 'Jam Lembur')
+            ->assertJsonPath('data.reason_category', 'Dukungan Operasional')
+            ->assertJsonCount(3, 'data.items')
+            ->assertJsonPath('data.items.0.duration_hours', 2)
+            ->assertJsonPath('data.items.1.duration_hours', 2)
+            ->assertJsonPath('data.items.2.end_date', '2026-10-22')
+            ->assertJsonPath('data.items.2.duration_hours', 3);
 
-        $this->assertDatabaseCount('overtime_requests', 3);
+        $this->assertDatabaseCount('overtime_requests', 1);
+        $this->assertDatabaseCount('overtime_request_items', 3);
     }
 
     public function test_multi_day_overtime_rejects_overlapping_slots_in_batch(): void
@@ -553,6 +578,7 @@ class OvertimeApiTest extends TestCase
             ->assertJsonValidationErrors(['entries.1.start_time']);
 
         $this->assertDatabaseCount('overtime_requests', 0);
+        $this->assertDatabaseCount('overtime_request_items', 0);
     }
 
     public function test_employee_can_submit_multipart_batch_overtime_with_attachment(): void
@@ -585,7 +611,11 @@ class OvertimeApiTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonPath('success', true)
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data.items')
+            ->assertJsonPath('data.duration_hours', 6);
+
+        $this->assertDatabaseCount('overtime_requests', 1);
+        $this->assertDatabaseCount('overtime_request_items', 2);
 
         $row = OvertimeRequest::first();
         $this->assertNotNull($row);
@@ -671,17 +701,27 @@ class OvertimeApiTest extends TestCase
             'attachment' => $initialFile,
         ], ['Accept' => 'application/json'])->assertStatus(201);
 
-        $firstId = $applyResp->json('data.0.id_overtime_requests');
-        $secondId = $applyResp->json('data.1.id_overtime_requests');
-        $sharedInitialPath = OvertimeRequest::findOrFail($firstId)->attachment_path;
+        $requestId = $applyResp->json('data.id_overtime_requests');
+        $sharedInitialPath = OvertimeRequest::findOrFail($requestId)->attachment_path;
         Storage::disk('public')->assertExists($sharedInitialPath);
 
+        // Pengajuan kedua yang tidak bentrok ikut mereferensikan test terpisah atas pembersihan berkas
         $replacementFile = UploadedFile::fake()->create('lampiran_revisi.pdf', 140, 'application/pdf');
-        $reviseResp = $this->post("/api/v1/overtime/requests/{$firstId}/update", [
-            'date' => '2026-11-11',
-            'end_date' => '2026-11-12',
-            'start_time' => '22:00',
-            'end_time' => '01:30',
+        $reviseResp = $this->post("/api/v1/overtime/requests/{$requestId}/update", [
+            'entries' => json_encode([
+                [
+                    'date' => '2026-11-11',
+                    'end_date' => '2026-11-12',
+                    'start_time' => '22:00',
+                    'end_time' => '01:30',
+                ],
+                [
+                    'date' => '2026-11-13',
+                    'end_date' => '2026-11-13',
+                    'start_time' => '18:00',
+                    'end_time' => '20:00',
+                ],
+            ]),
             'overtime_type' => 'Lembur Hari Libur',
             'reason_category' => 'Dukungan Operasional',
             'reason' => 'Revisi cutover malam lintas hari dengan lampiran baru',
@@ -690,33 +730,102 @@ class OvertimeApiTest extends TestCase
 
         $reviseResp->assertStatus(200)
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.end_date', '2026-11-12')
-            ->assertJsonPath('data.duration_hours', 3.5)
+            ->assertJsonPath('data.date', '2026-11-11')
+            ->assertJsonPath('data.end_date', '2026-11-13')
+            ->assertJsonPath('data.duration_hours', 5.5)
+            ->assertJsonCount(2, 'data.items')
             ->assertJsonPath('data.overtime_type', 'Lembur Hari Libur')
             ->assertJsonPath('data.reason_category', 'Dukungan Operasional');
 
-        $updatedFirst = OvertimeRequest::findOrFail($firstId);
-        $this->assertNotEquals($sharedInitialPath, $updatedFirst->attachment_path);
-        Storage::disk('public')->assertExists($updatedFirst->attachment_path);
-        // Sibling row masih menggunakan file awal, jadi file awal tidak boleh ikut terhapus
-        Storage::disk('public')->assertExists($sharedInitialPath);
-        $this->assertEquals($sharedInitialPath, OvertimeRequest::findOrFail($secondId)->attachment_path);
+        $updated = OvertimeRequest::findOrFail($requestId);
+        $this->assertNotEquals($sharedInitialPath, $updated->attachment_path);
+        Storage::disk('public')->assertExists($updated->attachment_path);
+        Storage::disk('public')->assertMissing($sharedInitialPath);
 
-        // Hapus lampiran dari baris pertama dan pastikan file pengganti terhapus karena tidak direferensikan baris lain
-        $newPathToDelete = $updatedFirst->attachment_path;
-        $removeResp = $this->putJson("/api/v1/overtime/requests/{$firstId}", [
-            'date' => '2026-11-11',
-            'end_date' => '2026-11-12',
-            'start_time' => '22:00',
-            'end_time' => '01:30',
-            'reason' => 'Revisi tanpa lampiran',
+        // Revisi metadata saja tidak menghapus rincian items multi-hari dan menghapus lampiran lama saat remove_attachment=true
+        $newPathToDelete = $updated->attachment_path;
+        $removeResp = $this->putJson("/api/v1/overtime/requests/{$requestId}", [
+            'reason' => 'Revisi metadata tanpa lampiran',
             'remove_attachment' => true,
         ]);
 
         $removeResp->assertStatus(200)
-            ->assertJsonPath('data.attachment_url', null);
+            ->assertJsonPath('data.attachment_url', null)
+            ->assertJsonPath('data.duration_hours', 5.5)
+            ->assertJsonCount(2, 'data.items');
         Storage::disk('public')->assertMissing($newPathToDelete);
-        Storage::disk('public')->assertExists($sharedInitialPath);
+    }
+
+    public function test_consolidated_overtime_attaches_per_day_attendance_and_splits_payroll_by_item_date(): void
+    {
+        Attendance::create([
+            'id_companies' => $this->companyA->id_companies,
+            'id_employees' => $this->employeeA->id_employees,
+            'date' => '2026-10-30',
+            'clock_in_time' => '07:55:00',
+            'clock_out_time' => '17:02:00',
+            'status' => 'on_time',
+        ]);
+
+        Attendance::create([
+            'id_companies' => $this->companyA->id_companies,
+            'id_employees' => $this->employeeA->id_employees,
+            'date' => '2026-11-02',
+            'clock_in_time' => '08:04:00',
+            'clock_out_time' => '17:15:00',
+            'status' => 'late',
+        ]);
+
+        Sanctum::actingAs($this->userEmpA);
+        $applyResp = $this->postJson('/api/v1/overtime/request', [
+            'entries' => [
+                ['date' => '2026-10-30', 'start_time' => '17:30', 'end_time' => '19:30'],
+                ['date' => '2026-11-02', 'start_time' => '18:00', 'end_time' => '21:00'],
+            ],
+            'reason' => 'Lembur lintas pergantian bulan',
+        ])->assertStatus(201);
+
+        $requestId = $applyResp->json('data.id_overtime_requests');
+
+        // Filter bulan November maupun Oktober tetap menemukan pengajuan konsolidasi ini + jam aktual per item
+        $this->getJson('/api/v1/overtime/my-requests?month=2026-11')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.items.0.actual_clock_in', '07:55:00')
+            ->assertJsonPath('data.data.0.items.1.actual_clock_in', '08:04:00')
+            ->assertJsonPath('data.data.0.items.1.actual_clock_out', '17:15:00');
+
+        // Setujui via manager dan hitung slip gaji periode November saja (hanya item 2026-11-02 = 3 jam yang masuk November)
+        Sanctum::actingAs($this->managerA);
+        $this->postJson("/api/v1/overtime/approvals/{$requestId}/action", [
+            'action' => 'approved',
+        ])->assertStatus(200);
+
+        $slipNov = PayrollSlip::create([
+            'id_companies' => $this->companyA->id_companies,
+            'id_employees' => $this->employeeA->id_employees,
+            'period_name' => 'November 2026',
+            'start_date' => '2026-11-01',
+            'end_date' => '2026-11-30',
+            'payment_date' => '2026-12-01',
+            'status' => 'draft',
+            'basic_salary' => 5000000,
+            'allowance_fixed' => 0,
+            'overtime_pay' => 0,
+            'deduction_late' => 0,
+            'deduction_absence' => 0,
+            'deduction_other' => 0,
+            'net_salary' => 5000000,
+        ]);
+
+        Sanctum::actingAs($this->hrA);
+        $this->postJson("/api/v1/payroll/periods/{$slipNov->id_payroll_slips}/calculate")
+            ->assertStatus(200);
+
+        $slipNov->refresh();
+        $expectedHourly = round(5000000 / 173, 2);
+        $expectedOvertimePay = round($expectedHourly * 3.0, 2);
+        $this->assertEquals($expectedOvertimePay, (float) $slipNov->overtime_pay);
     }
 
     public function test_employee_cannot_revise_other_tenant_overtime(): void

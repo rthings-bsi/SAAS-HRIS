@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\LeaveRequest;
 use App\Models\OvertimeRequest;
+use App\Models\OvertimeRequestItem;
 use App\Models\PayrollSlip;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -72,11 +73,27 @@ class PayrollCalculationService
             $dailyRate = $basicSalary / $workDays;
             $deductionAbsence = round($dailyRate * $unexcusedAbsences, 2);
 
-            // Upah Lembur disetujui
-            $approvedOvertimeHours = (float) OvertimeRequest::where('id_employees', $employee->id_employees)
+            // Upah Lembur disetujui (berdasarkan tanggal item agar konsolidasi lintas bulan akurat per cut-off)
+            $itemOvertimeHours = (float) OvertimeRequestItem::where('overtime_request_items.id_companies', $companyId)
+                ->join(
+                    'overtime_requests',
+                    'overtime_requests.id_overtime_requests',
+                    '=',
+                    'overtime_request_items.id_overtime_requests'
+                )
+                ->where('overtime_requests.id_employees', $employee->id_employees)
+                ->where('overtime_requests.status', 'approved')
+                ->whereBetween('overtime_request_items.date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->sum('overtime_request_items.duration_hours');
+
+            $legacyOvertimeHours = (float) OvertimeRequest::where('id_companies', $companyId)
+                ->where('id_employees', $employee->id_employees)
                 ->where('status', 'approved')
+                ->doesntHave('items')
                 ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
                 ->sum('duration_hours');
+
+            $approvedOvertimeHours = $itemOvertimeHours + $legacyOvertimeHours;
 
             // Formula standar upah lembur per jam (PP 35/2021): 1/173 x (Gaji Pokok + Tunjangan Tetap)
             $hourlyRate = ($basicSalary + $allowanceFixed) > 0 ? round(($basicSalary + $allowanceFixed) / 173, 2) : 0.0;

@@ -43,7 +43,7 @@ class NotificationService
         ?array $data = null,
         ?int $exceptUserId = null
     ): int {
-        $adminRoles = ['owner', 'superadmin', 'hr', 'manager'];
+        $adminRoles = ['owner', 'superadmin', 'super_admin', 'hr', 'manager'];
 
         $adminUsers = User::where('id_companies', $companyId)
             ->whereIn('role', $adminRoles)
@@ -92,7 +92,8 @@ class NotificationService
     {
         $query = Notification::where('id_companies', $user->id_companies)
             ->where('id_users', $user->id_users)
-            ->orderBy('created_at', 'desc');
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id_notifications', 'desc');
 
         if ($unreadOnly) {
             $query->where('is_read', false);

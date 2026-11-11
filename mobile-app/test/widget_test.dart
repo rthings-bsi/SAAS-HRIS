@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_app/core/constants/app_dimensions.dart';
+import 'package:mobile_app/core/theme/app_theme.dart';
+import 'package:mobile_app/core/widgets/ios_glass_menu_icon.dart';
 import 'package:mobile_app/features/attendance/data/attendance_models.dart';
 import 'package:mobile_app/features/attendance/provider/attendance_provider.dart';
 import 'package:mobile_app/features/home/presentation/home_dashboard_view.dart';
@@ -167,5 +169,213 @@ void main() {
     await tester.tap(shiftHeaderInkWell);
     await tester.pumpAndSettle();
     expect(find.text('Rincian Shift Kerja'), findsOneWidget);
+  });
+
+  testWidgets('Favorite Menu renders iOS 2026 Liquid Glass icons in grid and Edit sheet',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(375, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(
+          size: Size(375, 900),
+          disableAnimations: true,
+        ),
+        child: buildDashboardHarness(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(IosGlassMenuIcon), findsNWidgets(6));
+    expect(tester.takeException(), isNull);
+
+    // Open Edit Favorite Menu sheet and verify lazy list items render iOS glass icons cleanly
+    await tester.tap(find.byKey(const Key('favorite_menu_edit_btn')));
+    await tester.pumpAndSettle();
+    expect(find.text('Atur Favorite Menu'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(IosGlassMenuIcon),
+      ),
+      findsWidgets,
+    );
+    await tester.scrollUntilVisible(
+      find.text('Pedoman & Regulasi'),
+      180,
+      scrollable: find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(find.text('Pedoman & Regulasi'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('HomeScreen animates smoothly on navbar and Favorite Menu transitions',
+      (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(375, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todayAttendanceProvider.overrideWith(
+            (ref) async => const TodayAttendanceData(
+              date: '2026-11-11',
+              shiftName: 'Shift Reguler Operasional',
+              startTime: '08:00',
+              endTime: '17:00',
+              lateToleranceMinutes: 15,
+              status: 'Belum Hadir',
+            ),
+          ),
+          unreadNotificationCountProvider.overrideWith((ref) async => 2),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: const HomeScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap navbar item 'Lembur' -> verify smooth mid-transition frame then clean settle
+    await tester.tap(find.text('Lembur'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final midTranslations = tester
+        .widgetList<FractionalTranslation>(find.byType(FractionalTranslation))
+        .where((w) => w.translation != Offset.zero)
+        .toList();
+    expect(midTranslations, isNotEmpty);
+
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    final settledTranslations = tester
+        .widgetList<FractionalTranslation>(find.byType(FractionalTranslation))
+        .where((w) => w.translation != Offset.zero)
+        .toList();
+    expect(settledTranslations, isEmpty);
+
+    // Jump back to Beranda, then switch via Favorite Menu shortcut ('Profil &\nData Diri')
+    await tester.tap(find.text('Beranda'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Profil &\nData Diri'));
+    await tester.pumpAndSettle();
+    expect(find.text('Profil Saya'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    // Reduced-motion mode must switch immediately without active translation frames
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          todayAttendanceProvider.overrideWith(
+            (ref) async => const TodayAttendanceData(
+              date: '2026-11-11',
+              shiftName: 'Shift Reguler Operasional',
+              startTime: '08:00',
+              endTime: '17:00',
+              lateToleranceMinutes: 15,
+              status: 'Belum Hadir',
+            ),
+          ),
+          unreadNotificationCountProvider.overrideWith((ref) async => 0),
+        ],
+        child: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(375, 900),
+            disableAnimations: true,
+          ),
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const HomeScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Cuti'));
+    await tester.pump(const Duration(milliseconds: 80));
+    final reducedTranslations = tester
+        .widgetList<FractionalTranslation>(find.byType(FractionalTranslation))
+        .where((w) => w.translation != Offset.zero)
+        .toList();
+    expect(reducedTranslations, isEmpty);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('AppTheme uses SmoothMenuPageTransitionsBuilder and honors reduced motion',
+      (WidgetTester tester) async {
+    Widget buildNavApp({required bool disableAnimations}) {
+      return MediaQuery(
+        data: MediaQueryData(
+          size: const Size(375, 900),
+          disableAnimations: disableAnimations,
+        ),
+        child: MaterialApp(
+          key: ValueKey('nav_app_$disableAnimations'),
+          theme: AppTheme.lightTheme,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const Scaffold(
+                          body: Center(child: Text('Detail Menu Tujuan')),
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Buka Menu'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    expect(
+      AppTheme.lightTheme.pageTransitionsTheme.builders[TargetPlatform.android],
+      isA<SmoothMenuPageTransitionsBuilder>(),
+    );
+    expect(
+      AppTheme.lightTheme.pageTransitionsTheme.builders[TargetPlatform.iOS],
+      isA<SmoothMenuPageTransitionsBuilder>(),
+    );
+
+    await tester.pumpWidget(buildNavApp(disableAnimations: false));
+    await tester.tap(find.text('Buka Menu'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(find.byType(SlideTransition), findsWidgets);
+    await tester.pumpAndSettle();
+    expect(find.text('Detail Menu Tujuan'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(buildNavApp(disableAnimations: true));
+    await tester.tap(find.text('Buka Menu'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(find.byType(FadeTransition), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.text('Detail Menu Tujuan'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

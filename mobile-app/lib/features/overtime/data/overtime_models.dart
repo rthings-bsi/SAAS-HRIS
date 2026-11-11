@@ -82,6 +82,73 @@ extension OvertimeStatusX on OvertimeStatus {
   }
 }
 
+class OvertimeRequestItemModel {
+  final int id_overtime_request_items;
+  final String date;
+  final String? end_date;
+  final String start_time;
+  final String end_time;
+  final double duration_hours;
+  final String? actual_clock_in;
+  final String? actual_clock_out;
+
+  const OvertimeRequestItemModel({
+    this.id_overtime_request_items = 0,
+    required this.date,
+    this.end_date,
+    required this.start_time,
+    required this.end_time,
+    required this.duration_hours,
+    this.actual_clock_in,
+    this.actual_clock_out,
+  });
+
+  String get effectiveEndDate =>
+      (end_date != null && end_date!.trim().isNotEmpty) ? end_date! : date;
+
+  bool get isCrossDay => effectiveEndDate != date;
+
+  String get formattedRequestedDurationLong {
+    final safeHours =
+        duration_hours.isFinite && duration_hours > 0 ? duration_hours : 0.0;
+    final totalMinutes = (safeHours * 60).round();
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return '$hours jam $minutes menit';
+  }
+
+  factory OvertimeRequestItemModel.fromMap(Map<String, dynamic> map) {
+    final rawId = map['id_overtime_request_items'] ?? map['id'] ?? 0;
+    final id = rawId is int ? rawId : int.tryParse(rawId.toString()) ?? 0;
+    final rawDuration = map['duration_hours'] ?? map['duration'] ?? 0;
+    final duration = rawDuration is num
+        ? rawDuration.toDouble()
+        : double.tryParse(rawDuration.toString()) ?? 0.0;
+
+    return OvertimeRequestItemModel(
+      id_overtime_request_items: id,
+      date: map['date']?.toString() ?? '',
+      end_date: map['end_date']?.toString(),
+      start_time: map['start_time']?.toString() ?? '',
+      end_time: map['end_time']?.toString() ?? '',
+      duration_hours: duration,
+      actual_clock_in: map['actual_clock_in']?.toString(),
+      actual_clock_out: map['actual_clock_out']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id_overtime_request_items': id_overtime_request_items,
+        'date': date,
+        'end_date': end_date,
+        'start_time': start_time,
+        'end_time': end_time,
+        'duration_hours': duration_hours,
+        'actual_clock_in': actual_clock_in,
+        'actual_clock_out': actual_clock_out,
+      };
+}
+
 class OvertimeRequestModel {
   final int id_overtime_requests;
   final String? request_number;
@@ -108,6 +175,7 @@ class OvertimeRequestModel {
   final String? rejected_reason;
   final String? approver_name;
   final String? created_at;
+  final List<OvertimeRequestItemModel>? items;
 
   const OvertimeRequestModel({
     required this.id_overtime_requests,
@@ -135,10 +203,64 @@ class OvertimeRequestModel {
     this.rejected_reason,
     this.approver_name,
     this.created_at,
+    this.items = const [],
   });
 
+  List<OvertimeRequestItemModel> get effectiveItems {
+    final rawItems = items;
+    if (rawItems != null && rawItems.isNotEmpty) return rawItems;
+    return [
+      OvertimeRequestItemModel(
+        id_overtime_request_items: 0,
+        date: date,
+        end_date: end_date,
+        start_time: start_time,
+        end_time: end_time,
+        duration_hours: duration_hours,
+        actual_clock_in: actual_clock_in,
+        actual_clock_out: actual_clock_out,
+      ),
+    ];
+  }
+
+  String get effectiveEndDate {
+    if (end_date != null && end_date!.trim().isNotEmpty) {
+      return end_date!;
+    }
+    final rawItems = items;
+    if (rawItems != null && rawItems.isNotEmpty) {
+      var maxEnd = rawItems.first.effectiveEndDate;
+      for (final item in rawItems) {
+        if (item.effectiveEndDate.compareTo(maxEnd) > 0) {
+          maxEnd = item.effectiveEndDate;
+        }
+      }
+      return maxEnd;
+    }
+    return date;
+  }
+
+  int get distinctDaysCount {
+    final days = <String>{};
+    for (final entry in effectiveItems) {
+      final raw = entry.date.trim();
+      if (raw.isEmpty) continue;
+      days.add(raw.length >= 10 ? raw.substring(0, 10) : raw);
+    }
+    return days.isEmpty ? 1 : days.length;
+  }
+
+  bool coversIsoDate(String targetDate) {
+    final clean = targetDate.trim();
+    if (clean.isEmpty) return true;
+    for (final entry in effectiveItems) {
+      if (entry.date.startsWith(clean)) return true;
+    }
+    return date.startsWith(clean);
+  }
+
   bool get isCrossDay =>
-      end_date != null && end_date!.isNotEmpty && end_date != date;
+      effectiveEndDate.isNotEmpty && effectiveEndDate != date;
 
   String get formattedDuration {
     if (duration_hours % 1 == 0) {
@@ -242,6 +364,20 @@ class OvertimeRequestModel {
     }
     approverName ??= map['approver_name']?.toString();
 
+    final parsedItems = <OvertimeRequestItemModel>[];
+    final rawItems = map['items'];
+    if (rawItems is List) {
+      for (final raw in rawItems) {
+        if (raw is Map<String, dynamic>) {
+          parsedItems.add(OvertimeRequestItemModel.fromMap(raw));
+        } else if (raw is Map) {
+          parsedItems.add(
+            OvertimeRequestItemModel.fromMap(Map<String, dynamic>.from(raw)),
+          );
+        }
+      }
+    }
+
     return OvertimeRequestModel(
       id_overtime_requests: id,
       request_number: map['request_number']?.toString(),
@@ -268,6 +404,7 @@ class OvertimeRequestModel {
       rejected_reason: map['rejected_reason']?.toString(),
       approver_name: approverName,
       created_at: map['created_at']?.toString(),
+      items: parsedItems,
     );
   }
 
@@ -297,6 +434,7 @@ class OvertimeRequestModel {
       'status': status.name,
       'rejected_reason': rejected_reason,
       'created_at': created_at,
+      'items': (items ?? const []).map((e) => e.toMap()).toList(),
     };
   }
 }

@@ -1393,10 +1393,16 @@ class _LeaveModeTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 200);
+
     return InkWell(
       onTap: onTap,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-      child: Container(
+      child: AnimatedContainer(
+        duration: duration,
+        curve: Curves.easeOutCubic,
         constraints: const BoxConstraints(
           minHeight: AppDimensions.minTouchTarget,
         ),
@@ -1413,16 +1419,20 @@ class _LeaveModeTabButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: AnimatedDefaultTextStyle(
+                duration: duration,
+                curve: Curves.easeOutCubic,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected
                       ? AppColors.primaryContainer
                       : const Color(0xFF475569),
+                ),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

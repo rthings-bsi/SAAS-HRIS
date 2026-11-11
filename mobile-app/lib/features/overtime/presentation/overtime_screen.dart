@@ -303,8 +303,9 @@ class OvertimeScreen extends ConsumerWidget {
                           final items = approvalDateFilter == null
                               ? rawItems
                               : rawItems
-                                  .where((r) =>
-                                      r.date.startsWith(approvalDateFilter))
+                                  .where(
+                                    (r) => r.coversIsoDate(approvalDateFilter),
+                                  )
                                   .toList();
 
                           if (items.isEmpty) {
@@ -536,8 +537,7 @@ class OvertimeScreen extends ConsumerWidget {
                         final items = activeDateFilter == null
                             ? rawItems
                             : rawItems
-                                .where((r) =>
-                                    r.date.startsWith(activeDateFilter))
+                                .where((r) => r.coversIsoDate(activeDateFilter))
                                 .toList();
 
                         if (items.isEmpty) {
@@ -740,11 +740,11 @@ class _OvertimeListCard extends StatelessWidget {
         ? rawEmpName
         : fallbackEmployeeName;
     final startDateText = _formatDate(item.date);
-    final rawEndDate =
-        (item.end_date != null && item.end_date!.trim().isNotEmpty)
-            ? item.end_date!
-            : item.date;
-    final endDateText = _formatDate(rawEndDate);
+    final endDateText = _formatDate(item.effectiveEndDate);
+    final sessionCount = item.effectiveItems.length;
+    final summaryLabel = sessionCount > 1
+        ? '${item.distinctDaysCount} hari • $sessionCount sesi • ${item.formattedDuration}'
+        : item.formattedDuration;
 
     return Container(
       key: Key('overtime_card_${item.id_overtime_requests}'),
@@ -889,7 +889,23 @@ class _OvertimeListCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      OvertimeStatusBadge(status: item.status),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          OvertimeStatusBadge(status: item.status),
+                          Text(
+                            summaryLabel,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF475569),
+                              fontFeatures: [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -1380,10 +1396,16 @@ class _OvertimeModeTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 200);
+
     return InkWell(
       onTap: onTap,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-      child: Container(
+      child: AnimatedContainer(
+        duration: duration,
+        curve: Curves.easeOutCubic,
         constraints: const BoxConstraints(
           minHeight: AppDimensions.minTouchTarget,
         ),
@@ -1400,16 +1422,20 @@ class _OvertimeModeTabButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: AnimatedDefaultTextStyle(
+                duration: duration,
+                curve: Curves.easeOutCubic,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected
                       ? AppColors.primaryContainer
                       : const Color(0xFF475569),
+                ),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

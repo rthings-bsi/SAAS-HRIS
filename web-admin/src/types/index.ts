@@ -301,8 +301,22 @@ export interface LeaveBalance {
 
 export type OvertimeRequestStatus = "pending" | "approved" | "rejected" | "cancelled";
 
+export interface OvertimeRequestItem {
+  id_overtime_request_items: number;
+  id_companies?: number;
+  id_overtime_requests?: number;
+  date: string;
+  end_date?: string | null;
+  start_time: string;
+  end_time: string;
+  duration_hours: number;
+  actual_clock_in?: string | null;
+  actual_clock_out?: string | null;
+}
+
 export interface OvertimeRequest {
   id_overtime_requests: number;
+  request_number?: string | null;
   id_companies: number;
   id_employees: number;
   date: string;
@@ -317,6 +331,7 @@ export interface OvertimeRequest {
   status: OvertimeRequestStatus;
   approved_by?: number | null;
   rejected_reason?: string | null;
+  items?: OvertimeRequestItem[];
   employee?: Employee;
   approver?: User;
   created_at?: string;

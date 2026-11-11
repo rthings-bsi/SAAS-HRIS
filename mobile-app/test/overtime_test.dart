@@ -42,6 +42,7 @@ class MockOvertimeRepository extends OvertimeRepository {
   String? lastUpdatedStartTime;
   String? lastUpdatedEndTime;
   String? lastUpdatedReason;
+  List<Map<String, dynamic>>? lastUpdatedEntries;
   String? lastUpdatedType;
   String? lastUpdatedCategory;
   String? lastUpdatedAttachmentName;
@@ -192,6 +193,7 @@ class MockOvertimeRepository extends OvertimeRepository {
     required String startTime,
     required String endTime,
     required String reason,
+    List<Map<String, dynamic>>? entries,
     String? overtimeType,
     String? reasonCategory,
     String? attachmentPath,
@@ -209,6 +211,7 @@ class MockOvertimeRepository extends OvertimeRepository {
     lastUpdatedStartTime = startTime;
     lastUpdatedEndTime = endTime;
     lastUpdatedReason = reason;
+    lastUpdatedEntries = entries;
     lastUpdatedType = overtimeType;
     lastUpdatedCategory = reasonCategory;
     lastUpdatedAttachmentName = attachmentName;
@@ -638,7 +641,7 @@ void main() {
 
       expect(find.text('U5SH3OPR6 [23:00 - 07:00]'), findsOneWidget);
       expect(find.text('22:50 | 11 Nov'), findsOneWidget);
-      expect(find.text('07:05 | 11 Nov'), findsOneWidget);
+      expect(find.text('07:05 | 12 Nov'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('overtime_detail_approve_btn')));
       await tester.pumpAndSettle();
@@ -1611,6 +1614,182 @@ void main() {
       expect(poppedResult, isNotNull);
       expect(poppedResult!, hasLength(1));
       expect(poppedResult![0].isValid, isFalse);
+    });
+
+    test('OvertimeRequestModel parses nested consolidated items and date coverage helpers', () {
+      final model = OvertimeRequestModel.fromMap({
+        'id_overtime_requests': 24,
+        'request_number': 'OVR-202611-000024',
+        'date': '2026-11-02',
+        'end_date': '2026-11-06',
+        'start_time': '21:00:00',
+        'end_time': '23:00:00',
+        'duration_hours': 5.5,
+        'reason': 'Support Produksi + Delivery',
+        'status': 'pending',
+        'items': [
+          {
+            'id_overtime_request_items': 101,
+            'date': '2026-11-02',
+            'end_date': '2026-11-02',
+            'start_time': '21:00:00',
+            'end_time': '23:00:00',
+            'duration_hours': 2.0,
+            'actual_clock_in': '20:49:00',
+            'actual_clock_out': '08:07:00',
+          },
+          {
+            'id_overtime_request_items': 102,
+            'date': '2026-11-06',
+            'end_date': '2026-11-06',
+            'start_time': '17:00:00',
+            'end_time': '20:30:00',
+            'duration_hours': 3.5,
+            'actual_clock_in': '07:55:00',
+            'actual_clock_out': '17:02:00',
+          },
+        ],
+      });
+
+      expect(model.items, hasLength(2));
+      expect(model.effectiveItems, hasLength(2));
+      expect(model.effectiveEndDate, '2026-11-06');
+      expect(model.distinctDaysCount, 2);
+      expect(model.coversIsoDate('2026-11-02'), isTrue);
+      expect(model.coversIsoDate('2026-11-06'), isTrue);
+      expect(model.coversIsoDate('2026-11-04'), isFalse);
+
+      const nullItemsModel = OvertimeRequestModel(
+        id_overtime_requests: 25,
+        date: '2026-11-05',
+        start_time: '17:00:00',
+        end_time: '19:00:00',
+        duration_hours: 2.0,
+        reason: 'Null items defensive check',
+        status: OvertimeStatus.pending,
+        items: null,
+      );
+      expect(nullItemsModel.effectiveItems, hasLength(1));
+      expect(nullItemsModel.effectiveEndDate, '2026-11-05');
+      expect(nullItemsModel.distinctDaysCount, 1);
+      expect(nullItemsModel.coversIsoDate('2026-11-05'), isTrue);
+      expect(nullItemsModel.toMap()['items'], isEmpty);
+    });
+
+    testWidgets('Consolidated multi-day request shows 1 card in list and unified schedule box in detail',
+        (tester) async {
+      mockRepo.requestsData = [
+        const OvertimeRequestModel(
+          id_overtime_requests: 647239,
+          request_number: 'OVR-202611-647239',
+          employee_name: 'Budi Santoso',
+          employee_position: 'Staff IT & Sistem',
+          shift_name: 'U5SH3OPR6',
+          shift_start_time: '23:00:00',
+          shift_end_time: '07:00:00',
+          date: '2026-11-02',
+          end_date: '2026-11-06',
+          start_time: '21:00:00',
+          end_time: '20:30:00',
+          duration_hours: 7.5,
+          overtime_type: 'Jam Lembur',
+          reason_category: 'Lembur',
+          reason: 'Support Produksi + Delivery',
+          status: OvertimeStatus.pending,
+          created_at: '2026-11-06T09:00:00Z',
+          items: [
+            OvertimeRequestItemModel(
+              id_overtime_request_items: 1,
+              date: '2026-11-02',
+              end_date: '2026-11-02',
+              start_time: '21:00:00',
+              end_time: '23:00:00',
+              duration_hours: 2.0,
+              actual_clock_in: '20:49:00',
+              actual_clock_out: '08:07:00',
+            ),
+            OvertimeRequestItemModel(
+              id_overtime_request_items: 2,
+              date: '2026-11-02',
+              end_date: '2026-11-03',
+              start_time: '23:30:00',
+              end_time: '01:30:00',
+              duration_hours: 2.0,
+              actual_clock_in: '20:49:00',
+              actual_clock_out: '08:07:00',
+            ),
+            OvertimeRequestItemModel(
+              id_overtime_request_items: 3,
+              date: '2026-11-06',
+              end_date: '2026-11-06',
+              start_time: '17:00:00',
+              end_time: '20:30:00',
+              duration_hours: 3.5,
+              actual_clock_in: '07:55:00',
+              actual_clock_out: '17:05:00',
+            ),
+          ],
+        ),
+      ];
+
+      await tester.pumpWidget(wrapWithScope(const OvertimeScreen()));
+      await tester.pumpAndSettle();
+
+      // Single consolidated card in list
+      expect(find.byKey(const Key('overtime_card_647239')), findsOneWidget);
+      expect(find.text('OVR-202611-647239'), findsOneWidget);
+      expect(find.text('2 Nov 2026'), findsOneWidget);
+      expect(find.text('6 Nov 2026'), findsOneWidget);
+      expect(find.text('2 hari • 3 sesi • 7.5 jam'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('overtime_card_647239')));
+      await tester.pumpAndSettle();
+
+      // Single consolidated DETAIL PENGAJUAN LEMBUR box containing both days + all 3 slots
+      expect(find.byKey(const Key('overtime_detail_schedule_box')), findsOneWidget);
+      expect(find.text('2 Nov 2026'), findsWidgets);
+      expect(find.text('6 Nov 2026'), findsWidgets);
+      expect(find.text('20:49 | 2 Nov'), findsOneWidget);
+      expect(find.text('08:07 | 3 Nov'), findsOneWidget);
+      expect(find.text('07:55 | 6 Nov'), findsOneWidget);
+      expect(find.text('17:05 | 6 Nov'), findsOneWidget);
+      expect(find.text('21:00 | 2 Nov'), findsOneWidget);
+      expect(find.text('23:00 | 2 Nov'), findsOneWidget);
+      expect(find.text('23:30 | 2 Nov'), findsOneWidget);
+      expect(find.text('01:30 | 3 Nov'), findsOneWidget);
+      expect(find.text('17:00 | 6 Nov'), findsOneWidget);
+      expect(find.text('20:30 | 6 Nov'), findsOneWidget);
+      expect(find.text('Overtime 1'), findsNWidgets(2));
+      expect(find.text('Overtime 2'), findsOneWidget);
+      expect(find.text('Durasi diajukan 2 jam 0 menit'), findsNWidgets(2));
+      expect(find.text('Durasi diajukan 3 jam 30 menit'), findsOneWidget);
+      expect(find.text('Total Diajukan (2 hari, 3 sesi)'), findsOneWidget);
+      expect(find.text('7 jam 30 menit'), findsOneWidget);
+
+      // Revising a multi-entry request preserves Tanggal Mulai / Berakhir & sends entries payload
+      await tester.tap(find.byKey(const Key('overtime_detail_revise_btn')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Revisi Lembur'), findsOneWidget);
+      expect(find.text('Tanggal Mulai'), findsOneWidget);
+      expect(find.text('Tanggal Berakhir'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('overtime_next_step_btn')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('2/5 hari'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('overtime_submit_btn')));
+      await tester.pumpAndSettle();
+      // 2 of 5 days configured in Nov 2..Nov 6 confirmation
+      await tester.tap(find.text('Ajukan 2 Hari'));
+      await tester.pumpAndSettle();
+
+      expect(mockRepo.updateCalled, isTrue);
+      expect(mockRepo.lastUpdatedId, 647239);
+      expect(mockRepo.lastUpdatedEntries, hasLength(3));
+      expect(mockRepo.lastUpdatedEntries![0]['date'], '2026-11-02');
+      expect(mockRepo.lastUpdatedEntries![2]['date'], '2026-11-06');
     });
   });
 }

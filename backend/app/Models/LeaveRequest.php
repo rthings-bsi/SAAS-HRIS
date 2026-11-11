@@ -31,6 +31,7 @@ class LeaveRequest extends Model
 
     protected $appends = [
         'leave_type_obj',
+        'request_number',
     ];
 
     protected function casts(): array
@@ -46,6 +47,20 @@ class LeaveRequest extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'id_employees', 'id_employees');
+    }
+
+    public function getRequestNumberAttribute(): string
+    {
+        $ym = now()->format('Ym');
+        if ($this->created_at) {
+            $ym = $this->created_at->format('Ym');
+        } elseif (! empty($this->start_date)) {
+            $ym = \Carbon\Carbon::parse($this->start_date)->format('Ym');
+        }
+
+        $seq = str_pad((string) ((int) ($this->id_leave_requests ?? 0)), 6, '0', STR_PAD_LEFT);
+
+        return "LVR-{$ym}-{$seq}";
     }
 
     public function getLeaveTypeObjAttribute(): ?object

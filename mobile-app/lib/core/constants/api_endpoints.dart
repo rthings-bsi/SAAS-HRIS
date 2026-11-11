@@ -1,8 +1,11 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
-  // Base URL paten domain API Cloudflare
-  static const String baseUrl = 'https://api-hris.rickysatria.web.id/api/v1';
+  // Base URL (dapat di-override melalui --dart-define=BASE_URL=...)
+  static const String baseUrl = String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: 'http://127.0.0.1:8000/api/v1',
+  );
 
   // Preset live domain URL
   static const String defaultTunnelUrl = 'https://api-hris.rickysatria.web.id/api/v1';
@@ -36,6 +39,9 @@ class ApiEndpoints {
   static const String applyOvertime = '/overtime/request';
   static const String overtimeApprovals = '/overtime/approvals';
   static String overtimeAction(int id) => '/overtime/approvals/$id/action';
+  static String cancelOvertime(int id) => '/overtime/requests/$id/cancel';
+  static String updateOvertime(int id) => '/overtime/requests/$id';
+  static String updateOvertimeMultipart(int id) => '/overtime/requests/$id/update';
 
   // Payroll
   static const String payrollMySlips = '/payroll/my-slips';

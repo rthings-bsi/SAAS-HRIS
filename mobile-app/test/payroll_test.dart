@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:mobile_app/core/constants/api_endpoints.dart';
 import 'package:mobile_app/core/constants/app_colors.dart';
 import 'package:mobile_app/core/constants/app_dimensions.dart';
+import 'package:mobile_app/core/constants/app_phosphor_icons.dart';
 import 'package:mobile_app/core/network/api_client.dart';
 import 'package:mobile_app/core/network/api_exception.dart';
 import 'package:mobile_app/core/widgets/app_button.dart';
@@ -407,7 +409,7 @@ void main() {
 
       expect(find.byType(AppEmptyState), findsOneWidget);
       expect(find.text('Belum Ada Slip Gaji'), findsOneWidget);
-      expect(find.byIcon(Icons.receipt_long_outlined), findsOneWidget);
+      expect(find.byIcon(PhosphorIconsRegular.receipt), findsOneWidget);
     });
 
     testWidgets('State 3: Error state renders AppErrorState with retry button', (tester) async {
@@ -463,7 +465,7 @@ void main() {
       expect(find.text('Februari 2026'), findsOneWidget);
 
       // Verify chevron icons
-      expect(find.byIcon(Icons.chevron_right_rounded), findsNWidgets(2));
+      expect(find.byIcon(LucideIcons.chevronRight), findsNWidgets(2));
 
       // Tap on first slip to navigate to detail
       await tester.tap(find.text('Februari 2026'));
@@ -490,23 +492,23 @@ void main() {
 
       // Initial state: salary is visible
       expect(find.text(sampleSlip1.formattedNetSalary), findsWidgets);
-      expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.eye), findsOneWidget);
 
       // Tap toggle to hide salary
-      await tester.tap(find.byIcon(Icons.visibility_outlined));
+      await tester.tap(find.byIcon(LucideIcons.eye));
       await tester.pumpAndSettle();
 
       // Salary masked
       expect(find.text('Rp ••••••••'), findsWidgets);
-      expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.eyeOff), findsOneWidget);
 
       // Tap toggle to show salary again
-      await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+      await tester.tap(find.byIcon(LucideIcons.eyeOff));
       await tester.pumpAndSettle();
 
       // Salary visible again
       expect(find.text(sampleSlip1.formattedNetSalary), findsWidgets);
-      expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+      expect(find.byIcon(LucideIcons.eye), findsOneWidget);
     });
   });
 

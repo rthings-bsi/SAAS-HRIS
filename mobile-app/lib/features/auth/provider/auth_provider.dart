@@ -45,6 +45,12 @@ class AuthState {
   bool get hasEmployeeProfile => user?['employee'] != null;
   bool get isAdministrator =>
       role == 'owner' || role == 'hr' || role == 'superadmin';
+  bool get canApproveRequests =>
+      role == 'owner' ||
+      role == 'hr' ||
+      role == 'manager' ||
+      role == 'superadmin' ||
+      role == 'super_admin';
   bool get isEmployee => role == 'employee' && hasEmployeeProfile;
 
   String get roleLabel {
@@ -53,6 +59,8 @@ class AuthState {
         return 'Owner / Direktur';
       case 'hr':
         return 'HR Administrator';
+      case 'manager':
+        return 'Manager';
       case 'superadmin':
         return 'Platform Superadmin';
       case 'employee':

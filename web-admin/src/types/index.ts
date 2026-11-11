@@ -299,17 +299,21 @@ export interface LeaveBalance {
 // 6b. Overtime Entities
 // ==========================================
 
-export type OvertimeRequestStatus = "pending" | "approved" | "rejected";
+export type OvertimeRequestStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 export interface OvertimeRequest {
   id_overtime_requests: number;
   id_companies: number;
   id_employees: number;
   date: string;
+  end_date?: string | null;
   start_time: string;
   end_time: string;
   duration_hours: number;
+  overtime_type?: string | null;
+  reason_category?: string | null;
   reason: string;
+  attachment_url?: string | null;
   status: OvertimeRequestStatus;
   approved_by?: number | null;
   rejected_reason?: string | null;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_phosphor_icons.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../auth/provider/auth_provider.dart';
 import '../../leave/presentation/leave_screen.dart';
@@ -46,7 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _checkAdminNotice() {
     if (!mounted || _dialogShown) return;
     final auth = ref.read(authStateProvider);
-    if (auth.user != null && (auth.isAdministrator || !auth.hasEmployeeProfile)) {
+    if (auth.user != null && !auth.hasEmployeeProfile && !auth.canApproveRequests) {
       _dialogShown = true;
       showDialog(
         context: context,
@@ -64,7 +66,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: AppDimensions.cardBorderRadius,
                 ),
                 child: const Icon(
-                  Icons.admin_panel_settings_rounded,
+                  LucideIcons.shieldAlert,
                   color: AppColors.warningText,
                   size: 24,
                 ),
@@ -144,117 +146,138 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     const navItems = [
       _BottomNavItem(
-        icon: Icons.grid_view_outlined,
-        activeIcon: Icons.grid_view_rounded,
+        icon: PhosphorIconsRegular.squaresFour,
+        activeIcon: PhosphorIconsFill.squaresFour,
         label: 'Beranda',
       ),
       _BottomNavItem(
-        icon: Icons.more_time_outlined,
-        activeIcon: Icons.more_time_rounded,
+        icon: PhosphorIconsRegular.clockClockwise,
+        activeIcon: PhosphorIconsFill.clockClockwise,
         label: 'Lembur',
       ),
       _BottomNavItem(
-        icon: Icons.event_available_outlined,
-        activeIcon: Icons.event_available_rounded,
+        icon: PhosphorIconsRegular.calendarCheck,
+        activeIcon: PhosphorIconsFill.calendarCheck,
         label: 'Cuti',
       ),
       _BottomNavItem(
-        icon: Icons.receipt_long_outlined,
-        activeIcon: Icons.receipt_long_rounded,
+        icon: PhosphorIconsRegular.receipt,
+        activeIcon: PhosphorIconsFill.receipt,
         label: 'Gaji',
       ),
       _BottomNavItem(
-        icon: Icons.person_outline_rounded,
-        activeIcon: Icons.person_rounded,
+        icon: PhosphorIconsRegular.userCircle,
+        activeIcon: PhosphorIconsFill.userCircle,
         label: 'Profil',
       ),
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      backgroundColor: AppColors.surfaceCanvas,
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: IndexedStack(
+            index: _currentIndex,
+            children: _pages,
+          ),
+        ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-          child: Container(
-            height: 62,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 1,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x180B2545),
-                  blurRadius: 28,
-                  offset: Offset(0, 8),
-                  spreadRadius: -4,
-                ),
-                BoxShadow(
-                  color: Color(0x06000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceCard,
+          border: Border(
+            top: BorderSide(
+              color: AppColors.borderSubtle,
+              width: 1.0,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(navItems.length, (index) {
-                final item = navItems[index];
-                final isActive = _currentIndex == index;
-                return Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      if (_currentIndex != index) {
-                        setState(() {
-                          _currentIndex = index;
-                        });
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Elevated active squircle pill vs clean inactive icon
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOutCubic,
-                          width: isActive ? 42 : 36,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: isActive ? AppColors.navActive : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            isActive ? item.activeIcon : item.icon,
-                            size: 19,
-                            color: isActive ? Colors.white : const Color(0xFF64748B),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            heightFactor: 1.0,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(
+                  children: List.generate(navItems.length, (index) {
+                    final item = navItems[index];
+                    final isActive = _currentIndex == index;
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              if (_currentIndex != index) {
+                                setState(() {
+                                  _currentIndex = index;
+                                });
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minHeight: AppDimensions.minTouchTarget,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      curve: Curves.easeOut,
+                                      width: 40,
+                                      height: 26,
+                                      decoration: BoxDecoration(
+                                        color: isActive
+                                            ? AppColors.navActive
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Icon(
+                                        isActive ? item.activeIcon : item.icon,
+                                        size: 19,
+                                        color: isActive
+                                            ? Colors.white
+                                            : AppColors.textBody,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      item.label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: isActive
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: isActive
+                                            ? AppColors.navActive
+                                            : AppColors.textBody,
+                                        letterSpacing: -0.1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          item.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                            color: isActive ? AppColors.navActive : AppColors.navInactive,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+                      ),
+                    );
+                  }),
+                ),
+              ),
             ),
           ),
         ),

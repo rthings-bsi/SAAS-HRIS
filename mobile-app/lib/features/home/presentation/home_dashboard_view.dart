@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_phosphor_icons.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/widgets/hr_hub_logo.dart';
 import '../../attendance/data/attendance_models.dart';
@@ -41,8 +43,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     gridLabel: 'Pengajuan\nLembur',
     title: 'Pengajuan Lembur',
     subtitle: 'Ajukan dan pantau jam lembur kerja',
-    icon: Icons.more_time_rounded,
-    bgColor: Color(0xFFEFF6FF),
+    icon: PhosphorIconsFill.clockClockwise,
+    bgColor: Color(0xFFE0ECFF),
     iconColor: Color(0xFF2563EB),
   ),
   FavoriteMenuDefinition(
@@ -50,17 +52,17 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     gridLabel: 'Pengajuan\nCuti',
     title: 'Pengajuan Cuti & Izin',
     subtitle: 'Kelola cuti tahunan dan izin karyawan',
-    icon: Icons.calendar_month_rounded,
-    bgColor: Color(0xFFF0FDF4),
-    iconColor: Color(0xFF16A34A),
+    icon: PhosphorIconsFill.calendarCheck,
+    bgColor: Color(0xFFDCFCE7),
+    iconColor: Color(0xFF15803D),
   ),
   FavoriteMenuDefinition(
     id: 'payroll',
     gridLabel: 'Slip Gaji\nKaryawan',
     title: 'Slip Gaji Karyawan',
     subtitle: 'Rincian gaji dan potongan bulanan',
-    icon: Icons.receipt_long_rounded,
-    bgColor: Color(0xFFEFF6FF),
+    icon: PhosphorIconsFill.receipt,
+    bgColor: Color(0xFFE0ECFF),
     iconColor: Color(0xFF2563EB),
   ),
   FavoriteMenuDefinition(
@@ -68,26 +70,26 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     gridLabel: 'Presensi\nKamera GPS',
     title: 'Presensi Kamera GPS',
     subtitle: 'Rekam kehadiran swafoto & lokasi',
-    icon: Icons.camera_alt_rounded,
-    bgColor: Color(0xFFF0FDF4),
-    iconColor: Color(0xFF16A34A),
+    icon: PhosphorIconsFill.camera,
+    bgColor: Color(0xFFDCFCE7),
+    iconColor: Color(0xFF15803D),
   ),
   FavoriteMenuDefinition(
     id: 'on_duty',
     gridLabel: 'Tugas Luar\n(On Duty)',
     title: 'Tugas Luar (On Duty)',
     subtitle: 'Surat tugas dinas di luar area kantor',
-    icon: Icons.business_center_rounded,
-    bgColor: Color(0xFFF0FDF4),
-    iconColor: Color(0xFF16A34A),
+    icon: PhosphorIconsFill.briefcase,
+    bgColor: Color(0xFFDCFCE7),
+    iconColor: Color(0xFF15803D),
   ),
   FavoriteMenuDefinition(
     id: 'profile',
     gridLabel: 'Profil &\nData Diri',
     title: 'Profil & Data Diri',
     subtitle: 'Informasi kepegawaian dan akun',
-    icon: Icons.badge_rounded,
-    bgColor: Color(0xFFEFF6FF),
+    icon: PhosphorIconsFill.identificationCard,
+    bgColor: Color(0xFFE0ECFF),
     iconColor: Color(0xFF2563EB),
   ),
   FavoriteMenuDefinition(
@@ -95,8 +97,8 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     gridLabel: 'Riwayat\nPresensi',
     title: 'Riwayat Presensi',
     subtitle: 'Daftar jam masuk dan pulang harian',
-    icon: Icons.history_rounded,
-    bgColor: Color(0xFFEFF6FF),
+    icon: PhosphorIconsFill.clockCounterClockwise,
+    bgColor: Color(0xFFE0ECFF),
     iconColor: Color(0xFF2563EB),
   ),
   FavoriteMenuDefinition(
@@ -104,17 +106,17 @@ const List<FavoriteMenuDefinition> kAllFavoriteMenus = [
     gridLabel: 'Jadwal\nShift Kerja',
     title: 'Jadwal Shift Kerja',
     subtitle: 'Jam operasional dan toleransi shift',
-    icon: Icons.schedule_rounded,
-    bgColor: Color(0xFFF0FDF4),
-    iconColor: Color(0xFF16A34A),
+    icon: PhosphorIconsFill.calendarDots,
+    bgColor: Color(0xFFDCFCE7),
+    iconColor: Color(0xFF15803D),
   ),
   FavoriteMenuDefinition(
     id: 'company_policy',
     gridLabel: 'Pedoman &\nRegulasi',
     title: 'Pedoman & Regulasi',
     subtitle: 'Tata tertib kerja dan prosedur K3',
-    icon: Icons.menu_book_rounded,
-    bgColor: Color(0xFFEFF6FF),
+    icon: PhosphorIconsFill.bookOpenText,
+    bgColor: Color(0xFFE0ECFF),
     iconColor: Color(0xFF2563EB),
   ),
 ];
@@ -324,7 +326,10 @@ class HomeDashboardView extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 6,
+                              runSpacing: 2,
                               children: [
                                 const Text(
                                   'HR Hub',
@@ -335,7 +340,6 @@ class HomeDashboardView extends ConsumerWidget {
                                     letterSpacing: -0.3,
                                   ),
                                 ),
-                                const SizedBox(width: 6),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 6,
@@ -376,9 +380,9 @@ class HomeDashboardView extends ConsumerWidget {
                       ),
                       IconButton(
                         icon: const Icon(
-                          Icons.search_rounded,
+                          LucideIcons.search,
                           color: Color(0xFF475569),
-                          size: 22,
+                          size: 20,
                         ),
                         tooltip: 'Pencarian',
                         onPressed: () => _showSearchDialog(context),
@@ -388,9 +392,9 @@ class HomeDashboardView extends ConsumerWidget {
                           clipBehavior: Clip.none,
                           children: [
                             const Icon(
-                              Icons.notifications_none_rounded,
+                              LucideIcons.bell,
                               color: Color(0xFF475569),
-                              size: 22,
+                              size: 20,
                             ),
                             if (unreadNotificationCount > 0)
                               Positioned(
@@ -479,7 +483,7 @@ class HomeDashboardView extends ConsumerWidget {
                   ),
                 ),
 
-                // 3. Shift & Attendance Card
+                // 3. Shift & Attendance Card (single surface, flush header + sections)
                 Container(
                   margin: const EdgeInsets.symmetric(
                     horizontal: AppDimensions.space16,
@@ -500,454 +504,632 @@ class HomeDashboardView extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header Row: Today Date + Shift Name & Hours + Edit Icon
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () => _showShiftScheduleDialog(
-                            context,
-                            shiftName,
-                            shiftHours,
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                                width: 1.0,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEFF6FF),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: const Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 18,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Today ($todayFormatted)',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF0F172A),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        'Shift: $shiftName [$shiftHours]',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: Color(0xFF64748B),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.chevron_right_rounded,
-                                  size: 20,
-                                  color: Color(0xFF94A3B8),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    clipBehavior: Clip.antiAlias,
+                    child: LayoutBuilder(
+                      builder: (context, cardConstraints) {
+                        final double hPad;
+                        final double vPad;
+                        if (cardConstraints.maxWidth < 310) {
+                          hPad = 12;
+                          vPad = 12;
+                        } else if (cardConstraints.maxWidth < 470) {
+                          hPad = 16;
+                          vPad = 14;
+                        } else {
+                          hPad = 20;
+                          vPad = 16;
+                        }
 
-                      // Two-Column Attendance Info: Start Time & End Time
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
+                        final textScale = MediaQuery.textScalerOf(context)
+                            .scale(1.0)
+                            .clamp(1.0, 2.0);
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Column 1: Start Time
-                            Expanded(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: const Icon(
-                                      Icons.login_rounded,
-                                      size: 16,
-                                      color: Color(0xFF10B981),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Clock In',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF64748B),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 1),
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                                          textBaseline: TextBaseline.alphabetic,
-                                          children: [
-                                            Text(
-                                              clockInTime,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w800,
-                                                color: Color(0xFF0F172A),
-                                                fontFamily: 'monospace',
-                                              ),
-                                            ),
-                                            const SizedBox(width: 2),
-                                            const Text(
-                                              'WIB',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w500,
-                                                color: Color(0xFF94A3B8),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          hasClockedIn
-                                              ? (todayData.isLate == true
-                                                  ? '+${todayData.lateMinutes}m terlambat'
-                                                  : 'Tepat Waktu')
-                                              : 'Belum presensi',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: hasClockedIn
-                                                ? (todayData.isLate == true
-                                                    ? AppColors.warningText
-                                                    : AppColors.successText)
-                                                : const Color(0xFF10B981),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                              Container(
-                                height: 44,
-                                width: 1,
-                                color: const Color(0xFFE2E8F0),
-                              ),
-                            // Column 2: End Time
-                            Expanded(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFDBEAFE),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: const Icon(
-                                      Icons.logout_rounded,
-                                      size: 16,
-                                      color: Color(0xFF2563EB),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Clock Out',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF64748B),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 1),
-                                        Row(
-                                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                                          textBaseline: TextBaseline.alphabetic,
-                                          children: [
-                                            Text(
-                                              clockOutTime,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w800,
-                                                color: Color(0xFF0F172A),
-                                                fontFamily: 'monospace',
-                                              ),
-                                            ),
-                                            const SizedBox(width: 2),
-                                            const Text(
-                                              'WIB',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w500,
-                                                color: Color(0xFF94A3B8),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          hasClockedOut
-                                              ? 'Selesai Kerja'
-                                              : (hasClockedIn
-                                                  ? 'Sedang Bekerja'
-                                                  : 'Belum jam pulang'),
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w600,
-                                            color: hasClockedOut
-                                                ? AppColors.successText
-                                                : (hasClockedIn
-                                                    ? AppColors.infoText
-                                                    : const Color(0xFF94A3B8)),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
-
-                      // Primary Presensi Action Button
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-                        child: actionState.isLoading
-                            ? Container(
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                                ),
-                                child: const Center(
-                                  child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.2,
-                                      color: AppColors.actionAccent,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : isCompleted
-                                ? Container(
-                                    height: 48,
-                                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.successBg,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: AppColors.successBorder),
-                                    ),
-                                    child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.check_circle_rounded,
-                                          color: AppColors.successText,
-                                          size: 18,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Presensi Hari Ini Selesai',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.successText,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : SizedBox(
-                                    height: 48,
-                                    child: ElevatedButton.icon(
-                                      onPressed: () async {
-                                        await ref
-                                            .read(attendanceActionProvider.notifier)
-                                            .recordAttendance(
-                                              isClockIn: isClockInAction,
-                                            );
-                                        ref.invalidate(todayAttendanceProvider);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.actionAccent,
-                                        foregroundColor: Colors.white,
-                                        elevation: 0,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                        ),
-                                      ),
-                                      icon: Icon(
-                                        isClockInAction
-                                            ? Icons.login_rounded
-                                            : Icons.logout_rounded,
-                                        size: 18,
-                                      ),
-                                      label: Text(
-                                        isClockInAction
-                                            ? 'Clock In Sekarang'
-                                            : 'Clock Out Sekarang',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: -0.2,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                      ),
-
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
-
-                      // Card Footer: Actions Row (Kamera & GPS + View Detail)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
+                            // Zone 1: Flush Interactive Shift Header
+                            Semantics(
+                              button: true,
+                              label: 'Lihat rincian shift hari ini',
                               child: InkWell(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const AttendanceScreen(),
-                                    ),
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(8),
-                                child: const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 8),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.camera_alt_outlined,
-                                        size: 16,
-                                        color: AppColors.actionAccent,
-                                      ),
-                                      SizedBox(width: 6),
-                                      Text(
-                                        'Kamera & GPS',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.actionAccent,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              height: 18,
-                              width: 1,
-                              color: const Color(0xFFE2E8F0),
-                            ),
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => _showAttendanceDetailSheet(
+                                onTap: () => _showShiftScheduleDialog(
                                   context,
                                   shiftName,
                                   shiftHours,
-                                  clockInTime,
-                                  clockOutTime,
-                                  todayData,
                                 ),
-                                borderRadius: BorderRadius.circular(8),
-                                child: const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 8),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.near_me_outlined,
-                                        size: 16,
-                                        color: Color(0xFF64748B),
-                                      ),
-                                      SizedBox(width: 6),
-                                      Text(
-                                        'Rincian Shift',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
+                                hoverColor: const Color(0xFFF8FAFC),
+                                splashColor: const Color(0xFFE2E8F0),
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    minHeight: AppDimensions.minTouchTarget,
+                                  ),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: hPad,
+                                      vertical: vPad,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFEFF6FF),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: const Icon(
+                                            LucideIcons.calendarDays,
+                                            size: 18,
+                                            color: Color(0xFF2563EB),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Today ($todayFormatted)',
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF0F172A),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'Shift: $shiftName [$shiftHours]',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Color(0xFF475569),
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Icon(
+                                          LucideIcons.chevronRight,
+                                          size: 18,
                                           color: Color(0xFF64748B),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
+                            const Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: Color(0xFFF1F5F9),
+                            ),
+
+                            // Zone 2: Attendance Metrics & Primary CTA
+                            Padding(
+                              padding: EdgeInsets.all(hPad),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  LayoutBuilder(
+                                    builder: (context, attendanceConstraints) {
+                                      final effectiveWidth =
+                                          attendanceConstraints.maxWidth /
+                                              textScale;
+                                      final stackAttendance =
+                                          effectiveWidth < 280;
+
+                                      final clockInColumn = Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFDCFCE7),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: const Icon(
+                                              LucideIcons.logIn,
+                                              size: 16,
+                                              color: AppColors.successText,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Clock In',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Color(0xFF475569),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 1),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment
+                                                          .baseline,
+                                                  textBaseline:
+                                                      TextBaseline.alphabetic,
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        clockInTime,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                          color:
+                                                              Color(0xFF0F172A),
+                                                          fontFamily:
+                                                              'monospace',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 2),
+                                                    const Text(
+                                                      'WIB',
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            Color(0xFF64748B),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  hasClockedIn
+                                                      ? (todayData.isLate ==
+                                                              true
+                                                          ? '+${todayData.lateMinutes}m terlambat'
+                                                          : 'Tepat Waktu')
+                                                      : 'Belum presensi',
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: hasClockedIn
+                                                        ? (todayData.isLate ==
+                                                                true
+                                                            ? AppColors
+                                                                .warningText
+                                                            : AppColors
+                                                                .successText)
+                                                        : AppColors.successText,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      );
+
+                                      final clockOutColumn = Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            width: 32,
+                                            height: 32,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFDBEAFE),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: const Icon(
+                                              LucideIcons.logOut,
+                                              size: 16,
+                                              color: Color(0xFF2563EB),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Clock Out',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Color(0xFF475569),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 1),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment
+                                                          .baseline,
+                                                  textBaseline:
+                                                      TextBaseline.alphabetic,
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        clockOutTime,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                          color:
+                                                              Color(0xFF0F172A),
+                                                          fontFamily:
+                                                              'monospace',
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 2),
+                                                    const Text(
+                                                      'WIB',
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            Color(0xFF64748B),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  hasClockedOut
+                                                      ? 'Selesai Kerja'
+                                                      : (hasClockedIn
+                                                          ? 'Sedang Bekerja'
+                                                          : 'Belum jam pulang'),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: hasClockedOut
+                                                        ? AppColors.successText
+                                                        : (hasClockedIn
+                                                            ? AppColors.infoText
+                                                            : const Color(
+                                                                0xFF64748B)),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      );
+
+                                      if (stackAttendance) {
+                                        return Column(
+                                          children: [
+                                            clockInColumn,
+                                            const Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: 10,
+                                              ),
+                                              child: Divider(
+                                                height: 1,
+                                                color: Color(0xFFE2E8F0),
+                                              ),
+                                            ),
+                                            clockOutColumn,
+                                          ],
+                                        );
+                                      }
+
+                                      return Row(
+                                        children: [
+                                          Expanded(child: clockInColumn),
+                                          const SizedBox(width: 10),
+                                          Container(
+                                            height: 44,
+                                            width: 1,
+                                            color: const Color(0xFFE2E8F0),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(child: clockOutColumn),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                  SizedBox(height: vPad),
+
+                                  // Primary Presensi Action Button
+                                  if (actionState.isLoading)
+                                    ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        minHeight:
+                                            AppDimensions.minTouchTarget,
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF1F5F9),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: const Color(0xFFCBD5E1),
+                                          ),
+                                        ),
+                                        child: const Center(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.2,
+                                              color: AppColors.actionAccent,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  else if (isCompleted)
+                                    ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        minHeight:
+                                            AppDimensions.minTouchTarget,
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.successBg,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: AppColors.successBorder,
+                                          ),
+                                        ),
+                                        child: const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              LucideIcons.circleCheck,
+                                              color: AppColors.successText,
+                                              size: 18,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(
+                                                'Presensi Hari Ini Selesai',
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.successText,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        minHeight:
+                                            AppDimensions.minTouchTarget,
+                                        minWidth: double.infinity,
+                                      ),
+                                      child: ElevatedButton.icon(
+                                        onPressed: () async {
+                                          await ref
+                                              .read(
+                                                attendanceActionProvider
+                                                    .notifier,
+                                              )
+                                              .recordAttendance(
+                                                isClockIn: isClockInAction,
+                                              );
+                                          ref.invalidate(
+                                            todayAttendanceProvider,
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              AppColors.actionAccent,
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        icon: Icon(
+                                          isClockInAction
+                                              ? LucideIcons.logIn
+                                              : LucideIcons.logOut,
+                                          size: 18,
+                                        ),
+                                        label: Text(
+                                          isClockInAction
+                                              ? 'Clock In Sekarang'
+                                              : 'Clock Out Sekarang',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: -0.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            const Divider(
+                              height: 1,
+                              thickness: 1,
+                              color: Color(0xFFF1F5F9),
+                            ),
+
+                            // Zone 3: Footer Quick Utility Actions
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const AttendanceScreen(),
+                                          ),
+                                        );
+                                      },
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          minHeight:
+                                              AppDimensions.minTouchTarget,
+                                        ),
+                                        child: const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                LucideIcons.camera,
+                                                size: 15,
+                                                color: AppColors.actionAccent,
+                                              ),
+                                              SizedBox(width: 6),
+                                              Flexible(
+                                                child: Text(
+                                                  'Kamera & GPS',
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        AppColors.actionAccent,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    height: 18,
+                                    width: 1,
+                                    color: const Color(0xFFE2E8F0),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: InkWell(
+                                      onTap: () => _showAttendanceDetailSheet(
+                                        context,
+                                        shiftName,
+                                        shiftHours,
+                                        clockInTime,
+                                        clockOutTime,
+                                        todayData,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          minHeight:
+                                              AppDimensions.minTouchTarget,
+                                        ),
+                                        child: const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                LucideIcons.clock,
+                                                size: 15,
+                                                color: Color(0xFF475569),
+                                              ),
+                                              SizedBox(width: 6),
+                                              Flexible(
+                                                child: Text(
+                                                  'Rincian Shift',
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Color(0xFF475569),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
                 ),
 
-                // 4. Favorite Menu Section
+                // 4. Favorite Menu Section (card-less multi-breakpoint grid)
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.space16,
-                    vertical: 4,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.space16,
+                    4,
+                    AppDimensions.space16,
+                    8,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -955,74 +1137,139 @@ class HomeDashboardView extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Favorite Menu',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.inkPrimary,
+                          const Flexible(
+                            child: Text(
+                              'Favorite Menu',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.inkPrimary,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           InkWell(
                             onTap: () => _showEditFavoriteDialog(context, ref),
                             borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minWidth: AppDimensions.minTouchTarget,
+                                minHeight: AppDimensions.minTouchTarget,
                               ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.edit_outlined,
-                                    size: 14,
-                                    color: Color(0xFF2563EB),
+                              child: Center(
+                                widthFactor: 1.0,
+                                heightFactor: 1.0,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
                                   ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Edit',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2563EB),
-                                    ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE0ECFF),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                                ],
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        LucideIcons.pencil,
+                                        size: 13,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Edit',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 8),
 
-                      // 4-column Grid driven by user-customizable Favorite Menu state
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 4,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 0.78,
-                        children: [
-                          for (final menu in activeFavoriteMenus)
-                            _FavoriteMenuItem(
-                              label: menu.gridLabel,
-                              icon: menu.icon,
-                              bgColor: menu.bgColor,
-                              iconColor: menu.iconColor,
-                              onTap: () => _handleFavoriteMenuTap(
-                                context,
-                                menu.id,
-                                shiftName: shiftName,
-                                shiftHours: shiftHours,
-                              ),
-                            ),
-                        ],
+                      // Content-driven responsive menu rows across phone, tablet, and desktop widths
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final int columns;
+                          final double horizontalGap;
+                          final double verticalGap;
+                          final double labelFontSize;
+
+                          if (constraints.maxWidth < 310) {
+                            columns = 3;
+                            horizontalGap = 6;
+                            verticalGap = 8;
+                            labelFontSize = 11;
+                          } else if (constraints.maxWidth < 470) {
+                            columns = 4;
+                            horizontalGap = 8;
+                            verticalGap = 10;
+                            labelFontSize = 11.5;
+                          } else if (constraints.maxWidth < 550) {
+                            columns = 5;
+                            horizontalGap = 10;
+                            verticalGap = 12;
+                            labelFontSize = 12;
+                          } else {
+                            columns = 6;
+                            horizontalGap = 12;
+                            verticalGap = 12;
+                            labelFontSize = 12;
+                          }
+
+                          final int rowCount =
+                              (activeFavoriteMenus.length / columns).ceil();
+
+                          return Column(
+                            children: [
+                              for (int r = 0; r < rowCount; r++) ...[
+                                if (r > 0) SizedBox(height: verticalGap),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    for (int c = 0; c < columns; c++) ...[
+                                      if (c > 0) SizedBox(width: horizontalGap),
+                                      Expanded(
+                                        child: (r * columns + c) <
+                                                activeFavoriteMenus.length
+                                            ? () {
+                                                final menu =
+                                                    activeFavoriteMenus[
+                                                        r * columns + c];
+                                                return _FavoriteMenuItem(
+                                                  label: menu.gridLabel,
+                                                  icon: menu.icon,
+                                                  bgColor: menu.bgColor,
+                                                  iconColor: menu.iconColor,
+                                                  labelFontSize: labelFontSize,
+                                                  onTap: () =>
+                                                      _handleFavoriteMenuTap(
+                                                    context,
+                                                    menu.id,
+                                                    shiftName: shiftName,
+                                                    shiftHours: shiftHours,
+                                                  ),
+                                                );
+                                              }()
+                                            : const SizedBox.shrink(),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ],
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -1041,55 +1288,66 @@ class HomeDashboardView extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Row(
-                            children: [
-                              Icon(
-                                Icons.business_rounded,
-                                size: 18,
-                                color: Color(0xFF2563EB),
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Company Information',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.inkPrimary,
+                          const Flexible(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  LucideIcons.building2,
+                                  size: 17,
+                                  color: Color(0xFF2563EB),
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Company Information',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.inkPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           InkWell(
                             onTap: () => _showCompanyInfoListDialog(context),
-                            borderRadius: BorderRadius.circular(4),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 4,
+                            borderRadius: BorderRadius.circular(8),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minWidth: AppDimensions.minTouchTarget,
+                                minHeight: AppDimensions.minTouchTarget,
                               ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'See All',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'See All',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.actionAccent,
+                                      ),
+                                    ),
+                                    SizedBox(width: 2),
+                                    Icon(
+                                      LucideIcons.chevronRight,
+                                      size: 15,
                                       color: AppColors.actionAccent,
                                     ),
-                                  ),
-                                  SizedBox(width: 2),
-                                  Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 16,
-                                    color: AppColors.actionAccent,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 4),
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -1156,7 +1414,7 @@ class HomeDashboardView extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 84),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -1193,7 +1451,7 @@ class HomeDashboardView extends ConsumerWidget {
               autofocus: true,
               decoration: InputDecoration(
                 hintText: 'Cari menu, dokumen, atau shift...',
-                prefixIcon: const Icon(Icons.search_rounded),
+                prefixIcon: const Icon(LucideIcons.search, size: 18),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 10,
@@ -1273,7 +1531,7 @@ class HomeDashboardView extends ConsumerWidget {
         ),
         title: Row(
           children: [
-            const Icon(Icons.calendar_today_rounded, color: AppColors.actionAccent),
+            const Icon(LucideIcons.calendarDays, color: AppColors.actionAccent),
             const SizedBox(width: 8),
             const Text(
               'Rincian Shift Kerja',
@@ -1352,7 +1610,7 @@ class HomeDashboardView extends ConsumerWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded),
+                  icon: const Icon(LucideIcons.x, size: 18),
                   onPressed: () => Navigator.pop(ctx),
                 ),
               ],
@@ -1378,7 +1636,7 @@ class HomeDashboardView extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(Icons.camera_alt_outlined),
+                icon: const Icon(LucideIcons.camera, size: 18),
                 label: const Text(
                   'Buka Presensi Kerja (Kamera & GPS)',
                   style: TextStyle(fontWeight: FontWeight.w600),
@@ -1548,7 +1806,7 @@ class HomeDashboardView extends ConsumerWidget {
           children: [
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.description, color: AppColors.actionAccent),
+              leading: const Icon(LucideIcons.fileText, color: AppColors.actionAccent),
               title: const Text('Pedoman & Tata Tertib Kerja Karyawan', style: TextStyle(fontSize: 13)),
               subtitle: const Text('Versi 2026 / HR Corporate', style: TextStyle(fontSize: 11)),
               onTap: () {
@@ -1558,7 +1816,7 @@ class HomeDashboardView extends ConsumerWidget {
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.health_and_safety, color: AppColors.actionAccent),
+              leading: const Icon(LucideIcons.shieldCheck, color: AppColors.actionAccent),
               title: const Text('Prosedur K3 & Keselamatan Operasional', style: TextStyle(fontSize: 13)),
               subtitle: const Text('Panduan APD & Area Produksi', style: TextStyle(fontSize: 11)),
               onTap: () => Navigator.pop(ctx),
@@ -1584,7 +1842,7 @@ class HomeDashboardView extends ConsumerWidget {
         ),
         title: const Row(
           children: [
-            Icon(Icons.menu_book_rounded, color: AppColors.actionAccent),
+            Icon(LucideIcons.bookOpen, color: AppColors.actionAccent, size: 20),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1634,6 +1892,7 @@ class _FavoriteMenuItem extends StatelessWidget {
   final Color bgColor;
   final Color iconColor;
   final VoidCallback onTap;
+  final double labelFontSize;
 
   const _FavoriteMenuItem({
     required this.label,
@@ -1641,65 +1900,67 @@ class _FavoriteMenuItem extends StatelessWidget {
     required this.bgColor,
     required this.iconColor,
     required this.onTap,
+    this.labelFontSize = 11.5,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1.0,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
+    return Semantics(
+      button: true,
+      label: label.replaceAll('\n', ' '),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    shape: BoxShape.circle,
+          hoverColor: iconColor.withValues(alpha: 0.05),
+          splashColor: iconColor.withValues(alpha: 0.12),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: AppDimensions.minTouchTarget,
+              minHeight: 74,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: iconColor.withValues(alpha: 0.16),
+                        width: 1.0,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      icon,
+                      color: iconColor,
+                      size: 22,
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    icon,
-                    color: iconColor,
-                    size: 22,
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: labelFontSize,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1E293B),
+                      height: 1.22,
+                      letterSpacing: -0.1,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
-                    height: 1.2,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1828,7 +2089,7 @@ class _EditFavoriteMenuSheetState extends State<_EditFavoriteMenuSheet> {
                   ),
                   TextButton.icon(
                     onPressed: _resetDefault,
-                    icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                    icon: const Icon(LucideIcons.rotateCcw, size: 15),
                     label: const Text(
                       'Reset',
                       style: TextStyle(
@@ -1861,7 +2122,7 @@ class _EditFavoriteMenuSheetState extends State<_EditFavoriteMenuSheet> {
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.info_outline_rounded,
+                        LucideIcons.info,
                         size: 16,
                         color: Color(0xFFDC2626),
                       ),
@@ -1919,7 +2180,7 @@ class _EditFavoriteMenuSheetState extends State<_EditFavoriteMenuSheet> {
                                 height: 40,
                                 decoration: BoxDecoration(
                                   color: menu.bgColor,
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 alignment: Alignment.center,
                                 child: Icon(
@@ -1957,8 +2218,8 @@ class _EditFavoriteMenuSheetState extends State<_EditFavoriteMenuSheet> {
                                   tooltip: 'Geser ke atas',
                                   visualDensity: VisualDensity.compact,
                                   icon: Icon(
-                                    Icons.keyboard_arrow_up_rounded,
-                                    size: 20,
+                                    LucideIcons.chevronUp,
+                                    size: 18,
                                     color: selectedIndex > 0
                                         ? const Color(0xFF334155)
                                         : const Color(0xFFCBD5E1),
@@ -1971,8 +2232,8 @@ class _EditFavoriteMenuSheetState extends State<_EditFavoriteMenuSheet> {
                                   tooltip: 'Geser ke bawah',
                                   visualDensity: VisualDensity.compact,
                                   icon: Icon(
-                                    Icons.keyboard_arrow_down_rounded,
-                                    size: 20,
+                                    LucideIcons.chevronDown,
+                                    size: 18,
                                     color: selectedIndex <
                                             _selectedIds.length - 1
                                         ? const Color(0xFF334155)

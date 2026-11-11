@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
@@ -19,15 +20,6 @@ import '../provider/attendance_provider.dart';
 import 'camera_screen.dart';
 import 'history_screen.dart';
 
-/// AttendanceScreen matching Design/dashboard_presensi_karyawan/code.html
-/// and dashboard_presensi_sudah_clock_in_v2/code.html
-/// Incorporates:
-/// 1. Greeting & Live Digital Clock (HH:mm:ss WIB) with pulsating indicator
-/// 2. Shift & Operational Rules Card with Jam Masuk, Jam Pulang, 15 Menit toleransi,
-///    and Geofence validation pill (Kantor Pusat • Valid (18m / 50m))
-/// 3. Dynamic 3-state Attendance Card (Belum Hadir, Hadir Tepat Waktu, Sudah Clock Out)
-/// 4. 3-column Monthly Metric Summary (Tepat Waktu, Terlambat, Izin/Cuti)
-/// 5. Riwayat Presensi list with accessible >=48px 'Lihat Semua' button
 class AttendanceScreen extends ConsumerStatefulWidget {
   const AttendanceScreen({super.key});
 
@@ -90,12 +82,16 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
             children: [
               HrHubLogo(size: 24),
               SizedBox(width: 10),
-              Text(
-                'Presensi Kerja',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+              Flexible(
+                child: Text(
+                  'Presensi Kerja',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -105,7 +101,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           child: Padding(
             padding: const EdgeInsets.all(AppDimensions.space24),
             child: AppEmptyState(
-              icon: Icons.admin_panel_settings_outlined,
+              icon: LucideIcons.shieldAlert,
               title: 'Presensi Khusus Karyawan',
               description:
                   'Akun Anda (${auth.roleLabel}) terdaftar sebagai pengelola tanpa profil karyawan operasional. Aplikasi mobile diperuntukkan bagi karyawan untuk melakukan pencatatan kehadiran. Silakan gunakan Web Admin untuk memonitor presensi tim atau ganti ke akun karyawan.',
@@ -158,6 +154,16 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
     final userName = auth.user?['name'] as String? ?? 'Karyawan';
     final userRole = auth.roleLabel;
+    final headerBrandLabel =
+        auth.companyName.isNotEmpty && auth.companyName != 'HR Hub Workspace'
+            ? auth.companyName
+            : 'HR Hub';
+    final locationLabel =
+        auth.branchName != null && auth.branchName!.isNotEmpty
+            ? auth.branchName!
+            : 'Lokasi Kantor Terdaftar';
+    final textScale =
+        MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 2.0);
 
     return Scaffold(
       backgroundColor: AppColors.surfaceCanvas,
@@ -165,6 +171,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         backgroundColor: AppColors.surfaceCard,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, thickness: 1, color: AppColors.borderSubtle),
+        ),
         title: Row(
           children: [
             const HrHubLogo(size: 24),
@@ -179,18 +189,22 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               width: 6,
               height: 6,
               decoration: const BoxDecoration(
-                color: AppColors.statusSuccess,
+                color: AppColors.successText,
                 shape: BoxShape.circle,
               ),
             ),
             const SizedBox(width: 6),
-            const Text(
-              'PT SPINDO',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textMuted,
-                letterSpacing: 0.3,
+            Flexible(
+              child: Text(
+                headerBrandLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.inkMuted,
+                  letterSpacing: 0.3,
+                ),
               ),
             ),
           ],
@@ -198,7 +212,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
         actions: [
           IconButton(
             icon: const Icon(
-              Icons.history_rounded,
+              LucideIcons.history,
+              size: 20,
               color: AppColors.textBody,
             ),
             tooltip: 'Riwayat Kehadiran',
@@ -210,878 +225,1080 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        onRefresh: () async {
-          ref.invalidate(todayAttendanceProvider);
-          ref.invalidate(attendanceHistoryProvider);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.space16,
-            vertical: AppDimensions.space12,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Greeting & Live Digital Clock Card
-              Container(
-                padding: const EdgeInsets.all(AppDimensions.space16),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceCard,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderSubtle),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x06000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: LayoutBuilder(
+            builder: (context, viewportConstraints) {
+              final double hPad;
+              final double vPad;
+              if (viewportConstraints.maxWidth < 310) {
+                hPad = 12;
+                vPad = 12;
+              } else if (viewportConstraints.maxWidth < 470) {
+                hPad = AppDimensions.space16;
+                vPad = 14;
+              } else {
+                hPad = 20;
+                vPad = 16;
+              }
+
+              return RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () async {
+                  ref.invalidate(todayAttendanceProvider);
+                  ref.invalidate(attendanceHistoryProvider);
+                },
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: AppDimensions.space24),
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                userRole,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Halo, $userName',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                  letterSpacing: -0.3,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: const BoxDecoration(
-                            color: AppColors.surfaceContainerLow,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.verified_user_rounded,
-                            size: 20,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
+                    // 1. Flat Header Strip (no nested cards or floating pills)
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                      color: AppColors.surfaceCard,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: hPad,
+                        vertical: vPad,
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceMuted,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Icon(
-                                Icons.calendar_month_rounded,
-                                size: 16,
-                                color: AppColors.textMuted,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      userRole,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.inkMuted,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Halo, $userName',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.inkPrimary,
+                                        letterSpacing: -0.3,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                todayFormatted,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textBody,
+                              const SizedBox(width: 12),
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFEFF6FF),
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  LucideIcons.shieldCheck,
+                                  size: 19,
+                                  color: Color(0xFF2563EB),
                                 ),
                               ),
                             ],
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceCard,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x0A000000),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 1),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.statusSuccess,
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0x66059669),
-                                        blurRadius: 4,
-                                        spreadRadius: 1,
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 6,
+                            alignment: WrapAlignment.spaceBetween,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    LucideIcons.calendar,
+                                    size: 14,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      todayFormatted,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.inkMuted,
                                       ),
-                                    ],
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 5),
-                                Text(
-                                  clockString,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                    fontFeatures: [FontFeature.tabularFigures()],
+                                ],
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.successText,
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    clockString,
+                                    style: AppTextStyle.time(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ).copyWith(color: AppColors.inkPrimary),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: AppColors.borderSubtle,
+                    ),
 
-              const SizedBox(height: AppDimensions.space12),
-
-              // 2. Today's Shift Card & Operational Rules
-              todayAsync.when(
-                loading: () => const Column(
-                  children: [
-                    AppSkeleton(height: 120),
-                    SizedBox(height: AppDimensions.space12),
-                    AppSkeleton(height: 180),
-                  ],
-                ),
-                error: (error, _) => AppErrorState(
-                  isCard: true,
-                  title: 'Gagal Memuat Status Presensi',
-                  message: error is ApiException
-                      ? error.userFriendlyMessage
-                      : error.toString().replaceFirst('Exception: ', ''),
-                  retryText: 'Coba Lagi',
-                  onRetry: () => ref.invalidate(todayAttendanceProvider),
-                ),
-                data: (data) {
-                  final badge = data.badgeStatus;
-                  final hasClockedIn = data.hasClockedIn;
-                  final hasClockedOut = data.hasClockedOut;
-                  final isCompleted = hasClockedIn && hasClockedOut;
-                  final isClockInAction = !hasClockedIn;
-
-                  final buttonText = isCompleted
-                      ? 'Presensi Selesai'
-                      : (isClockInAction
-                          ? 'Clock In Sekarang'
-                          : 'Clock Out Sekarang');
-
-                  final buttonIcon = isCompleted
-                      ? Icons.check_circle_outline_rounded
-                      : (isClockInAction
-                          ? Icons.fingerprint_rounded
-                          : Icons.logout_rounded);
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Shift Operational Card
-                      Container(
-                        padding: const EdgeInsets.all(AppDimensions.space16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceCard,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.borderSubtle),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x06000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // Scrollable Content Sections
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          todayAsync.when(
+                            loading: () => const Column(
                               children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.schedule_rounded,
-                                      size: 18,
-                                      color: AppColors.primary,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      data.shiftName,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.statusInfoBg,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: AppColors.statusInfoBorder,
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Shift Aktif',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.statusInfo,
-                                    ),
-                                  ),
-                                ),
+                                AppSkeleton(height: 120),
+                                SizedBox(height: AppDimensions.space12),
+                                AppSkeleton(height: 180),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(AppDimensions.space12),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceMuted,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: _ShiftDetailItem(
-                                      icon: Icons.login_rounded,
-                                      label: 'Jam Masuk',
-                                      value: data.startTime,
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 1,
-                                    height: 32,
-                                    color: AppColors.borderSubtle,
-                                  ),
-                                  const SizedBox(width: AppDimensions.space8),
-                                  Expanded(
-                                    child: _ShiftDetailItem(
-                                      icon: Icons.logout_rounded,
-                                      label: 'Jam Pulang',
-                                      value: data.endTime,
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 1,
-                                    height: 32,
-                                    color: AppColors.borderSubtle,
-                                  ),
-                                  const SizedBox(width: AppDimensions.space8),
-                                  Expanded(
-                                    child: _ShiftDetailItem(
-                                      icon: Icons.timelapse_rounded,
-                                      label: 'Toleransi',
-                                      value: '${data.lateToleranceMinutes} Menit',
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            error: (error, _) => AppErrorState(
+                              isCard: true,
+                              title: 'Gagal Memuat Status Presensi',
+                              message: error is ApiException
+                                  ? error.userFriendlyMessage
+                                  : error
+                                      .toString()
+                                      .replaceFirst('Exception: ', ''),
+                              retryText: 'Coba Lagi',
+                              onRetry: () =>
+                                  ref.invalidate(todayAttendanceProvider),
                             ),
-                            const SizedBox(height: 10),
-                            // Geofence & Location Indicator
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceContainerLow,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.location_on_rounded,
-                                        size: 15,
-                                        color: AppColors.secondary,
-                                      ),
-                                      SizedBox(width: 5),
-                                      Text(
-                                        'Kantor Pusat',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.check_circle_rounded,
-                                        size: 13,
-                                        color: AppColors.statusSuccess,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Valid (18m / 50m)',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.statusSuccess,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                            data: (data) {
+                              final badge = data.badgeStatus;
+                              final hasClockedIn = data.hasClockedIn;
+                              final hasClockedOut = data.hasClockedOut;
+                              final isCompleted = hasClockedIn && hasClockedOut;
+                              final isClockInAction = !hasClockedIn;
 
-                      const SizedBox(height: AppDimensions.space12),
+                              final buttonText = isCompleted
+                                  ? 'Presensi Selesai'
+                                  : (isClockInAction
+                                      ? 'Clock In Sekarang'
+                                      : 'Clock Out Sekarang');
 
-                      // 3. Dynamic Attendance State Card
-                      Container(
-                        padding: const EdgeInsets.all(AppDimensions.space16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceCard,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: hasClockedIn && !hasClockedOut
-                                ? AppColors.statusSuccessBorder
-                                : AppColors.borderSubtle,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x06000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'STATUS KEHADIRAN',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.textMuted,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: AppDimensions.space4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: badge.backgroundColor,
-                                        borderRadius: BorderRadius.circular(999),
-                                        border: Border.all(
-                                          color: badge.borderColor,
-                                          width: AppDimensions.borderWidth,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        badge.label,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: badge.textColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: badge.backgroundColor,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Icon(
-                                    hasClockedOut
-                                        ? Icons.verified_rounded
-                                        : (hasClockedIn
-                                            ? Icons.task_alt_rounded
-                                            : Icons.timer_outlined),
-                                    size: 24,
-                                    color: badge.textColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimensions.space16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(AppDimensions.space12),
+                              final buttonIcon = isCompleted
+                                  ? LucideIcons.circleCheck
+                                  : (isClockInAction
+                                      ? LucideIcons.camera
+                                      : LucideIcons.logOut);
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // 2. Single-Surface Shift Operational Card (zero inner boxes)
+                                  Container(
                                     decoration: BoxDecoration(
-                                      color: hasClockedIn
-                                          ? AppColors.statusSuccessBg
-                                          : AppColors.surfaceMuted,
+                                      color: AppColors.surfaceCard,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: hasClockedIn
+                                        color: AppColors.borderSubtle,
+                                      ),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x06000000),
+                                          blurRadius: 8,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: hPad,
+                                            vertical: vPad,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                LucideIcons.clock,
+                                                size: 18,
+                                                color: AppColors.actionAccent,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  data.shiftName,
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.inkPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 10,
+                                                  vertical: 4,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      const Color(0xFFEFF6FF),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: const Text(
+                                                  'Shift Aktif',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Color(0xFF1D4ED8),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Divider(
+                                          height: 1,
+                                          thickness: 1,
+                                          color: Color(0xFFF1F5F9),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: hPad,
+                                            vertical: vPad,
+                                          ),
+                                          child: LayoutBuilder(
+                                            builder:
+                                                (context, metricConstraints) {
+                                              final effectiveWidth =
+                                                  metricConstraints.maxWidth /
+                                                      textScale;
+
+                                              if (effectiveWidth < 285) {
+                                                return Column(
+                                                  children: [
+                                                    _ShiftDetailRow(
+                                                      icon: LucideIcons.logIn,
+                                                      label: 'Jam Masuk',
+                                                      value: data.startTime,
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    _ShiftDetailRow(
+                                                      icon: LucideIcons.logOut,
+                                                      label: 'Jam Pulang',
+                                                      value: data.endTime,
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    _ShiftDetailRow(
+                                                      icon:
+                                                          LucideIcons.hourglass,
+                                                      label: 'Toleransi',
+                                                      value:
+                                                          '${data.lateToleranceMinutes} Menit',
+                                                    ),
+                                                  ],
+                                                );
+                                              }
+
+                                              return Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: _ShiftDetailItem(
+                                                      icon: LucideIcons.logIn,
+                                                      label: 'Jam Masuk',
+                                                      value: data.startTime,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 1,
+                                                    height: 32,
+                                                    color:
+                                                        AppColors.borderSubtle,
+                                                  ),
+                                                  const SizedBox(
+                                                    width: AppDimensions.space12,
+                                                  ),
+                                                  Expanded(
+                                                    child: _ShiftDetailItem(
+                                                      icon: LucideIcons.logOut,
+                                                      label: 'Jam Pulang',
+                                                      value: data.endTime,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 1,
+                                                    height: 32,
+                                                    color:
+                                                        AppColors.borderSubtle,
+                                                  ),
+                                                  const SizedBox(
+                                                    width: AppDimensions.space12,
+                                                  ),
+                                                  Expanded(
+                                                    child: _ShiftDetailItem(
+                                                      icon:
+                                                          LucideIcons.hourglass,
+                                                      label: 'Toleransi',
+                                                      value:
+                                                          '${data.lateToleranceMinutes} Menit',
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        const Divider(
+                                          height: 1,
+                                          thickness: 1,
+                                          color: Color(0xFFF1F5F9),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: hPad,
+                                            vertical: 10,
+                                          ),
+                                          child: Wrap(
+                                            spacing: 8,
+                                            runSpacing: 4,
+                                            alignment:
+                                                WrapAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            children: [
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    LucideIcons.mapPin,
+                                                    size: 14,
+                                                    color: AppColors.inkMuted,
+                                                  ),
+                                                  const SizedBox(width: 5),
+                                                  Flexible(
+                                                    child: Text(
+                                                      locationLabel,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: AppColors
+                                                            .inkPrimary,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    LucideIcons.locateFixed,
+                                                    size: 13,
+                                                    color:
+                                                        AppColors.successText,
+                                                  ),
+                                                  SizedBox(width: 4),
+                                                  Text(
+                                                    'Verifikasi GPS aktif',
+                                                    style: TextStyle(
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color:
+                                                          AppColors.successText,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: AppDimensions.space12),
+
+                                  // 3. Single-Surface Attendance Status & CTA Card (zero inner boxes)
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surfaceCard,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: hasClockedIn && !hasClockedOut
                                             ? AppColors.statusSuccessBorder
                                             : AppColors.borderSubtle,
                                       ),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x06000000),
+                                          blurRadius: 8,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
                                       children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.arrow_circle_down_rounded,
-                                              size: 14,
-                                              color: hasClockedIn
-                                                  ? AppColors.statusSuccess
-                                                  : AppColors.textMuted,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text(
-                                              'Masuk (Clock In)',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                color: AppColors.textMuted,
-                                                fontWeight: FontWeight.w500,
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: hPad,
+                                            vertical: vPad,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    const Text(
+                                                      'Status Kehadiran',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            AppColors.inkMuted,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 6),
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 10,
+                                                        vertical:
+                                                            AppDimensions
+                                                                .space4,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: badge
+                                                            .backgroundColor,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(999),
+                                                      ),
+                                                      child: Text(
+                                                        badge.label,
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color:
+                                                              badge.textColor,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(width: 12),
+                                              Container(
+                                                width: 40,
+                                                height: 40,
+                                                decoration: BoxDecoration(
+                                                  color: badge.backgroundColor,
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Icon(
+                                                  hasClockedOut
+                                                      ? LucideIcons.badgeCheck
+                                                      : (hasClockedIn
+                                                          ? LucideIcons
+                                                              .checkCheck
+                                                          : LucideIcons.timer),
+                                                  size: 20,
+                                                  color: badge.textColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        const SizedBox(height: AppDimensions.space4),
-                                        Text(
-                                          data.clockInTime ?? '--:--',
-                                          style: AppTextStyle.time(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w700,
-                                          ).copyWith(
-                                            color: hasClockedIn
-                                                ? AppColors.statusSuccess
-                                                : AppColors.textMuted,
+                                        const Divider(
+                                          height: 1,
+                                          thickness: 1,
+                                          color: Color(0xFFF1F5F9),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.all(hPad),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.stretch,
+                                            children: [
+                                              LayoutBuilder(
+                                                builder: (context,
+                                                    timeConstraints) {
+                                                  final effectiveWidth =
+                                                      timeConstraints.maxWidth /
+                                                          textScale;
+                                                  final stackTimes =
+                                                      effectiveWidth < 270;
+
+                                                  final clockInMetric =
+                                                      _AttendanceTimeReadout(
+                                                    icon: LucideIcons.logIn,
+                                                    iconBg:
+                                                        const Color(0xFFDCFCE7),
+                                                    iconColor:
+                                                        AppColors.successText,
+                                                    label: 'Masuk (Clock In)',
+                                                    value: data.clockInTime ??
+                                                        '--:--',
+                                                    valueColor: hasClockedIn
+                                                        ? AppColors.inkPrimary
+                                                        : AppColors.inkMuted,
+                                                  );
+
+                                                  final clockOutMetric =
+                                                      _AttendanceTimeReadout(
+                                                    icon: LucideIcons.logOut,
+                                                    iconBg:
+                                                        const Color(0xFFDBEAFE),
+                                                    iconColor:
+                                                        const Color(0xFF2563EB),
+                                                    label: 'Pulang (Clock Out)',
+                                                    value: data.clockOutTime ??
+                                                        '--:--',
+                                                    valueColor: hasClockedOut
+                                                        ? AppColors.clockOutText
+                                                        : AppColors.inkMuted,
+                                                  );
+
+                                                  if (stackTimes) {
+                                                    return Column(
+                                                      children: [
+                                                        clockInMetric,
+                                                        const Padding(
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                            vertical: 10,
+                                                          ),
+                                                          child: Divider(
+                                                            height: 1,
+                                                            color: Color(
+                                                              0xFFE2E8F0,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        clockOutMetric,
+                                                      ],
+                                                    );
+                                                  }
+
+                                                  return Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: clockInMetric,
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Container(
+                                                        width: 1,
+                                                        height: 40,
+                                                        color: const Color(
+                                                          0xFFE2E8F0,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 10),
+                                                      Expanded(
+                                                        child: clockOutMetric,
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              ),
+                                              const SizedBox(height: 16),
+
+                                              // Primary Action Button (Navigates to CameraScreen for live selfie)
+                                              AppButton(
+                                                text: buttonText,
+                                                icon: Icon(
+                                                  buttonIcon,
+                                                  size: 18,
+                                                  color: isCompleted
+                                                      ? AppColors.inkMuted
+                                                      : Colors.white,
+                                                ),
+                                                isLoading:
+                                                    actionState.isLoading,
+                                                onPressed: isCompleted
+                                                    ? null
+                                                    : () async {
+                                                        final result =
+                                                            await Navigator.of(
+                                                          context,
+                                                        ).push<bool>(
+                                                          MaterialPageRoute(
+                                                            builder: (_) =>
+                                                                CameraScreen(
+                                                              isClockIn:
+                                                                  isClockInAction,
+                                                            ),
+                                                          ),
+                                                        );
+                                                        if (result == true) {
+                                                          ref.invalidate(
+                                                            todayAttendanceProvider,
+                                                          );
+                                                          ref.invalidate(
+                                                            attendanceHistoryProvider,
+                                                          );
+                                                        }
+                                                      },
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: AppDimensions.space12),
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(AppDimensions.space12),
+                                ],
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: AppDimensions.space16),
+
+                          // 4. Unified Attendance Summary Card (collapses cleanly on narrow widths)
+                          historyAsync.maybeWhen(
+                            data: (history) {
+                              int onTimeCount = 0;
+                              int lateCount = 0;
+                              int leaveCount = 0;
+
+                              for (final item in history) {
+                                if (item.badgeStatus ==
+                                        AttendanceBadgeStatus.tepatWaktu ||
+                                    item.status == 'on_time') {
+                                  onTimeCount++;
+                                } else if (item.badgeStatus ==
+                                        AttendanceBadgeStatus.terlambat ||
+                                    item.status == 'late') {
+                                  lateCount++;
+                                } else if (item.status == 'leave' ||
+                                    item.status == 'permit') {
+                                  leaveCount++;
+                                }
+                              }
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Flexible(
+                                        child: Text(
+                                          'Ringkasan Presensi',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.inkPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        DateFormat('MMMM yyyy', 'id_ID')
+                                            .format(_currentTime),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.inkMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
                                     decoration: BoxDecoration(
-                                      color: hasClockedOut
-                                          ? AppColors.clockOutBg
-                                          : AppColors.surfaceMuted,
+                                      color: AppColors.surfaceCard,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: hasClockedOut
-                                            ? AppColors.clockOutBorder
-                                            : AppColors.borderSubtle,
+                                        color: AppColors.borderSubtle,
                                       ),
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.arrow_circle_up_rounded,
-                                              size: 14,
-                                              color: hasClockedOut
-                                                  ? AppColors.clockOutText
-                                                  : AppColors.textMuted,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text(
-                                              'Pulang (Clock Out)',
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                color: AppColors.textMuted,
-                                                fontWeight: FontWeight.w500,
+                                    child: LayoutBuilder(
+                                      builder: (context, summaryConstraints) {
+                                        final effectiveWidth =
+                                            summaryConstraints.maxWidth /
+                                                textScale;
+                                        if (effectiveWidth < 295) {
+                                          return Column(
+                                            children: [
+                                              _SummaryMetricRow(
+                                                icon: LucideIcons.circleCheck,
+                                                label: 'Tepat Waktu',
+                                                value: '$onTimeCount',
+                                                color: AppColors.successText,
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: AppDimensions.space4),
-                                        Text(
-                                          data.clockOutTime ?? '--:--',
-                                          style: AppTextStyle.time(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w700,
-                                          ).copyWith(
-                                            color: hasClockedOut
-                                                ? AppColors.clockOutText
-                                                : AppColors.textMuted,
+                                              const Divider(
+                                                height: 1,
+                                                color: Color(0xFFF1F5F9),
+                                              ),
+                                              _SummaryMetricRow(
+                                                icon: LucideIcons.clockAlert,
+                                                label: 'Terlambat',
+                                                value: '$lateCount',
+                                                color: AppColors.warningText,
+                                              ),
+                                              const Divider(
+                                                height: 1,
+                                                color: Color(0xFFF1F5F9),
+                                              ),
+                                              _SummaryMetricRow(
+                                                icon: LucideIcons.calendarCheck,
+                                                label: 'Izin / Cuti',
+                                                value: '$leaveCount',
+                                                color: AppColors.infoText,
+                                              ),
+                                            ],
+                                          );
+                                        }
+
+                                        return IntrinsicHeight(
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: _SummaryMetricColumn(
+                                                  icon: LucideIcons.circleCheck,
+                                                  label: 'Tepat Waktu',
+                                                  value: '$onTimeCount',
+                                                  color: AppColors.successText,
+                                                  horizontalPad:
+                                                      hPad * 0.75,
+                                                ),
+                                              ),
+                                              const VerticalDivider(
+                                                width: 1,
+                                                thickness: 1,
+                                                color: Color(0xFFF1F5F9),
+                                              ),
+                                              Expanded(
+                                                child: _SummaryMetricColumn(
+                                                  icon: LucideIcons.clockAlert,
+                                                  label: 'Terlambat',
+                                                  value: '$lateCount',
+                                                  color: AppColors.warningText,
+                                                  horizontalPad:
+                                                      hPad * 0.75,
+                                                ),
+                                              ),
+                                              const VerticalDivider(
+                                                width: 1,
+                                                thickness: 1,
+                                                color: Color(0xFFF1F5F9),
+                                              ),
+                                              Expanded(
+                                                child: _SummaryMetricColumn(
+                                                  icon:
+                                                      LucideIcons.calendarCheck,
+                                                  label: 'Izin / Cuti',
+                                                  value: '$leaveCount',
+                                                  color: AppColors.infoText,
+                                                  horizontalPad:
+                                                      hPad * 0.75,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                      ],
+                                        );
+                                      },
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppDimensions.space16),
+                                ],
+                              );
+                            },
+                            orElse: () => const SizedBox.shrink(),
+                          ),
 
-                            // Primary Action Button (Navigates to CameraScreen for live selfie)
-                            AppButton(
-                              text: buttonText,
-                              icon: Icon(
-                                buttonIcon,
-                                size: 18,
-                                color: isCompleted
-                                    ? AppColors.textMuted
-                                    : Colors.white,
+                          const SizedBox(height: AppDimensions.space20),
+
+                          // 5. Attendance History Section Header
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Flexible(
+                                child: Text(
+                                  'Riwayat Presensi Bulan Ini',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.inkPrimary,
+                                  ),
+                                ),
                               ),
-                              isLoading: actionState.isLoading,
-                              onPressed: isCompleted
-                                  ? null
-                                  : () async {
-                                      final result = await Navigator.of(context)
-                                          .push<bool>(
-                                        MaterialPageRoute(
-                                          builder: (_) => CameraScreen(
-                                            isClockIn: isClockInAction,
-                                          ),
+                              const SizedBox(width: 8),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  minWidth: AppDimensions.minTouchTarget,
+                                  minHeight: AppDimensions.minTouchTarget,
+                                ),
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const HistoryScreen(),
+                                      ),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radiusInput,
+                                  ),
+                                  child: const Center(
+                                    widthFactor: 1.0,
+                                    heightFactor: 1.0,
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: AppDimensions.space8,
+                                        vertical: AppDimensions.space4,
+                                      ),
+                                      child: Text(
+                                        'Lihat Semua',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.actionAccent,
                                         ),
-                                      );
-                                      if (result == true) {
-                                        ref.invalidate(todayAttendanceProvider);
-                                        ref.invalidate(attendanceHistoryProvider);
-                                      }
-                                    },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-
-              const SizedBox(height: AppDimensions.space16),
-
-              // 4. Monthly Metric Summary Cards (3 Columns)
-              historyAsync.maybeWhen(
-                data: (history) {
-                  int onTimeCount = 0;
-                  int lateCount = 0;
-                  int leaveCount = 0;
-
-                  for (final item in history) {
-                    if (item.badgeStatus == AttendanceBadgeStatus.tepatWaktu ||
-                        item.status == 'on_time') {
-                      onTimeCount++;
-                    } else if (item.badgeStatus == AttendanceBadgeStatus.terlambat ||
-                        item.status == 'late') {
-                      lateCount++;
-                    } else if (item.status == 'leave' || item.status == 'permit') {
-                      leaveCount++;
-                    }
-                  }
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Ringkasan Presensi',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            DateFormat('MMMM yyyy', 'id_ID').format(_currentTime),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _MetricCard(
-                              icon: Icons.check_circle_rounded,
-                              label: 'Tepat Waktu',
-                              value: '$onTimeCount',
-                              color: AppColors.statusSuccess,
-                              bgColor: AppColors.statusSuccessBg,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _MetricCard(
-                              icon: Icons.alarm_on_rounded,
-                              label: 'Terlambat',
-                              value: '$lateCount',
-                              color: AppColors.statusWarning,
-                              bgColor: AppColors.statusWarningBg,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _MetricCard(
-                              icon: Icons.event_available_rounded,
-                              label: 'Izin / Cuti',
-                              value: '$leaveCount',
-                              color: AppColors.statusInfo,
-                              bgColor: AppColors.statusInfoBg,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-                orElse: () => const SizedBox.shrink(),
-              ),
-
-              const SizedBox(height: AppDimensions.space20),
-
-              // 5. Attendance History Section Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Riwayat Presensi Bulan Ini',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minWidth: AppDimensions.minTouchTarget,
-                      minHeight: AppDimensions.minTouchTarget,
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const HistoryScreen(),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusInput),
-                      child: const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: AppDimensions.space8,
-                            vertical: AppDimensions.space4,
-                          ),
-                          child: Text(
-                            'Lihat Semua',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimensions.space12),
-
-              historyAsync.when(
-                loading: () => Column(
-                  children: List.generate(
-                    3,
-                    (_) => const Padding(
-                      padding: EdgeInsets.only(bottom: AppDimensions.space8),
-                      child: AppSkeleton(height: 64),
-                    ),
-                  ),
-                ),
-                error: (error, _) => AppErrorState(
-                  isCard: true,
-                  title: 'Gagal Memuat Riwayat',
-                  message: 'Gagal memuat riwayat kehadiran.',
-                  retryText: 'Coba Lagi',
-                  onRetry: () => ref.invalidate(attendanceHistoryProvider),
-                ),
-                data: (history) {
-                  if (history.isEmpty) {
-                    return const AppEmptyState(
-                      icon: Icons.history_rounded,
-                      title: 'Belum Ada Riwayat',
-                      description: 'Belum ada riwayat kehadiran tercatat.',
-                    );
-                  }
-
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: history.length > 5 ? 5 : history.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: AppDimensions.space8),
-                    itemBuilder: (context, index) {
-                      final item = history[index];
-                      final badge = item.badgeStatus;
-                      final inTime = item.clockIn ?? '--:--';
-                      final outTime = item.clockOut ?? '--:--';
-
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.space16,
-                          vertical: AppDimensions.space12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceCard,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.borderSubtle),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x04000000),
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.date,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(height: AppDimensions.space4),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Masuk: ',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textMuted,
-                                      ),
-                                    ),
-                                    Text(
-                                      inTime,
-                                      style: AppTextStyle.time(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const Text(
-                                      ' / Pulang: ',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textMuted,
-                                      ),
-                                    ),
-                                    Text(
-                                      outTime,
-                                      style: AppTextStyle.time(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppDimensions.space8),
+
+                          historyAsync.when(
+                            loading: () => Column(
+                              children: List.generate(
+                                3,
+                                (_) => const Padding(
+                                  padding: EdgeInsets.only(
+                                    bottom: AppDimensions.space8,
+                                  ),
+                                  child: AppSkeleton(height: 64),
+                                ),
+                              ),
+                            ),
+                            error: (error, _) => AppErrorState(
+                              isCard: true,
+                              title: 'Gagal Memuat Riwayat',
+                              message: 'Gagal memuat riwayat kehadiran.',
+                              retryText: 'Coba Lagi',
+                              onRetry: () =>
+                                  ref.invalidate(attendanceHistoryProvider),
+                            ),
+                            data: (history) {
+                              if (history.isEmpty) {
+                                return const AppEmptyState(
+                                  icon: LucideIcons.history,
+                                  title: 'Belum Ada Riwayat',
+                                  description:
+                                      'Belum ada riwayat kehadiran tercatat.',
+                                );
+                              }
+
+                              final recentHistory = history.take(5).toList();
+
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceCard,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.borderSubtle,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x04000000),
+                                      blurRadius: 6,
+                                      offset: Offset(0, 2),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: AppDimensions.space4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: badge.backgroundColor,
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: badge.borderColor,
-                                  width: AppDimensions.borderWidth,
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: recentHistory.length,
+                                  separatorBuilder: (_, index) => const Divider(
+                                    height: 1,
+                                    thickness: 1,
+                                    color: Color(0xFFF1F5F9),
+                                  ),
+                                  itemBuilder: (context, index) {
+                                    final item = recentHistory[index];
+                                    final badge = item.badgeStatus;
+                                    final inTime = item.clockIn ?? '--:--';
+                                    final outTime = item.clockOut ?? '--:--';
+
+                                    return Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: hPad,
+                                        vertical: 12,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  item.date,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.inkPrimary,
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  height: AppDimensions.space4,
+                                                ),
+                                                Wrap(
+                                                  spacing: 8,
+                                                  runSpacing: 2,
+                                                  children: [
+                                                    Text.rich(
+                                                      TextSpan(
+                                                        children: [
+                                                          const TextSpan(
+                                                            text: 'Masuk: ',
+                                                            style: TextStyle(
+                                                              fontSize: 12,
+                                                              color: AppColors
+                                                                  .inkMuted,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: inTime,
+                                                            style: AppTextStyle
+                                                                .time(
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    Text.rich(
+                                                      TextSpan(
+                                                        children: [
+                                                          const TextSpan(
+                                                            text: 'Pulang: ',
+                                                            style: TextStyle(
+                                                              fontSize: 12,
+                                                              color: AppColors
+                                                                  .inkMuted,
+                                                            ),
+                                                          ),
+                                                          TextSpan(
+                                                            text: outTime,
+                                                            style: AppTextStyle
+                                                                .time(
+                                                              fontSize: 12,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: AppDimensions.space4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: badge.backgroundColor,
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            child: Text(
+                                              badge.label,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: badge.textColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
-                              child: Text(
-                                badge.label,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: badge.textColor,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -1089,61 +1306,165 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   }
 }
 
-class _MetricCard extends StatelessWidget {
+class _AttendanceTimeReadout extends StatelessWidget {
   final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
   final String label;
   final String value;
-  final Color color;
-  final Color bgColor;
+  final Color valueColor;
 
-  const _MetricCard({
+  const _AttendanceTimeReadout({
     required this.icon,
+    required this.iconBg,
+    required this.iconColor,
     required this.label,
     required this.value,
-    required this.color,
-    required this.bgColor,
+    required this.valueColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.space12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: iconBg,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 16, color: iconColor),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.inkMuted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyle.time(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ).copyWith(color: valueColor),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryMetricColumn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final double horizontalPad;
+
+  const _SummaryMetricColumn({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.horizontalPad,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPad,
+        vertical: 12,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 16, color: color),
+          Row(
+            children: [
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 5),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: AppColors.inkMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryMetricRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _SummaryMetricRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkPrimary,
+              ),
+            ),
+          ),
           Text(
             value,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w700,
               color: color,
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textMuted,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -1169,18 +1490,62 @@ class _ShiftDetailItem extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 12, color: AppColors.textMuted),
+            Icon(icon, size: 12, color: AppColors.inkMuted),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textMuted,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.inkMuted,
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 3),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyle.time(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShiftDetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ShiftDetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: AppColors.inkMuted),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.inkMuted,
+            ),
+          ),
+        ),
         Text(
           value,
           style: AppTextStyle.time(

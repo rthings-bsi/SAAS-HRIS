@@ -145,6 +145,50 @@ export default function LeavesPage() {
     enabled: isEmployee,
   });
 
+  // User's own leave requests for disabling booked dates in Apply Leave Calendar
+  const { data: myOwnRequests = [] } = useQuery({
+    queryKey: ["my-own-leave-requests"],
+    queryFn: async () => {
+      const response = await apiClient.get<
+        ApiResponse<LeaveRequest[] | { data: LeaveRequest[] }>
+      >("/leave/my-requests");
+      if (response.data.success && response.data.data) {
+        if (Array.isArray(response.data.data)) {
+          return response.data.data;
+        }
+        if (
+          typeof response.data.data === "object" &&
+          "data" in response.data.data &&
+          Array.isArray(response.data.data.data)
+        ) {
+          return response.data.data.data;
+        }
+      }
+      return [];
+    },
+    enabled: isApplyLeaveOpen,
+  });
+
+  // Calculate existing leave ranges that cannot be re-selected (greyed out and disabled)
+  const existingLeaveRanges = useMemo(() => {
+    const sourceList = isEmployee ? leaveRequests : myOwnRequests;
+    return sourceList
+      .filter((r) => r.status === "approved" || r.status === "pending")
+      .map((r) => {
+        const typeName =
+          typeof r.leave_type === "object" && r.leave_type !== null
+            ? r.leave_type.name
+            : (r as unknown as { leave_type_name?: string }).leave_type_name || "Cuti";
+        const statusLabel = r.status === "approved" ? "Disetujui" : "Menunggu Atasan";
+        return {
+          startDate: r.start_date,
+          endDate: r.end_date,
+          label: `${typeName} (${statusLabel})`,
+          status: r.status,
+        };
+      });
+  }, [isEmployee, leaveRequests, myOwnRequests]);
+
   // Stats calculation
   const stats = useMemo(() => {
     const totalQuota = leaveBalances.reduce((acc, b) => acc + (b.quota_days || 0), 0);
@@ -240,6 +284,7 @@ export default function LeavesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-leave-requests"] });
       queryClient.invalidateQueries({ queryKey: ["employee-leave-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["my-own-leave-requests"] });
       setIsApplyLeaveOpen(false);
       setApplyLeaveTypeId("");
       setApplyStartDate("");
@@ -296,6 +341,16 @@ export default function LeavesPage() {
 
     if (new Date(applyStartDate) > new Date(applyEndDate)) {
       setApplyError("Tanggal selesai cuti tidak boleh lebih awal dari tanggal mulai.");
+      return;
+    }
+
+    const hasOverlap = existingLeaveRanges.some(
+      (r) => r.startDate <= applyEndDate && r.endDate >= applyStartDate
+    );
+    if (hasOverlap) {
+      setApplyError(
+        "Rentang tanggal yang dipilih bertabrakan dengan permohonan cuti yang sudah ada (abu-abu). Silakan pilih tanggal yang tersedia."
+      );
       return;
     }
 
@@ -984,6 +1039,12 @@ export default function LeavesPage() {
                 label="Rentang Tanggal Cuti"
                 required
                 defaultExpanded={true}
+                disabledRanges={existingLeaveRanges}
+                helperText={
+                  existingLeaveRanges.length > 0
+                    ? `${existingLeaveRanges.length} permohonan cuti aktif ditandai abu-abu & tidak dapat dipilih.`
+                    : undefined
+                }
               />
               <input type="hidden" name="start_date" value={applyStartDate} />
               <input type="hidden" name="end_date" value={applyEndDate} />

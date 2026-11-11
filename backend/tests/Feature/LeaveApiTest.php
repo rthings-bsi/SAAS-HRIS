@@ -603,6 +603,10 @@ class LeaveApiTest extends TestCase
             ]);
 
         $this->assertCount(2, $response->json('data.data'));
+        $firstItem = $response->json('data.data.0');
+        $this->assertMatchesRegularExpression('/^LVR-\d{6}-\d{6}$/', $firstItem['request_number'] ?? '');
+        $this->assertEquals('Staff A', $firstItem['employee']['user']['name'] ?? null);
+        $this->assertIsBool($firstItem['is_paid'] ?? null);
 
         // Filter by status pending
         $filteredResponse = $this->getJson('/api/v1/leave/my-requests?status=pending');

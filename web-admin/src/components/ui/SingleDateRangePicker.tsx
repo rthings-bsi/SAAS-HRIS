@@ -10,14 +10,23 @@ import {
   CalendarRange,
 } from "lucide-react";
 
+export interface DisabledDateRange {
+  startDate: string; // Format: YYYY-MM-DD
+  endDate: string; // Format: YYYY-MM-DD
+  label?: string; // e.g. "Cuti Tahunan (Disetujui)"
+  status?: string; // "approved" | "pending"
+}
+
 export interface SingleDateRangePickerProps {
   startDate: string; // Format: YYYY-MM-DD
   endDate: string; // Format: YYYY-MM-DD
   onChange: (range: { startDate: string; endDate: string }) => void;
+  singleDateMode?: boolean; // When true: single click selects the date (startDate = endDate = dateStr)
   label?: string;
   required?: boolean;
   minDate?: string; // Optional: YYYY-MM-DD
   maxDate?: string; // Optional: YYYY-MM-DD
+  disabledRanges?: DisabledDateRange[];
   helperText?: string;
   defaultExpanded?: boolean;
 }
@@ -73,10 +82,12 @@ export function SingleDateRangePicker({
   startDate,
   endDate,
   onChange,
+  singleDateMode = false,
   label = "Rentang Tanggal Cuti",
   required = false,
   minDate,
   maxDate,
+  disabledRanges,
   helperText,
   defaultExpanded = true,
 }: SingleDateRangePickerProps) {
@@ -120,6 +131,17 @@ export function SingleDateRangePicker({
 
   // Day cell click handler
   const handleDateClick = (dateStr: string) => {
+    // If date is already booked in any disabledRange, reject selection
+    const isDateBooked = disabledRanges?.some(
+      (r) => r.startDate && r.endDate && dateStr >= r.startDate && dateStr <= r.endDate
+    );
+    if (isDateBooked) return;
+
+    if (singleDateMode) {
+      onChange({ startDate: dateStr, endDate: dateStr });
+      return;
+    }
+
     if (selectionStep === "start") {
       // First click: sets start date, clears end date, and transitions to step 'end'
       onChange({ startDate: dateStr, endDate: "" });
@@ -134,6 +156,19 @@ export function SingleDateRangePicker({
         onChange({ startDate: dateStr, endDate: "" });
         setSelectionStep("end");
       } else {
+        // Check if any booked range intersects between startDate and dateStr
+        const hasBookedDateInside = disabledRanges?.some((r) => {
+          if (!r.startDate || !r.endDate) return false;
+          return r.startDate <= dateStr && r.endDate >= startDate;
+        });
+
+        if (hasBookedDateInside) {
+          // Range spans across booked date: treat clicked date as new start date
+          onChange({ startDate: dateStr, endDate: "" });
+          setSelectionStep("end");
+          return;
+        }
+
         // Valid end date (>= start date, including same date for 1-day leave)
         onChange({ startDate, endDate: dateStr });
         setSelectionStep("start"); // Ready for next cycle if user wants to re-pick
@@ -158,7 +193,13 @@ export function SingleDateRangePicker({
     end.setDate(end.getDate() + (daysCount - 1));
 
     const startIso = toLocalIso(start);
-    const endIso = toLocalIso(end);
+    const endIso = singleDateMode ? startIso : toLocalIso(end);
+
+    // Prevent preset if it overlaps with any booked range
+    const overlaps = disabledRanges?.some(
+      (r) => r.startDate && r.endDate && r.startDate <= endIso && r.endDate >= startIso
+    );
+    if (overlaps) return;
 
     setViewDate(new Date(start.getFullYear(), start.getMonth(), 1));
     onChange({ startDate: startIso, endDate: endIso });
@@ -185,6 +226,9 @@ export function SingleDateRangePicker({
       day: number;
       dateStr: string;
       isDisabled: boolean;
+      isBooked: boolean;
+      bookedLabel?: string;
+      bookedStatus?: string;
       isSelectedStart: boolean;
       isSelectedEnd: boolean;
       isInRange: boolean;
@@ -200,6 +244,7 @@ export function SingleDateRangePicker({
         day: 0,
         dateStr: "",
         isDisabled: true,
+        isBooked: false,
         isSelectedStart: false,
         isSelectedEnd: false,
         isInRange: false,
@@ -214,9 +259,14 @@ export function SingleDateRangePicker({
         day
       ).padStart(2, "0")}`;
 
-      const isDisabled = Boolean(
-        (minDate && dateStr < minDate) || (maxDate && dateStr > maxDate)
+      const matchedBooking = disabledRanges?.find(
+        (r) => r.startDate && r.endDate && dateStr >= r.startDate && dateStr <= r.endDate
       );
+      const isBooked = Boolean(matchedBooking);
+
+      const isDisabled =
+        isBooked ||
+        Boolean((minDate && dateStr < minDate) || (maxDate && dateStr > maxDate));
 
       const isSelectedStart = startDate === dateStr;
       const isSelectedEnd = endDate === dateStr;
@@ -230,7 +280,20 @@ export function SingleDateRangePicker({
           startDate !== endDate
       );
 
-      // In temporary hover preview range
+      // In temporary hover preview range (check if hover range crosses any booked date)
+      const hoverCrossesBooked = Boolean(
+        selectionStep === "end" &&
+          startDate &&
+          !endDate &&
+          hoveredDate &&
+          disabledRanges?.some((r) => {
+            if (!r.startDate || !r.endDate) return false;
+            const rangeStart = startDate <= hoveredDate ? startDate : hoveredDate;
+            const rangeEnd = startDate <= hoveredDate ? hoveredDate : startDate;
+            return r.startDate <= rangeEnd && r.endDate >= rangeStart;
+          })
+      );
+
       const isHoverRange = Boolean(
         selectionStep === "end" &&
           startDate &&
@@ -238,13 +301,17 @@ export function SingleDateRangePicker({
           hoveredDate &&
           hoveredDate >= startDate &&
           dateStr >= startDate &&
-          dateStr <= hoveredDate
+          dateStr <= hoveredDate &&
+          !hoverCrossesBooked
       );
 
       cells.push({
         day,
         dateStr,
         isDisabled,
+        isBooked,
+        bookedLabel: matchedBooking?.label,
+        bookedStatus: matchedBooking?.status,
         isSelectedStart,
         isSelectedEnd,
         isInRange,
@@ -254,7 +321,7 @@ export function SingleDateRangePicker({
     }
 
     return cells;
-  }, [currentYear, currentMonth, minDate, maxDate, startDate, endDate, selectionStep, hoveredDate]);
+  }, [currentYear, currentMonth, minDate, maxDate, startDate, endDate, selectionStep, hoveredDate, disabledRanges]);
 
   // Generate Year options (current - 2 to current + 3)
   const yearOptions = useMemo(() => {
@@ -316,10 +383,18 @@ export function SingleDateRangePicker({
           </div>
           <div className="min-w-0 text-left">
             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Rentang Pengajuan
+              {singleDateMode ? "Tanggal Pengajuan" : "Rentang Pengajuan"}
             </div>
             <div className="text-xs font-bold text-slate-900 truncate">
-              {startDate && endDate ? (
+              {singleDateMode ? (
+                startDate ? (
+                  <span>{formatDisplayDate(startDate)}</span>
+                ) : (
+                  <span className="text-slate-400 font-normal">
+                    Klik untuk memilih tanggal pengajuan
+                  </span>
+                )
+              ) : startDate && endDate ? (
                 <span>
                   {formatDisplayDate(startDate)}
                   {startDate === endDate ? " (1 Hari)" : ` s/d ${formatDisplayDate(endDate)}`}
@@ -338,7 +413,7 @@ export function SingleDateRangePicker({
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {startDate && endDate && (
+          {!singleDateMode && startDate && endDate && (
             <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]">
               {durationDays} Hari
             </span>
@@ -369,27 +444,31 @@ export function SingleDateRangePicker({
             >
               Besok
             </button>
-            <button
-              type="button"
-              onClick={() => applyPreset(3, 0)}
-              className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 font-medium text-slate-600 transition-colors cursor-pointer shrink-0"
-            >
-              3 Hari
-            </button>
-            <button
-              type="button"
-              onClick={() => applyPreset(5, 0)}
-              className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 font-medium text-slate-600 transition-colors cursor-pointer shrink-0"
-            >
-              5 Hari Kerja
-            </button>
-            <button
-              type="button"
-              onClick={() => applyPreset(7, 0)}
-              className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 font-medium text-slate-600 transition-colors cursor-pointer shrink-0"
-            >
-              1 Minggu
-            </button>
+            {!singleDateMode && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(3, 0)}
+                  className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 font-medium text-slate-600 transition-colors cursor-pointer shrink-0"
+                >
+                  3 Hari
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(5, 0)}
+                  className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 font-medium text-slate-600 transition-colors cursor-pointer shrink-0"
+                >
+                  5 Hari Kerja
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(7, 0)}
+                  className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 font-medium text-slate-600 transition-colors cursor-pointer shrink-0"
+                >
+                  1 Minggu
+                </button>
+              </>
+            )}
           </div>
 
           {/* Calendar Header Navigation */}
@@ -485,20 +564,23 @@ export function SingleDateRangePicker({
 
               // Button pill styling
               let buttonStyle =
-                "w-8 h-8 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer z-10 ";
+                "w-8 h-8 rounded-xl text-xs font-semibold flex items-center justify-center transition-all z-10 ";
 
-              if (isStart || isEnd) {
+              if (cell.isBooked) {
                 buttonStyle +=
-                  " bg-[#16A34A] text-white font-extrabold shadow-sm scale-105";
+                  " bg-slate-100 text-slate-400 cursor-not-allowed border border-dashed border-slate-300 line-through select-none";
+              } else if (isStart || isEnd) {
+                buttonStyle +=
+                  " bg-[#16A34A] text-white font-extrabold shadow-sm scale-105 cursor-pointer";
               } else if (inRange) {
-                buttonStyle += " text-emerald-900 font-bold hover:bg-emerald-200/60";
+                buttonStyle += " text-emerald-900 font-bold hover:bg-emerald-200/60 cursor-pointer";
               } else if (cell.isToday) {
                 buttonStyle +=
-                  " border border-emerald-600/80 text-emerald-700 font-bold hover:bg-emerald-50";
+                  " border border-emerald-600/80 text-emerald-700 font-bold hover:bg-emerald-50 cursor-pointer";
               } else if (cell.isDisabled) {
                 buttonStyle += " text-slate-300 cursor-not-allowed";
               } else {
-                buttonStyle += " text-slate-700 hover:bg-slate-100 active:scale-95";
+                buttonStyle += " text-slate-700 hover:bg-slate-100 active:scale-95 cursor-pointer";
               }
 
               return (
@@ -506,14 +588,21 @@ export function SingleDateRangePicker({
                   <button
                     type="button"
                     disabled={cell.isDisabled}
-                    onClick={() => handleDateClick(cell.dateStr)}
+                    onClick={() => !cell.isDisabled && handleDateClick(cell.dateStr)}
                     onMouseEnter={() => {
-                      if (selectionStep === "end" && startDate) {
+                      if (selectionStep === "end" && startDate && !cell.isBooked) {
                         setHoveredDate(cell.dateStr);
                       }
                     }}
                     className={buttonStyle}
-                    aria-label={`Pilih tanggal ${cell.dateStr}`}
+                    title={
+                      cell.isBooked
+                        ? `Permohonan sudah ada: ${cell.bookedLabel || "Diajukan"} (Abu-abu / Tidak dapat diklik)`
+                        : cell.isDisabled
+                        ? "Tanggal tidak tersedia"
+                        : `Pilih tanggal ${cell.dateStr}`
+                    }
+                    aria-label={`Pilih tanggal ${cell.dateStr}${cell.isBooked ? " (Sudah ada permohonan, tidak dapat dipilih)" : ""}`}
                   >
                     {cell.day}
                   </button>
@@ -522,10 +611,43 @@ export function SingleDateRangePicker({
             })}
           </div>
 
+          {/* Calendar Status Legend */}
+          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs bg-[#16A34A] inline-block" />
+              <span>Dipilih</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs bg-slate-100 border border-dashed border-slate-300 inline-flex items-center justify-center text-[7px] text-slate-400 font-bold">
+                ✕
+              </span>
+              <span className="text-slate-600 font-medium">Sudah Ada Permohonan (Abu-abu / Tidak bisa diklik)</span>
+            </div>
+            {disabledRanges && disabledRanges.length > 0 && (
+              <span className="text-[10px] text-slate-400 font-mono ml-auto">
+                {disabledRanges.length} jadwal terdaftar
+              </span>
+            )}
+          </div>
+
           {/* Guidance Status Footer */}
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
             <div className="text-slate-500 flex items-center gap-1.5">
-              {!startDate ? (
+              {singleDateMode ? (
+                !startDate ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-slate-300" />
+                    <span>Klik tanggal untuk memilih hari</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-emerald-700 font-bold">
+                      Tanggal {formatDisplayDate(startDate)} terpilih
+                    </span>
+                  </>
+                )
+              ) : !startDate ? (
                 <>
                   <span className="w-2 h-2 rounded-full bg-slate-300" />
                   <span>Klik tanggal mulai cuti</span>
@@ -547,7 +669,7 @@ export function SingleDateRangePicker({
               )}
             </div>
 
-            {startDate && endDate && (
+            {(singleDateMode ? startDate : (startDate && endDate)) && (
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}

@@ -48,7 +48,7 @@ class AuthController extends Controller
     {
         $user = $request->user()->load([
             'company',
-            'employee',
+            'employee.shift',
         ]);
 
         return $this->successResponse($user, 'Profil berhasil diambil.');

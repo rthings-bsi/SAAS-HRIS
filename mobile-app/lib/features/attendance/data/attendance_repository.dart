@@ -112,6 +112,26 @@ class AttendanceRepository {
       ApiEndpoints.attendanceHistory,
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
+    return _extractHistoryList(response);
+  }
+
+  Future<List<dynamic>> getAttendanceHistoryRange({
+    required String startDate,
+    required String endDate,
+    int perPage = 100,
+  }) async {
+    final response = await _client.get(
+      ApiEndpoints.attendanceHistory,
+      queryParameters: {
+        'start_date': startDate,
+        'end_date': endDate,
+        'per_page': perPage,
+      },
+    );
+    return _extractHistoryList(response);
+  }
+
+  List<dynamic> _extractHistoryList(dynamic response) {
     if (response is List) {
       return response;
     } else if (response is Map<String, dynamic>) {

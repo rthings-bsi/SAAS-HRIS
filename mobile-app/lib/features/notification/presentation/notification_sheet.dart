@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../data/notification_model.dart';
@@ -38,28 +39,28 @@ class _NotificationSheetState extends ConsumerState<NotificationSheet> {
   IconData _getTypeIcon(String type) {
     switch (type.toLowerCase()) {
       case 'leave':
-        return Icons.calendar_today_rounded;
+        return LucideIcons.calendar;
       case 'overtime':
-        return Icons.access_time_rounded;
+        return LucideIcons.clock;
       case 'payroll':
-        return Icons.account_balance_wallet_rounded;
+        return LucideIcons.wallet;
       case 'attendance':
-        return Icons.how_to_reg_rounded;
+        return LucideIcons.userCheck;
       default:
-        return Icons.notifications_none_rounded;
+        return LucideIcons.bell;
     }
   }
 
   Color _getTypeColor(String type) {
     switch (type.toLowerCase()) {
       case 'leave':
-        return AppColors.menuGreenIcon;
+        return const Color(0xFF047857);
       case 'overtime':
-        return const Color(0xFFD97706);
+        return const Color(0xFFB45309);
       case 'payroll':
         return AppColors.actionAccent;
       case 'attendance':
-        return const Color(0xFF7C3AED);
+        return const Color(0xFF6D28D9);
       default:
         return AppColors.inkMuted;
     }
@@ -100,301 +101,352 @@ class _NotificationSheetState extends ConsumerState<NotificationSheet> {
   Widget build(BuildContext context) {
     final state = ref.watch(notificationListProvider);
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.82,
-      ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 4),
-              width: 38,
-              height: 4.5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFCBD5E1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.82,
           ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 4),
+                  width: 38,
+                  height: 4.5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
 
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 16, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 12, 12),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Text(
-                      'Notifikasi',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.inkPrimary,
-                      ),
-                    ),
-                    if (state.unreadCount > 0) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFEE2E2),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFFECACA)),
-                        ),
-                        child: Text(
-                          '${state.unreadCount} Baru',
-                          style: const TextStyle(
-                            fontSize: 10.5,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Notifikasi',
+                          style: TextStyle(
+                            fontSize: 17,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFFB91C1C),
+                            color: AppColors.inkPrimary,
                           ),
                         ),
-                      ),
-                    ],
+                        if (state.unreadCount > 0) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              '${state.unreadCount} Baru',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFB91C1C),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (state.unreadCount > 0)
+                          TextButton.icon(
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              minimumSize: const Size(
+                                0,
+                                AppDimensions.minTouchTarget,
+                              ),
+                            ),
+                            icon: const Icon(
+                              LucideIcons.checkCheck,
+                              size: 16,
+                              color: AppColors.actionAccent,
+                            ),
+                            label: const Text(
+                              'Tandai Dibaca',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.actionAccent,
+                              ),
+                            ),
+                            onPressed: () {
+                              ref
+                                  .read(notificationListProvider.notifier)
+                                  .markAllAsRead();
+                            },
+                          ),
+                        IconButton(
+                          icon: const Icon(
+                            LucideIcons.x,
+                            size: 20,
+                            color: Color(0xFF64748B),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: AppDimensions.minTouchTarget,
+                            minHeight: AppDimensions.minTouchTarget,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          tooltip: 'Tutup',
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-                Row(
-                  children: [
-                    if (state.unreadCount > 0)
-                      TextButton.icon(
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          minimumSize: const Size(0, AppDimensions.minTouchTarget),
-                        ),
-                        icon: const Icon(
-                          Icons.done_all_rounded,
-                          size: 16,
-                          color: AppColors.actionAccent,
-                        ),
-                        label: const Text(
-                          'Tandai Dibaca',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+              ),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+
+              // Body
+              Flexible(
+                child: Builder(
+                  builder: (context) {
+                    if (state.isLoading && state.notifications.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
                             color: AppColors.actionAccent,
                           ),
                         ),
-                        onPressed: () {
-                          ref.read(notificationListProvider.notifier).markAllAsRead();
-                        },
-                      ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
-                      onPressed: () => Navigator.pop(context),
-                      tooltip: 'Tutup',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      );
+                    }
 
-          // Body
-          Flexible(
-            child: Builder(
-              builder: (context) {
-                if (state.isLoading && state.notifications.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.2,
-                        color: AppColors.actionAccent,
-                      ),
-                    ),
-                  );
-                }
-
-                if (state.errorMessage != null && state.notifications.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.all(28),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline_rounded,
-                            size: 40,
-                            color: AppColors.dangerText,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            state.errorMessage!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
-                          ),
-                          const SizedBox(height: 14),
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.actionAccent,
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(0, AppDimensions.minTouchTarget),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                    if (state.errorMessage != null &&
+                        state.notifications.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(28),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                LucideIcons.circleAlert,
+                                size: 40,
+                                color: Color(0xFFB91C1C),
                               ),
-                            ),
-                            icon: const Icon(Icons.refresh_rounded, size: 16),
-                            label: const Text('Coba Lagi'),
-                            onPressed: () {
-                              ref.read(notificationListProvider.notifier).fetchNotifications();
-                            },
+                              const SizedBox(height: 12),
+                              Text(
+                                state.errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.inkMuted,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.actionAccent,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(
+                                    0,
+                                    AppDimensions.minTouchTarget,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                icon: const Icon(LucideIcons.refreshCw, size: 16),
+                                label: const Text('Coba Lagi'),
+                                onPressed: () {
+                                  ref
+                                      .read(notificationListProvider.notifier)
+                                      .fetchNotifications();
+                                },
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                if (state.notifications.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: const Icon(
-                              Icons.notifications_off_outlined,
-                              size: 26,
-                              color: Color(0xFF94A3B8),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Belum Ada Notifikasi',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.inkPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Pemberitahuan terkait status cuti, lembur, dan slip gaji akan ditampilkan di sini.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF64748B),
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  itemCount: state.notifications.length,
-                  separatorBuilder: (context, index) =>
-                      const Divider(height: 1, indent: 64, color: Color(0xFFF1F5F9)),
-                  itemBuilder: (context, index) {
-                    final notif = state.notifications[index];
-                    final icon = _getTypeIcon(notif.type);
-                    final iconColor = _getTypeColor(notif.type);
-                    final iconBg = _getTypeBgColor(notif.type);
-
-                    return InkWell(
-                      onTap: () => _handleItemTap(notif),
-                      child: Container(
-                        constraints: const BoxConstraints(
-                          minHeight: AppDimensions.minTouchTarget,
                         ),
-                        color: notif.isRead ? Colors.white : const Color(0xFFF0FDF4),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 38,
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: iconBg,
-                                borderRadius: BorderRadius.circular(10),
+                      );
+                    }
+
+                    if (state.notifications.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 48,
+                          horizontal: 24,
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(
+                                  LucideIcons.bellOff,
+                                  size: 26,
+                                  color: Color(0xFF64748B),
+                                ),
                               ),
-                              child: Icon(icon, color: iconColor, size: 19),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Belum Ada Notifikasi',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.inkPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Pemberitahuan terkait status cuti, lembur, dan slip gaji akan ditampilkan di sini.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      itemCount: state.notifications.length,
+                      separatorBuilder: (context, index) => const Divider(
+                        height: 1,
+                        indent: 64,
+                        color: Color(0xFFF1F5F9),
+                      ),
+                      itemBuilder: (context, index) {
+                        final notif = state.notifications[index];
+                        final icon = _getTypeIcon(notif.type);
+                        final iconColor = _getTypeColor(notif.type);
+                        final iconBg = _getTypeBgColor(notif.type);
+
+                        return InkWell(
+                          onTap: () => _handleItemTap(notif),
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              minHeight: AppDimensions.minTouchTarget,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                            color: notif.isRead
+                                ? Colors.white
+                                : const Color(0xFFF0FDF4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: iconBg,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(icon, color: iconColor, size: 19),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: Text(
-                                          notif.title,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight:
-                                                notif.isRead ? FontWeight.w600 : FontWeight.w700,
-                                            color: AppColors.inkPrimary,
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              notif.title,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: notif.isRead
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w700,
+                                                color: AppColors.inkPrimary,
+                                              ),
+                                            ),
                                           ),
+                                          if (!notif.isRead) ...[
+                                            const SizedBox(width: 6),
+                                            Container(
+                                              width: 7,
+                                              height: 7,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.actionAccent,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        notif.message,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF475569),
+                                          height: 1.35,
                                         ),
                                       ),
-                                      if (!notif.isRead) ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          width: 7,
-                                          height: 7,
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.actionAccent,
-                                            shape: BoxShape.circle,
-                                          ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        notif.type.toUpperCase(),
+                                        style: const TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF64748B),
+                                          letterSpacing: 0.4,
                                         ),
-                                      ],
+                                      ),
                                     ],
                                   ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    notif.message,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF475569),
-                                      height: 1.35,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    notif.type.toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF94A3B8),
-                                      letterSpacing: 0.4,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

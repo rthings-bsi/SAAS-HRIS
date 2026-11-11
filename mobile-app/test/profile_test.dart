@@ -115,7 +115,8 @@ void main() {
     expect(find.text('Software Engineer'), findsWidgets);
     expect(find.text('Karyawan Tetap'), findsOneWidget);
     expect(find.text('NIK: EMP-001'), findsOneWidget);
-    expect(find.text('PT Nusantara Tech'), findsOneWidget);
+    expect(find.text('Tenant Organisasi'), findsNothing);
+    expect(find.text('Mulai Bekerja'), findsNothing);
     expect(find.text('Kantor Pusat Jakarta'), findsOneWidget);
     expect(find.text('Engineering'), findsOneWidget);
     expect(find.text('ahmad.fauzi@example.com'), findsOneWidget);

@@ -55,6 +55,7 @@ class LeaveRepository {
             .toList();
       } else if (response.containsKey('remaining_days') ||
           response.containsKey('total_quota') ||
+          response.containsKey('quota_days') ||
           response.containsKey('total_days')) {
         return [LeaveBalanceModel.fromMap(response)];
       }
@@ -142,6 +143,70 @@ class LeaveRepository {
       if (response['data'] is Map<String, dynamic>) {
         return response['data'] as Map<String, dynamic>;
       }
+      return response;
+    }
+    return {'success': true};
+  }
+
+  Future<List<LeaveRequestModel>> getApprovals({
+    String? status,
+    int? page,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (status != null && status.isNotEmpty && status != 'all') {
+      queryParams['status'] = status;
+    }
+    if (page != null) {
+      queryParams['page'] = page;
+    }
+
+    final response = await _client.get(
+      ApiEndpoints.leaveApprovals,
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+    );
+
+    if (response is List) {
+      return response
+          .map((item) => LeaveRequestModel.fromMap(item as Map<String, dynamic>))
+          .toList();
+    } else if (response is Map<String, dynamic>) {
+      final dataField = response['data'];
+      if (dataField is List) {
+        return dataField
+            .map((item) => LeaveRequestModel.fromMap(item as Map<String, dynamic>))
+            .toList();
+      } else if (dataField is Map<String, dynamic> && dataField['data'] is List) {
+        return (dataField['data'] as List)
+            .map((item) => LeaveRequestModel.fromMap(item as Map<String, dynamic>))
+            .toList();
+      } else if (response['requests'] is List) {
+        return (response['requests'] as List)
+            .map((item) => LeaveRequestModel.fromMap(item as Map<String, dynamic>))
+            .toList();
+      }
+    }
+
+    return [];
+  }
+
+  Future<Map<String, dynamic>> takeApprovalAction({
+    required int id,
+    required String action,
+    String? notes,
+  }) async {
+    final payload = <String, dynamic>{
+      'action': action,
+    };
+    if (notes != null && notes.trim().isNotEmpty) {
+      payload['notes'] = notes.trim();
+    }
+
+    final response = await _client.post(
+      ApiEndpoints.leaveAction(id),
+      data: payload,
+    );
+
+    if (response is Map<String, dynamic>) {
       return response;
     }
     return {'success': true};

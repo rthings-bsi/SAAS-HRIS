@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimensions.dart';
 import '../../../core/theme/app_theme.dart';
@@ -17,10 +18,9 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
 
   Widget _buildSummaryCard() {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1.0,
@@ -34,14 +34,17 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+          Padding(
+            padding: const EdgeInsets.all(AppDimensions.space16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.start,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
@@ -64,82 +67,91 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: slip.status.backgroundColor,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: slip.status.borderColor,
-                    width: 1.0,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 6,
-                      height: 6,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: slip.status.textColor,
-                          shape: BoxShape.circle,
+                  decoration: BoxDecoration(
+                    color: slip.status.backgroundColor,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 6,
+                        height: 6,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: slip.status.textColor,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 4),
+                      Text(
+                        slip.status.label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: slip.status.textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(
+            height: 1,
+            color: Color(0xFFF1F5F9),
+            thickness: 1.0,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.space16,
+              vertical: 12,
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.calendar,
+                      size: 15,
+                      color: AppColors.textMuted,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      slip.status.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: slip.status.textColor,
+                    SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'Tanggal Pembayaran',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.space12),
-          const Divider(
-            color: AppColors.borderSubtle,
-            thickness: 1.0,
-          ),
-          const SizedBox(height: AppDimensions.space12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(
-                    Icons.event_outlined,
-                    size: 16,
-                    color: AppColors.textMuted,
+                Text(
+                  slip.formattedPaymentDate,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
                   ),
-                  SizedBox(width: 6),
-                  Text(
-                    'Tanggal Pembayaran',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                slip.formattedPaymentDate,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -202,7 +214,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1.0,
@@ -216,12 +228,16 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     width: 28,
@@ -231,19 +247,23 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 18,
-                      color: AppColors.statusSuccess,
+                      LucideIcons.circlePlus,
+                      size: 16,
+                      color: Color(0xFF047857),
                     ),
                   ),
                   const SizedBox(width: AppDimensions.space8),
-                  const Text(
-                    'Rincian Penerimaan',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.2,
+                  const Flexible(
+                    child: Text(
+                      'Rincian Penerimaan',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
                     ),
                   ),
                 ],
@@ -259,7 +279,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.statusSuccess,
+                    color: Color(0xFF047857),
                   ),
                 ),
               ),
@@ -283,7 +303,8 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppDimensions.space8),
           const Divider(
-            color: AppColors.borderSubtle,
+            height: 1,
+            color: Color(0xFFF1F5F9),
             thickness: 1.0,
           ),
           const SizedBox(height: AppDimensions.space8),
@@ -291,7 +312,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
             label: 'Total Penerimaan',
             value: slip.formattedTotalEarnings,
             isBold: true,
-            valueColor: AppColors.statusSuccess,
+            valueColor: const Color(0xFF047857),
           ),
         ],
       ),
@@ -303,7 +324,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: AppColors.borderSubtle,
           width: 1.0,
@@ -317,12 +338,16 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     width: 28,
@@ -332,19 +357,23 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
-                      Icons.remove_circle_outline_rounded,
-                      size: 18,
-                      color: AppColors.statusDanger,
+                      LucideIcons.circleMinus,
+                      size: 16,
+                      color: Color(0xFFB91C1C),
                     ),
                   ),
                   const SizedBox(width: AppDimensions.space8),
-                  const Text(
-                    'Rincian Potongan',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.2,
+                  const Flexible(
+                    child: Text(
+                      'Rincian Potongan',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
                     ),
                   ),
                 ],
@@ -360,7 +389,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.statusDanger,
+                    color: Color(0xFFB91C1C),
                   ),
                 ),
               ),
@@ -384,7 +413,8 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppDimensions.space8),
           const Divider(
-            color: AppColors.borderSubtle,
+            height: 1,
+            color: Color(0xFFF1F5F9),
             thickness: 1.0,
           ),
           const SizedBox(height: AppDimensions.space8),
@@ -392,7 +422,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
             label: 'Total Potongan',
             value: slip.formattedTotalDeductions,
             isBold: true,
-            valueColor: AppColors.statusDanger,
+            valueColor: const Color(0xFFB91C1C),
           ),
         ],
       ),
@@ -404,7 +434,7 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(AppDimensions.space16),
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: AppColors.statusSuccessBorder,
           width: 1.5,
@@ -430,9 +460,9 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
-                  Icons.payments_outlined,
-                  size: 18,
-                  color: AppColors.statusSuccess,
+                  LucideIcons.wallet,
+                  size: 16,
+                  color: Color(0xFF047857),
                 ),
               ),
               const SizedBox(width: AppDimensions.space8),
@@ -458,23 +488,23 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
               style: AppTextStyle.currency(
                 fontSize: 28,
                 fontWeight: FontWeight.w800,
-                color: AppColors.statusSuccess,
+                color: const Color(0xFF047857),
               ),
             ),
           ),
           const SizedBox(height: 8),
-          Row(
+          const Row(
             children: [
-              const Icon(
-                Icons.account_balance_outlined,
+              Icon(
+                LucideIcons.landmark,
                 size: 14,
                 color: AppColors.textMuted,
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'Ditransfer langsung ke rekening payroll terdaftar',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: AppColors.textMuted,
                   ),
@@ -494,17 +524,13 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceMuted,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.borderSubtle,
-          width: 1.0,
-        ),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Icons.verified_user_outlined,
-            size: 18,
+            LucideIcons.shieldCheck,
+            size: 16,
             color: AppColors.textMuted,
           ),
           SizedBox(width: 8),
@@ -548,54 +574,72 @@ class PayrollSlipDetailScreen extends ConsumerWidget {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimensions.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildSummaryCard(),
-              const SizedBox(height: AppDimensions.space16),
-              _buildEarningsCard(),
-              const SizedBox(height: AppDimensions.space16),
-              _buildDeductionsCard(),
-              const SizedBox(height: AppDimensions.space16),
-              _buildNetSalaryCard(),
-              const SizedBox(height: AppDimensions.space16),
-              _buildLegalNotice(),
-              const SizedBox(height: AppDimensions.space24),
-              AppButton(
-                text: 'Unduh Slip Gaji (PDF)',
-                icon: const Icon(Icons.download_rounded, size: 20),
-                isLoading: downloadState.isLoading,
-                height: AppDimensions.minTouchTarget,
-                onPressed: () async {
-                  final success = await ref
-                      .read(payrollDownloadNotifierProvider.notifier)
-                      .downloadSlipPdf(slip.id_payroll_slips);
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: LayoutBuilder(
+              builder: (context, viewportConstraints) {
+                final double hPad = viewportConstraints.maxWidth < 310
+                    ? 12
+                    : (viewportConstraints.maxWidth < 470
+                        ? AppDimensions.space16
+                        : 20);
 
-                  if (!context.mounted) return;
+                return SingleChildScrollView(
+                  padding: EdgeInsets.all(hPad),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildSummaryCard(),
+                      const SizedBox(height: AppDimensions.space16),
+                      _buildEarningsCard(),
+                      const SizedBox(height: AppDimensions.space16),
+                      _buildDeductionsCard(),
+                      const SizedBox(height: AppDimensions.space16),
+                      _buildNetSalaryCard(),
+                      const SizedBox(height: AppDimensions.space16),
+                      _buildLegalNotice(),
+                      const SizedBox(height: AppDimensions.space24),
+                      AppButton(
+                        text: 'Unduh Slip Gaji (PDF)',
+                        icon: const Icon(LucideIcons.download, size: 18),
+                        isLoading: downloadState.isLoading,
+                        height: AppDimensions.minTouchTarget,
+                        onPressed: () async {
+                          final success = await ref
+                              .read(payrollDownloadNotifierProvider.notifier)
+                              .downloadSlipPdf(slip.id_payroll_slips);
 
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Slip gaji berhasil diunduh.'),
-                        backgroundColor: AppColors.statusSuccess,
+                          if (!context.mounted) return;
+
+                          if (success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Slip gaji berhasil diunduh.'),
+                                backgroundColor: AppColors.statusSuccess,
+                              ),
+                            );
+                          } else {
+                            final errorMsg = ref
+                                .read(payrollDownloadNotifierProvider)
+                                .errorMessage;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    errorMsg ?? 'Gagal mengunduh slip gaji.'),
+                                backgroundColor: AppColors.statusDanger,
+                              ),
+                            );
+                          }
+                        },
                       ),
-                    );
-                  } else {
-                    final errorMsg =
-                        ref.read(payrollDownloadNotifierProvider).errorMessage;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(errorMsg ?? 'Gagal mengunduh slip gaji.'),
-                        backgroundColor: AppColors.statusDanger,
-                      ),
-                    );
-                  }
-                },
-              ),
-              const SizedBox(height: AppDimensions.space16),
-            ],
+                      const SizedBox(height: AppDimensions.space16),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),

@@ -17,6 +17,7 @@ export type StatusType =
   | "holiday"
   | "disetujui"
   | "ditolak"
+  | "cancelled"
   | "aktif";
 
 interface StatusBadgeProps {

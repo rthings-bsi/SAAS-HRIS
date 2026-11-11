@@ -72,7 +72,7 @@ class LeaveController extends Controller
         }
 
         $query = LeaveRequest::where('id_employees', $employee->id_employees)
-            ->with(['approver']);
+            ->with(['employee.user', 'approver']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
